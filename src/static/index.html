@@ -45,18 +45,25 @@
             margin-bottom: 20px;
             display: flex;
             justify-content: center;
+            gap: 10px;
         }
 
         .code-input {
             background: transparent;
             border: none;
             outline: none;
-              font-family: "Inter", sans-serif;
+            font-family: "Inter", sans-serif;
             font-size: 28px;
-            letter-spacing: 15px;
-            width: 200px;
+            width: 40px;
+            height: 50px;
             text-align: center;
             color: #333;
+            border-bottom: 2px solid #333;
+            transition: border-color 0.2s;
+        }
+
+        .code-input:focus {
+            outline: none;
         }
 
         .download-btn {
@@ -87,32 +94,43 @@
     <div class="container">
         <form id="downloadForm">
             <div class="input-box">
-                <input
-                    type="text"
-                    class="code-input"
-                    id="codeInput"
-                    maxlength="6"
-                    pattern="[a-z]{6}"
-                    required
-                    autocomplete="off"
-                    spellcheck="false"
-                >
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
+                <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false">
             </div>
             <button type="submit" class="download-btn">Download</button>
         </form>
     </div>
 
     <script>
-        const input = document.getElementById('codeInput');
+        const inputs = document.querySelectorAll('.code-input');
         const form = document.getElementById('downloadForm');
 
-        input.addEventListener('input', () => {
-            input.value = input.value.toLowerCase().replace(/[^a-z]/g, '');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toLowerCase().replace(/[^a-z]/g, '');
+
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
         });
+
+        inputs[0].focus();
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (input.value.length === 6) {
+            const fullCode = Array.from(inputs).map(input => input.value).join('');
+            if (fullCode.length === 6) {
                 alert('Success! Your download is starting...');
             } else {
                 alert('Error: Please enter exactly 6 lowercase letters.');
