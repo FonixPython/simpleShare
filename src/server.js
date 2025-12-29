@@ -19,15 +19,6 @@ app.use(express.static(path.join(__dirname, "./static")));
 
 
 
-async function createRandomString(length) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-}
-
 async function verifyCredentials(username, password) {
     if (username == process.env.MASTER_USER && password == process.env.MASTER_PASSWORD) {return {"valid":false,"user_id":"master"};}
     let conn;
@@ -66,8 +57,12 @@ async function getPermissions(token)  {
 async function generateSession(user_id) {
     let conn;
     try {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
         conn = await pool.getConnection();
-        let token = await createRandomString(200)
         await conn.query("INSERT INTO session_tokens value (?, ?)", [user_id, token]);
         return token
     } finally {if (conn) {conn.release()};}
