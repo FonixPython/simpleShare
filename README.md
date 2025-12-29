@@ -27,7 +27,7 @@ SimpleShare is a web application that allows users to upload and share files eas
 3. Start the server:
 
    ```bash
-   node server.js
+   node src/server.js
    ```
 
 ## Usage
