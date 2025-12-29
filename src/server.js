@@ -5,7 +5,6 @@ require("dotenv").config();
 const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
-const path = require("path");
 
 console.log(process.env.DB_HOST);
 const pool = mariadb.createPool({
@@ -201,7 +200,6 @@ async function authenticateUser(req, res, next) {
   if (auth_result == false) {
     res.sendStatus(401);
   }
-
   next();
 }
 
