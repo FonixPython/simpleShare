@@ -29,16 +29,18 @@ jobs:
         run: |
           npm ci || npm install
 
-      - name: Create / update prettier branch
+      - name: Create / reset prettier branch from dev
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          git fetch origin
+
           if git show-ref --quiet refs/heads/prettier; then
             git checkout prettier
-            git merge dev --no-edit
+            git reset --hard origin/dev
           else
-            git checkout -b prettier
+            git checkout -b prettier origin/dev
           fi
 
       - name: Run Prettier
@@ -50,7 +52,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "style: apply prettier formatting"
-            git push origin prettier
+            git push origin prettier --force-with-lease
           else
             echo "No formatting changes."
           fi
