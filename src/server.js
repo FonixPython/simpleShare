@@ -100,7 +100,7 @@ async function registerUser(username, password) {
     if (verified.user_id === null) {
       await conn.query(
         "INSERT INTO users (username,password_hash) VALUES (?, ?)",
-        [username, password_hash]
+        [username, password_hash],
       );
       return { success: true, error: null };
     } else {
@@ -181,7 +181,7 @@ async function calculateRemainFromQuota(session_token) {
       }
       let used_up = conn.query(
         "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
-        [validation_res]
+        [validation_res],
       );
       return quota - used_up;
     } else {
