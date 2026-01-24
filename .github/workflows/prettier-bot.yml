@@ -1,0 +1,59 @@
+name: Prettier Bot
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  prettier-bot:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Checkout prettier branch
+        run: |
+          git fetch origin prettier || true
+          git checkout -B prettier origin/prettier || git checkout -B prettier
+
+      - name: Merge dev -> prettier
+        run: |
+          git pull origin dev --no-rebase
+
+      - name: Run Prettier
+        run: |
+          npx prettier . --write
+
+      - name: Stage everything EXCEPT workflows
+        run: |
+          git add . ':!**/.github/workflows/*'
+          git commit -m "Prettier auto-format" || echo "No formatting changes 🎉"
+
+      - name: Push prettier branch
+        run: |
+          git push origin prettier
+
+      - name: Create / update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: dev
+          head: prettier
+          title: "Prettier formatting update"
+          body: "Automatikus Prettier formázás a dev branch alapján."
