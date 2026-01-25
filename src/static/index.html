@@ -410,18 +410,39 @@
         color: #f7e15e;
         filter: drop-shadow(0px 0px 100px hsl(51, 91%, 67%));
       }
+      #header {
+        top:0;
+        left:0;
+        width: 100vw;
+        height: 10vh;
+        position: absolute;
+        border-bottom: 1px solid;
+        border-image: linear-gradient(90deg,hsl(223, 100%, 70%) 0%,hsl(138, 91%, 67%) 50%, hsl(223, 100%, 70%)100%) 1;
 
-      .hidden {
+      }
+      #footer {
+        position: absolute;
+        bottom:0;
+        left:0;
+        width: 100vw;
+        height: 10vh;
+        position: absolute;
+        border-top: 1px solid;
+        border-image: linear-gradient(90deg,hsl(223, 100%, 70%) 0%,hsl(138, 91%, 67%) 50%, hsl(223, 100%, 70%)100%) 1;
+      }
+      .hidden{
         display: none;
       }
     </style>
   </head>
   <body>
-  <h1 id="logo">simple<span id="highlighted">Share</span></h1>
-    <div class="button-container">
-      <button class="menu-btn hidden" onclick=switchHamburber()><span class="material-icons-outlined">menu</span></button>
-      <button class="login-btn" onclick=document.getElementById("login-box").classList.remove("hidden");document.getElementById("login-background").classList.remove("hidden");>LOG IN</button>
-      <button class="upload-btn hidden" onclick=document.getElementById("upload-box").classList.remove("hidden");document.getElementById("upload-background").classList.remove("hidden");><span class="material-icons-outlined">upload</span></button>
+    <div id="header">
+      <h1 id="logo">simple<span id="highlighted">Share</span></h1>
+      <div class="button-container">
+        <button class="menu-btn hidden" onclick=switchHamburber()><span class="material-icons-outlined">menu</span></button>
+        <button class="login-btn" onclick=document.getElementById("login-box").classList.remove("hidden");document.getElementById("login-background").classList.remove("hidden");>LOG IN</button>
+        <button class="upload-btn hidden" onclick=document.getElementById("upload-box").classList.remove("hidden");document.getElementById("upload-background").classList.remove("hidden");><span class="material-icons-outlined">upload</span></button>
+      </div>
     </div>
 
     <div class="container">
