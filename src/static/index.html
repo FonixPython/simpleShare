@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="global.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&family=Material+Icons+Round&family=Material+Icons+Sharp&family=Material+Icons+Two+Tone" rel="stylesheet" />
     <style>
+      *{
+        user-select: none;
+      }
       body {
         margin: 0;
         padding: 0;
@@ -146,6 +149,7 @@
         cursor: pointer;
         letter-spacing: 1px;
         text-align: center;
+        z-index: 10;
       }
       .menu-btn {
         height: 42px;
@@ -313,6 +317,100 @@
         left: 0;
         background-color: hsla(0, 0%, 100%, 0);
       }
+      #upload-status-symbol{
+        font-size: 10em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        margin-top:20%;
+      }
+      #upload-status-text{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 3em;
+        font-family: "Inter", sans-serif;
+        margin-top: 5%;
+
+      }
+      #filecode-display {
+        text-align: center;
+        font-size: 2em;
+        font-family: "Red Hat Mono", monospace;
+        margin-top: 5%;
+        letter-spacing: 15px;
+        padding-left:15px;
+        padding-top: 4px;
+        padding-bottom: 8px;
+        background-color: hsla(0, 0%, 12%, 0.8);
+        border-radius: 15px;
+        border: 1px solid rgba(161, 161, 161, 0.67);
+        transition: 0.2s;
+        user-select: text;
+      }
+      #filecode-display:hover {
+        border-color: hsl(223, 100%, 70%);
+        filter: drop-shadow(0px 0px 10px hsla(223, 100%, 70%, 0.6));
+        transform: scale(102%);
+      }
+      #upload-status-box {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: column;
+      }
+      #or{
+        color: #b7b7b7;
+        font-size: 1.5em;
+        font-weight: normal;
+        font-family: "Inter", sans-serif;
+        margin-top: 2%
+      }
+      #link-display{
+        margin-top: 3%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        border: 1px solid rgba(161, 161, 161, 0.67);
+        border-radius: 15px;
+        background-color: hsl(0, 0%, 15%);
+        padding: 0.6em;
+      }
+      #copy-icon{
+        text-align: center;
+        font-size: 2em;
+        padding: 5px;
+        background-color: hsl(0, 0%, 24%);
+        border: 1px solid rgba(161, 161, 161, 0.67);
+        border-radius: 5px;
+        transition: 0.2s;
+        margin:3px;
+        margin-left:6px;
+      }
+      #copy-icon:hover{
+        background-color: hsla(226, 91%, 67%, 0.45);
+        border: 1px solid hsla(226, 85%, 62%, 0.8);
+        filter: drop-shadow(0px 0px 10px hsla(226, 85%, 62%, 0.8));
+      }
+      .red-error {
+        color: #f77b5e;
+        filter: drop-shadow(0px 0px 100px hsla(11, 91%, 67%, 0.95));
+      }
+      .green-success {
+        color: #5ef78c;
+        filter: drop-shadow(0px 0px 100px hsl(138, 91%, 67%));
+      }
+      .yellow-working {
+        color: #f7e15e;
+        filter: drop-shadow(0px 0px 100px hsl(51, 91%, 67%));
+      }
+
       .hidden {
         display: none;
       }
@@ -385,12 +483,19 @@
 
     <div class="background hidden" id="upload-background" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");>
       <div class="upload-box hidden" id="upload-box" onclick=event.stopPropagation();>
-        <button class="close-btn" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
+        <button class="close-btn" id="upload-close-btn" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
         <div class="drop_zone" id="drop_zone">
           <p>
             <span style="color: #5ef78c">Drop</span> or
             <span style="color: #4c73f0">Select</span> files here
           </p>
+        </div>
+        <div id="upload-status-box" class="hidden" style="display: none">
+          <span id="upload-status-symbol" class="material-icons-outlined hidden">error</span>
+          <span id="upload-status-text" class="hidden">Error: File too large!</span>
+          <span id="filecode-display" class="hidden" style="display: none">sguvae</span>
+          <span id="or" style="display: none">or</span>
+          <div id="link-display" class="hidden" style="display: none"><span id="link-text" style="display: inline"></span><span class="material-icons-outlined" id="copy-icon" style="display: inline">content_copy</span></div>
         </div>
       </div>
     </div>
@@ -416,7 +521,6 @@
         </form>
       </div>
     </div>
-
 
     <script>
       // Try to login with session token
@@ -537,12 +641,10 @@
         event.preventDefault();
         dropZone.classList.add("dragover");
       });
-
       dropZone.addEventListener("dragleave", (event) => {
         event.preventDefault();
         dropZone.classList.remove("dragover");
       });
-
       dropZone.addEventListener("drop", (event) => {
         event.preventDefault();
         dropZone.classList.remove("dragover");
@@ -566,6 +668,13 @@
       });
 
       async function handleFiles(files) {
+        document.getElementById("drop_zone").style.display = "none";
+        document.getElementById("upload-status-box").style.display = "flex";
+        document.getElementById("upload-status-symbol").classList.add("yellow-working");
+        document.getElementById("upload-status-symbol").innerText = "construction";
+        document.getElementById("upload-status-text").classList.add("yellow-working");
+        document.getElementById("upload-status-text").innerText = "Working...";
+        document.getElementById("upload-close-btn").addEventListener("click", (event) => {location.reload();});
         const formData = new FormData();
         formData.append("file", files[0]);
 
@@ -580,12 +689,39 @@
         if (!response.ok) {
           const error = await response.json();
           console.error("Upload failed:", error.error);
+          document.getElementById("upload-status-symbol").classList.remove("yellow-working");
+          document.getElementById("upload-status-text").classList.remove("yellow-working");
+          document.getElementById("upload-status-symbol").classList.add("red-error");
+          document.getElementById("upload-status-text").classList.add("red-error");
+          document.getElementById("upload-status-symbol").innerText = "error";
+          if (response.status === 400) {document.getElementById("upload-status-text").innerText = "Bad request!";}
+          if (response.status === 401) {document.getElementById("upload-status-text").innerText = "Unauthorized!";}
+          if (response.status === 413) {document.getElementById("upload-status-text").innerText = "File too large! You ran out of quota!";}
+          if (response.status === 500) {document.getElementById("upload-status-text").innerText = "Internal Server Error!";}
+          else {document.getElementById("upload-status-text").innerText = "Unknown Error!";}
           return;
         }
-
-        const result = await response.json();
-        console.log("Stored as:", result.storedAs);
-
+        else {
+          document.getElementById("upload-status-symbol").classList.remove("yellow-working");
+          document.getElementById("upload-status-text").classList.remove("yellow-working");
+          document.getElementById("upload-status-symbol").classList.add("green-success");
+          document.getElementById("upload-status-text").classList.add("green-success");
+          document.getElementById("upload-status-symbol").innerText = "check";
+          document.getElementById("upload-status-text").innerText = "Upload successful!";
+          let response_data = await response.json()
+          console.log(response_data)
+          document.getElementById("filecode-display").style.display = "flex";
+          document.getElementById("filecode-display").innerText=response_data.code;
+          document.getElementById("or").style.display = "flex";
+          const base_url = location.href;
+          document.getElementById("link-display").style.display = "flex";
+          document.getElementById("link-text").innerText=base_url+"files/"+response_data.code;
+          document.getElementById("copy-icon").addEventListener("click", (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText(base_url+"files/"+response_data.code);
+            alert("Link copied!");
+          });
+        }
       }
 
       // Login and store session token
