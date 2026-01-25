@@ -23,22 +23,25 @@ app.use(express.static(path.join(__dirname, "./static")));
 async function verifyCredentials(username, password) {
   let conn;
   try {
-    if (username === "master" && password === "masterpass") {
-      return { valid: true, user_id: 0 };
-    }
     conn = await pool.getConnection();
     const rows = await conn.query("SELECT * FROM users WHERE username = ?", [username]);
 
     if (rows.length === 0) {
       return { valid: false, user_id: null };
     }
-
     const isMatch = await bcrypt.compare(password, rows[0].password_hash);
 
-    return {
-      valid: isMatch,
-      user_id: rows[0].id
-    };
+    if (isMatch) {
+      return {
+        valid: true,
+        user_id: rows[0].id
+      };
+    } else {
+      return {
+        valid: false,
+        user_id: rows[0].id
+      };
+    }
 
   } catch (err) {
     console.error("Database error:", err);
@@ -52,11 +55,11 @@ async function getPermissions(token) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let res1 = conn.query("SELECT * FROM session_tokens WHERE token = ?", [
+    let res1 = await conn.query("SELECT * FROM session_tokens WHERE token = ?", [
       token,
     ]);
     if (res1.length > 0) {
-      let res2 = conn.query("SELECT * FROM users WHERE id = ?", [res1.user_id]);
+      let res2 = await conn.query("SELECT * FROM users WHERE id = ?", [res1[0].user_id]);
       if (res2.length > 0) {
         if (res2[0].is_admin == 1) {
           return "admin";
@@ -71,6 +74,19 @@ async function getPermissions(token) {
     }
   } finally {
     if (conn) conn.release();
+  }
+}
+
+async function logout(token) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    return await conn.query("DELETE FROM session_tokens WHERE token = ?", [token]);
+  }
+  finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -130,7 +146,7 @@ async function validateToken(token) {
         let res2 = await conn.query("SELECT * FROM users WHERE id = ?", [
           res[0].user_id,
         ]);
-        if (res.length > 0) {
+        if (res2.length > 0) {
           return res[0].user_id;
         } else {
           return false;
@@ -172,45 +188,65 @@ async function generateUniqueFileID(code_length) {
   }
 }
 
-async function calculateRemainFromQuota(session_token) {
+async function calculateRemainFromQuota(user_id) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let validation_res = await validateToken(session_token);
-    if (validation_res != false) {
-      let quota = conn.query("SELECT * FROM users WHERE id = ?", [
-        validation_res,
-      ])[0].quota_in_bytes;
-      if (quota == 0) {
-        return null;
-      }
-      let used_up = conn.query(
+
+    let result = await conn.query("SELECT quota_in_bytes FROM users WHERE id = ?", [user_id]);
+    if (result.length === 0) return 0;
+
+    let quota = result[0].quota_in_bytes;
+    if (quota == 0) return null;
+
+    let used_res = await conn.query(
         "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
-        [validation_res],
-      );
-      return quota - used_up;
-    } else {
-      return 0;
-    }
+        [user_id]
+    );
+
+    let used_up = used_res[0].total_used || 0;
+
+    return quota - used_up;
   } finally {
-    if (conn) {
-      conn.release();
-    }
+    if (conn) conn.release();
   }
 }
 
-async function authenticateUser(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.sendStatus(401);
-  let auth_result = await validateToken(auth);
-  if (auth_result == false) {
-    res.sendStatus(401);
+async function prepareUploadContext(req, res, next) {
+  const code = await generateUniqueFileID(6);
+  req.fileCode = code;
+  let remaining = await calculateRemainFromQuota(req.user.id);
+  if (remaining !== null) {
+    req.maxUploadSize = remaining;
   }
   next();
 }
 
-async function setUploadLimits(req, res, next) {
-  req.maxUploadSize = await calculateRemainFromQuota(req.headers.authorization);
+const uploadMiddleware = (req, res, next) => {
+  const limits = {};
+  if (req.maxUploadSize) {
+    limits.fileSize = req.maxUploadSize;
+  }
+
+  const upload = multer({
+    storage: storage,
+    limits: limits,
+  }).single("file");
+
+  upload(req, res, (err) => {
+    if (err) return next(err);
+    next();
+  });
+};
+
+async function authenticateUser(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.sendStatus(401);
+  let user_id = await validateToken(auth);
+  if (user_id === false) {
+    return res.sendStatus(401);
+  }
+  req.user = { id: user_id };
   next();
 }
 
@@ -218,44 +254,36 @@ async function registerUploadInIndex(req) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let user_id = await validateToken(req.headers.authorization);
+
     let res = await conn.query(
-      "INSERT INTO file_index(id,mime_type,stored_filename,original_filename,file_size_in_bytes,user_id) VALUES (?,?,?,?,?,?)",
-      [
-        req.file.code,
-        req.file.mimetype,
-        req.file.filename,
-        req.file.originalname,
-        req.file.size,
-        user_id,
-      ],
+        "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
+        [
+          req.fileCode,
+          req.file.mimetype,
+          req.file.filename,
+          req.file.originalname,
+          req.file.size,
+          req.user.id,
+        ],
     );
-    if (res) {
-      return true;
-    } else {
-      return false;
-    }
+    return !!res;
   } finally {
-    if (conn) {
-      conn.release();
-    }
+    if (conn) conn.release();
   }
 }
 
 const storage = multer.diskStorage({
-  destination: process.env.UPLOAD_PATH,
+  destination: process.env.UPLOAD_PATH || "./uploads",
   filename: function (req, file, cb) {
-    const code = generateUniqueFileID(6);
     const ext = path.extname(file.originalname);
-    req.file.code = code;
-    const filename = `${code}${ext}`;
+    const filename = `${req.fileCode}${ext}`;
     cb(null, filename);
   },
 });
 
 const upload = (req, res, next) => {
   multer({
-    storage,
+    storage: storage,
     limits: { fileSize: req.maxUploadSize },
   }).single("file")(req, res, next);
 };
@@ -265,9 +293,8 @@ app.post("/verifySession", async (req, res, next) => {
   if (!token) return res.sendStatus(401);
 
   let result = await getPermissions(token);
-  console.log(result);
   if (result !== "none") {
-    return res.sendStatus(200).json({permission:result})
+    return res.json({permission:result})
   }
   else {
     return res.sendStatus(401)
@@ -275,22 +302,30 @@ app.post("/verifySession", async (req, res, next) => {
 })
 
 app.post(
-  "/upload",
-  authenticateUser,
-  setUploadLimits,
-  upload,
-  async (req, res) => {
-    let result = await registerUploadInIndex(req);
-    if (result == true) {
-      res
-        .sendStatus(200)
-        .json({
+    "/upload",
+    authenticateUser,
+    prepareUploadContext,
+    uploadMiddleware,
+    async (req, res) => {
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      let result = await registerUploadInIndex(req);
+
+      if (result == true) {
+        res.status(200).json({
           error: null,
           message: "Successfully uploaded file!",
-          code: req.file.code,
+          code: req.fileCode,
         });
+      } else {
+        res.status(500).json({ error: "Database registration failed" });
+      }
     }
-  });
+);
+
 // Error handling
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -298,8 +333,8 @@ app.use((err, req, res, next) => {
       return res.status(413).json({ error: "File too large" });
     }
   }
-
   if (err) {
+    console.log(err);
     return res.status(500).json({ error: "Upload failed" });
   }
 
@@ -325,6 +360,12 @@ app.post("/login", async (req, res) => {
     res.status(401).json({ status: 401, error: "Invalid Credentials!" });
   }
 });
+
+app.post("/logout", async (req, res) => {
+  if (!req.body.token){return res.status(400)}
+  let result = await logout(req.body.token)
+  res.sendStatus(200)
+})
 
 app.post("/register", async (req, res) => {
   let new_username = req.body.username;
