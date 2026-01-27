@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="header">
+    <div id="header"> <!-- Top header bar -->
       <h1 id="logo">simple<span id="highlighted">Share</span></h1>
       <div class="button-container">
         <button class="menu-btn hidden" onclick=switchHamburber()><span class="material-icons-outlined">menu</span></button>
@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <div class="container">
+    <div class="container"> <!-- Code input -->
       <form id="downloadForm">
         <div class="input-box">
           <input type="text" class="code-input" maxlength="1" required autocomplete="off" spellcheck="false"/>
@@ -30,8 +30,7 @@
       </form>
     </div>
 
-
-    <div class="background hidden" id="upload-background" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");>
+    <div class="background hidden" id="upload-background" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");> <!-- Upload modal -->
       <div class="upload-box hidden" id="upload-box" onclick=event.stopPropagation();>
         <button class="close-btn" id="upload-close-btn" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
         <div class="drop_zone" id="drop_zone">
@@ -50,7 +49,7 @@
       </div>
     </div>
 
-    <div class="background hidden" id="hambruber-background" onclick=switchHamburber()>
+    <div class="background hidden" id="hambruber-background" onclick=switchHamburber()> <!-- Hamburger menu -->
       <div class="hamburber-menu hidden" id="hamburber-menu" >
         <button class="burber-item hidden white" id="admin-dash"><span class="material-icons-outlined">dashboard</span>Admin dashboard</button>
         <button class="burber-item hidden white" id="my-files"><span class="material-icons-outlined">folder</span> My files</button>
