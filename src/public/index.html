@@ -94,7 +94,17 @@
     <div class="background hidden" id="my-files-background" onclick=document.getElementById('my-files-background').classList.add('hidden')>
       <div class="modal" id="my-files-box" onclick=event.stopPropagation();>
         <button class="close-btn" id="my-files-close-btn" onclick=document.getElementById("my-files-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
-
+        <table id="my-files-table">
+          <tr>
+            <th>Code</th>
+            <th>Filename</th>
+            <th>Added On</th>
+            <th>Size</th>
+            <th>Type</th>
+            <th>Download</th>
+            <th>Delete</th>
+          </tr>
+        </table>
       </div>
     </div>
 

@@ -17,7 +17,6 @@ async function verifyAccessToken() {
                     document.getElementsByClassName("login-btn")[0].classList.add("hidden");
                     document.getElementsByClassName("menu-btn")[0].classList.remove("hidden");
                     document.getElementsByClassName("upload-btn")[0].classList.remove("hidden");
-                    await updateQuotaDisplay()
                     return await content.permission
                 }
             })
@@ -49,10 +48,72 @@ async function updateQuotaDisplay() {
     if (quota_percent <= 75 ) {document.getElementById("progress").style.backgroundColor = "#5ef78c"; }
 
     document.getElementById("quota-container").style.display = "flex";
+}
 
+async function updateFilesDisplay() {
+    document.getElementById("my-files-table").innerHTML = "";
+    document.getElementById("my-files-table").insertAdjacentHTML('beforeend', `<tr>
+            <th>Code</th>
+            <th>Filename</th>
+            <th>Added On</th>
+            <th>Size</th>
+            <th>Type</th>
+            <th>Download</th>
+            <th>Delete</th>
+          </tr>`);
+    let result = await fetch("/getAllFiles",{
+        method: "POST",
+        body: JSON.stringify({token:localStorage.getItem("token")}),
+        headers: { "Content-type": "application/json; charset=UTF-8" }
+    })
+    console.log(result.status)
+    let result_json = await result.json();
+    for (let file in result_json) {
+        let file_data = result_json[file];
+        let html_code = `<tr>
+            <td>${file_data.code}</td>
+            <td>${file_data.name}</td>
+            <td>${file_data.date}</td>
+            <td>${file_data.size}</td>
+            <td>${file_data.mimetype}</td>
+            <td><button class="download-button" onclick=download("${file_data.code}")>Download</button></td>
+            <td><button class="delete-button" onclick=deleteFile("${file_data.code}")>Delete</button></td>
+            </tr>`
+        document.getElementById("my-files-table").insertAdjacentHTML('beforeend', html_code);
+        //console.log(file_data);
+    }
+}
+
+async function download(code) {
+    const link = document.createElement("a");
+    link.href = "/files/"+code;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    form.reset()
+}
+
+async function deleteFile(code) {
+    let result = await fetch("/delete/"+code,{
+        METHOD: "GET",
+        headers: {
+            Authorization: `${localStorage.getItem("token")}`,
+        }
+    })
+    if (result.status !== 200) {
+        console.log("Error while deleting file");
+        console.log(result.status);
+        let result = await result.json();
+        console.log(result.body.message)
+    }
+    await updateFilesDisplay();
+    await updateQuotaDisplay();
 }
 
 let access_level = verifyAccessToken();
+updateQuotaDisplay()
+updateFilesDisplay()
 // Handling the hamburger menu
 var burber_open = false
 function switchHamburber(){
@@ -205,10 +266,11 @@ async function handleFiles(files) {
         document.getElementById("upload-status-symbol").classList.add("red-error");
         document.getElementById("upload-status-text").classList.add("red-error");
         document.getElementById("upload-status-symbol").innerText = "error";
-        if (response.status === 400) {document.getElementById("upload-status-text").innerText = "Bad request!";}
-        if (response.status === 401) {document.getElementById("upload-status-text").innerText = "Unauthorized!";}
-        if (response.status === 413) {document.getElementById("upload-status-text").innerText = "File too large! You ran out of quota!";}
-        if (response.status === 500) {document.getElementById("upload-status-text").innerText = "Internal Server Error!";}
+        console.log(response.status);
+        if (response.status == 400) {document.getElementById("upload-status-text").innerText = "Bad request!";}
+        else if (response.status == 401) {document.getElementById("upload-status-text").innerText = "Unauthorized!";}
+        else if (response.status == 413) {document.getElementById("upload-status-text").innerText = "File too large! You ran out of quota!";}
+        else if (response.status == 500) {document.getElementById("upload-status-text").innerText = "Internal Server Error!";}
         else {document.getElementById("upload-status-text").innerText = "Unknown Error!";}
         return;
     }
@@ -289,4 +351,5 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         console.error("Fetch error:", err);
     }
 });
+
 

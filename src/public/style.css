@@ -474,9 +474,108 @@ hr {
   color: black;
   border-radius: 15px;
   align-content: flex-start;
-  text-align: center
+  text-align: center;
+  transition: 500ms;
+  transition-timing-function: ease-in;
 }
 
+table {
+  width: 100%;
+  border-radius: 28px;
+  height:100%;
+  margin-top:80px;
+  border: 1px solid #444;
+  border-collapse: collapse;
+  overflow-x:scroll;
+  overflow-y:scroll;
+  table-layout: fixed;
+  background-color: hsla(0, 0%, 10%, 0.9);
+  display:block;
+}
+td {
+  border: 1px solid #444;
+  padding: 10px;
+}
+
+th {
+  border: 1px solid #444;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+  background-color: hsla(0, 0%, 10%);
+}
+
+tr:nth-child(odd) {
+  background-color: hsl(0, 0%, 10%);
+}
+tr:nth-child(even) {
+  background-color: hsla(0, 0%, 80%, 0.9);
+}
+
+th:nth-child(1),
+td:nth-child(1) { width: 50px; }
+th:nth-child(2),
+td:nth-child(2) { width: 40%; }
+th:nth-child(3),
+td:nth-child(3) { width: 100px; }
+th:nth-child(4),
+td:nth-child(4) { width: 50px; }
+th:nth-child(5),
+td:nth-child(5) { width: 200px; }
+
+td:nth-last-child(1){
+  position: sticky;
+  background-color: hsla(0, 0%, 10%);
+  z-index: 5;
+  width:75px;
+  right:0px;
+  border: 1px solid #444;
+  padding: 0;
+}
+th:nth-last-child(1) {
+  position: sticky;
+  background-color: hsla(0, 0%, 10%);
+  z-index: 11;
+  width:75px;
+  right:0px;
+  border: 1px solid #444;
+}
+th:nth-last-child(2) {
+  position: sticky;
+  background-color: hsla(0, 0%, 10%);
+  z-index: 11;
+  width:75px;
+  right:75px;
+  border: 1px solid #444;
+}
+td:nth-last-child(2) {
+   position: sticky;
+   background-color: hsla(0, 0%, 10%);
+   z-index: 5;
+   width:75px;
+   right:75px;
+   border: 1px solid #444;
+  padding: 0;
+ }
+.delete-button {
+  height: auto;
+  width: 75px;
+  display: flex;
+  border: none;
+  background-color: hsl(11, 91%, 67%);
+  margin: auto;
+  text-align: center;
+}
+.download-button {
+  height: auto;
+  width: 75px;
+  display: flex;
+  border: none;
+  background-color: hsl(138, 91%, 67%);
+  margin: auto;
+  text-align: center;
+}
 .hidden{
   display: none;
 }

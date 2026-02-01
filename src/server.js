@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const os = require("os");
+const fs = require("fs").promises;
 require("dotenv").config();
 const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
@@ -361,6 +362,43 @@ async function registerUploadInIndex(req) {
   }
 }
 
+async function getAllUserFiles(user_id) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let results = await conn.query("SELECT * FROM file_index WHERE user_id = ?", [user_id]);
+    let return_list = []
+    for (let file in results) {
+      return_list.push({code:results[file].id,name:results[file].original_name,mimetype:results[file].mime_type,size:results[file].file_size_in_bytes,date:results[file].date_added});
+    }
+    return return_list;
+  }
+  finally {
+    if (conn) {conn.release();}
+  }
+}
+
+async function deleteFile(file_code) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let file_data = await conn.query("SELECT * FROM file_index WHERE id = ?", [file_code]);
+    if (file_data.length === 0) {return "no file found"}
+    try {
+      await fs.unlink(process.env.UPLOAD_PATH + file_data[0].stored_filename)
+    }
+    catch(err) {
+      console.log(err);
+      return err
+    }
+    await conn.query("DELETE FROM file_index WHERE id = ?", [file_code]);
+    return true
+  }
+  finally {
+    if (conn) {conn.release();}
+  }
+}
+
 const storage = multer.diskStorage({
   destination: process.env.UPLOAD_PATH || "./uploads",
   filename: function (req, file, cb) {
@@ -406,6 +444,39 @@ app.get("/files/:file_code",async (req, res) => {
   }
 })
 
+app.get("/delete/:file_code",async (req, res) => {
+  if (!req.headers.authorization) {return res.sendStatus(401)}
+  let file_code = req.params.file_code;
+  if (file_code.length !== 6){return res.sendStatus(400)}
+  let regex =/\d/
+  if (regex.test(file_code)){return res.sendStatus(400)}
+  let perms = await getPermissions(req.headers.authorization);
+  let user_id = await validateToken(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401)
+  }
+  if (perms === "user") {
+    let file_info = await retrieveFileInfo(file_code);
+    if (file_info.user_id === user_id) {
+      let result = await deleteFile(file_code);
+      if (result === true) {
+        return res.sendStatus(200)
+      }
+      else {
+        return res.status(500).json({error: result})
+      }
+    }
+  }
+  if (perms === "admin") {
+    let result = await deleteFile(file_code);
+    if (result === true) {
+      return res.sendStatus(200)
+    }
+    else {
+      return res.status(500).json({error: result})
+    }
+  }
+})
 
 app.post("/quota", async (req, res) => {
   if (!req.body.token) return res.sendStatus(401)
@@ -421,12 +492,18 @@ app.post("/quota", async (req, res) => {
 
 })
 
-app.post(
-    "/upload",
-    authenticateUser,
-    prepareUploadContext,
-    uploadMiddleware,
-    async (req, res) => {
+app.post("/getAllFiles", async (req, res) => {
+  if (!req.body.token) return res.sendStatus(400)
+  let token = req.body.token;
+  let user_id = await validateToken(token);
+  if (await getPermissions(token) === "none" || !user_id) {
+    return res.sendStatus(401)
+  }
+  let results = await getAllUserFiles(user_id);
+  return res.status(200).json(results);
+})
+
+app.post("/upload", authenticateUser,prepareUploadContext, uploadMiddleware, async (req, res) => {
 
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
@@ -445,7 +522,6 @@ app.post(
       }
     }
 );
-
 // Error handling
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -460,7 +536,6 @@ app.use((err, req, res, next) => {
 
   next();
 });
-
 
 app.post("/login", async (req, res) => {
   let username = req.body.username;
