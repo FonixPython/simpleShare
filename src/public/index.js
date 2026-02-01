@@ -17,11 +17,41 @@ async function verifyAccessToken() {
                     document.getElementsByClassName("login-btn")[0].classList.add("hidden");
                     document.getElementsByClassName("menu-btn")[0].classList.remove("hidden");
                     document.getElementsByClassName("upload-btn")[0].classList.remove("hidden");
+                    await updateQuotaDisplay()
                     return await content.permission
                 }
             })
     }
 }
+
+async function updateQuotaDisplay() {
+    let quota_result = await fetch("/quota", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=UTF-8"
+        },
+        body: JSON.stringify({token:sessionToken})
+    })
+    let quota_json = await quota_result.json();
+    if (quota_json.total !== 0) {
+        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of " + Math.floor(quota_json.total / 1000000) + " MB";
+        var quota_percent = Math.floor(quota_json.used.total_used / quota_json.total *100);
+    }
+    else {
+        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of unlimited ";
+        var quota_percent = 75
+    }
+    document.getElementById("quota-text").innerText = quota_text
+    document.getElementById("progress").innerText = quota_percent + "%"
+    document.getElementById("progress").style.width = quota_percent + "%"
+    if (quota_percent <= 100 ) {document.getElementById("progress").style.backgroundColor = "#f77b5e"; }
+    if (quota_percent <= 90 ) {document.getElementById("progress").style.backgroundColor = "#f7e15e"; }
+    if (quota_percent <= 75 ) {document.getElementById("progress").style.backgroundColor = "#5ef78c"; }
+
+    document.getElementById("quota-container").style.display = "flex";
+
+}
+
 let access_level = verifyAccessToken();
 // Handling the hamburger menu
 var burber_open = false
@@ -202,8 +232,37 @@ async function handleFiles(files) {
             navigator.clipboard.writeText(base_url+"files/"+response_data.code);
             alert("Link copied!");
         });
+        await updateQuotaDisplay();
     }
 }
+
+document.getElementById("changePasswordForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const old_password = document.getElementById("old-password").value;
+    const new_password = document.getElementById("new-password").value;
+
+    try {
+        const response = await fetch("/userChangePassword", {
+            method: "POST",
+            body: JSON.stringify({token:localStorage.getItem("token"),cur_password:old_password, new_password:new_password}),
+            headers: { "Content-type": "application/json; charset=UTF-8" }
+        });
+        const json = await response.json();
+        if (response.status === 200) {
+            document.getElementById("change-password-label").innerText = json.message
+            location.reload();
+        }
+        if (response.status === 400) {
+            document.getElementById("change-password-label").innerText = json.message
+        }
+        if (response.status === 401) {
+            document.getElementById("change-password-label").innerText = json.message
+        }
+    } catch (err) {
+        console.error("Fetch error:", err);
+    }
+})
 
 // Login and store session token
 document.getElementById("loginForm").addEventListener("submit", async function(e) {

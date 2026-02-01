@@ -13,6 +13,12 @@
         <button class="menu-btn hidden" onclick=switchHamburber()><span class="material-icons-outlined">menu</span></button>
         <button class="login-btn" onclick=document.getElementById("login-box").classList.remove("hidden");document.getElementById("login-background").classList.remove("hidden");>LOG IN</button>
         <button class="upload-btn hidden" onclick=document.getElementById("upload-box").classList.remove("hidden");document.getElementById("upload-background").classList.remove("hidden");><span class="material-icons-outlined">upload</span></button>
+        <div id="quota-container" style="display:none">
+          <span id="quota-text">250 MB of 500 MB</span>
+          <div id="progress-bar">
+            <div id="progress">50%</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -31,7 +37,7 @@
     </div>
 
     <div class="background hidden" id="upload-background" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");> <!-- Upload modal -->
-      <div class="upload-box hidden" id="upload-box" onclick=event.stopPropagation();>
+      <div class="modal hidden" id="upload-box" onclick=event.stopPropagation();>
         <button class="close-btn" id="upload-close-btn" onclick=document.getElementById("upload-box").classList.add("hidden");document.getElementById("upload-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
         <div class="drop_zone" id="drop_zone">
           <p>
@@ -52,15 +58,15 @@
     <div class="background hidden" id="hambruber-background" onclick=switchHamburber()> <!-- Hamburger menu -->
       <div class="hamburber-menu hidden" id="hamburber-menu" >
         <button class="burber-item hidden white" id="admin-dash"><span class="material-icons-outlined">dashboard</span>Admin dashboard</button>
-        <button class="burber-item hidden white" id="my-files"><span class="material-icons-outlined">folder</span> My files</button>
-        <button class="burber-item hidden white" id="change-password"><span class="material-icons-outlined">password</span> Change password</button>
+        <button class="burber-item hidden white" id="my-files" onclick=document.getElementById('my-files-background').classList.remove('hidden')><span class="material-icons-outlined">folder</span> My files</button>
+        <button class="burber-item hidden white" id="change-password" onclick=document.getElementById('change-password-background').classList.remove('hidden')><span class="material-icons-outlined">password</span> Change password</button>
         <hr id="hamburber-separator" class="hidden">
         <button class="burber-item hidden white" id="logout-menu-item" onclick=logout()><span class="material-icons-outlined">logout</span>Logout</button>
       </div>
     </div>
 
     <div class="background hidden" id="login-background" onclick=document.getElementById("login-box").classList.add("hidden");document.getElementById("login-background").classList.add("hidden");>
-      <div class="login-box hidden" id="login-box" onclick=event.stopPropagation();>
+      <div class="modal hidden" id="login-box" onclick=event.stopPropagation();>
         <button class="close-btn" onclick=document.getElementById("login-box").classList.add("hidden");document.getElementById("login-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
         <form id="loginForm">
           <input type="text" id="username" name="username" aria-label="Username" placeholder="Username" class="form-input" required> <br>
@@ -68,6 +74,27 @@
           <button type="submit" class="submit-button" id="action-button">Login</button>
           <label id="login-error-label"></label>
         </form>
+      </div>
+    </div>
+
+    <div class="background hidden" id="change-password-background" onclick="document.getElementById('change-password-background').classList.add('hidden')">
+        <div class="modal" id="change-password-box" onclick=event.stopPropagation();>
+          <button class="close-btn" id="change-password-close-btn" onclick=document.getElementById("change-password-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
+          <form id="changePasswordForm" style="display: flex;flex-direction: column;">
+            <input type="password" id="old-password" name="old-password" aria-label="Old password" placeholder="Old password" class="form-input" required> <br>
+            <input type="password" id="new-password" name="new-password" aria-label="New password" placeholder="New password" class="form-input" required> <br>
+            <button type="submit" class="submit-button" id="change-password-button">Login</button>
+          </form>
+          <span id="change-password-label" class="yellow-working" style="margin: 30px">
+            WARNING: This will log out all logged in instances!
+          </span>
+        </div>
+    </div>
+
+    <div class="background hidden" id="my-files-background" onclick=document.getElementById('my-files-background').classList.add('hidden')>
+      <div class="modal" id="my-files-box" onclick=event.stopPropagation();>
+        <button class="close-btn" id="my-files-close-btn" onclick=document.getElementById("my-files-background").classList.add("hidden");><span class="material-icons-outlined">close</span></button>
+
       </div>
     </div>
 

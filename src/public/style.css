@@ -19,7 +19,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--bg);
-  font-family: "Red Hat Mono", monospace;
+  font-family: "Inter", sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -30,6 +30,24 @@ body {
 .white {
   color: white;
 }
+
+.modal {
+  z-index: 10;
+  background-color: hsla(0, 0%, 12%, 0.6);
+  position: absolute;
+  height: calc(100vh - 20vh);
+  width: calc(100vw - 30vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 100px auto;
+  border-radius: 28px;
+  border: 3px solid #a1a1a1;
+  transition: 0.1s;
+  backdrop-filter: blur(20px);
+}
+
 .login-btn {
   background-color: var(--primary-button);
   color: black;
@@ -435,6 +453,30 @@ hr {
   border-top: 1px solid;
   border-image: linear-gradient(90deg,hsl(223, 100%, 70%) 0%,hsl(138, 91%, 67%) 50%, hsl(223, 100%, 70%)100%) 1;
 }
+#quota-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: flex-end;
+  margin: auto;
+  text-align: left;
+}
+#progress-bar {
+  background-color:grey;
+  width: 200px;
+  display: inline-flex;
+  flex-direction: row;
+  border-radius: 15px;
+}
+#progress {
+  width:50%;
+  background-color:var(--ok);
+  color: black;
+  border-radius: 15px;
+  align-content: flex-start;
+  text-align: center
+}
+
 .hidden{
   display: none;
 }

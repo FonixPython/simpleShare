@@ -51,6 +51,8 @@ async function verifyCredentials(username, password) {
   }
 }
 
+async function uploadImage(req, res) {}
+
 async function getPermissions(token) {
   let conn;
   try {
@@ -188,6 +190,38 @@ async function generateUniqueFileID(code_length) {
     if (conn) {
       conn.release();
     }
+  }
+}
+
+async function getTotalQuota(user_id) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let result = await conn.query("SELECT * FROM users WHERE id = ?", [user_id])
+    if (result.length > 0) {
+      return result[0].quota_in_bytes
+    }
+    else {
+      return null;
+    }
+  }
+  finally {
+    if (conn) {conn.release();}
+  }
+}
+
+async function getUsedQuota(user_id) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let used_res = await conn.query(
+        "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
+        [user_id]
+    );
+    return used_res[0];
+  }
+  finally {
+    if (conn) {conn.release();}
   }
 }
 
@@ -373,6 +407,20 @@ app.get("/files/:file_code",async (req, res) => {
 })
 
 
+app.post("/quota", async (req, res) => {
+  if (!req.body.token) return res.sendStatus(401)
+  let token = req.body.token;
+  let user_id = await validateToken(token);
+  if (await getPermissions(token) === "none" || !user_id) {
+    return res.sendStatus(401)
+  }
+  let total_quota = await getTotalQuota(user_id);
+  let used_quota = await getUsedQuota(user_id);
+
+  return res.status(200).json({"total":total_quota,"used":used_quota});
+
+})
+
 app.post(
     "/upload",
     authenticateUser,
@@ -441,7 +489,10 @@ app.post("/logout", async (req, res) => {
 })
 
 app.post("/userChangePassword", async (req, res) => {
-  if (!req.body.token || !req.body.cur_password || !req.body.new_password){return res.status(400)}
+  if (!req.body.token || !req.body.cur_password || !req.body.new_password){
+    return res.status(400).json({message: "Invalid request!"})
+  }
+
   let result = await userChangePassword(req.body.token,req.body.cur_password ,req.body.new_password);
   if (result === 0) {
     return res.status(200).json({message: "Password changed successfully!"});
@@ -476,9 +527,12 @@ app.post("/register", async (req, res) => {
     res.status(401).json({ status: 401, error: "Invalid Credentials!" });
   }
 });
+
 app.use("/", (req, res, next) => {
   res.sendFile(path.join(__dirname, "./public/index.html"));
 });
+
+
 
 // Generic
 function getIPv4Addresses() {
