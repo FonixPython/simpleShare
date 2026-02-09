@@ -57,7 +57,7 @@
 
     <div class="background hidden" id="hambruber-background" onclick=switchHamburber()> <!-- Hamburger menu -->
       <div class="hamburber-menu hidden" id="hamburber-menu" >
-        <button class="burber-item hidden white" id="admin-dash"><span class="material-icons-outlined">dashboard</span>Admin dashboard</button>
+        <button class="burber-item hidden white" id="admin-dash" onclick=redirectToDashboard()><span class="material-icons-outlined">dashboard</span>Admin dashboard</button>
         <button class="burber-item hidden white" id="my-files" onclick=document.getElementById('my-files-background').classList.remove('hidden')><span class="material-icons-outlined">folder</span> My files</button>
         <button class="burber-item hidden white" id="change-password" onclick=document.getElementById('change-password-background').classList.remove('hidden')><span class="material-icons-outlined">password</span> Change password</button>
         <hr id="hamburber-separator" class="hidden">

@@ -33,11 +33,11 @@ async function updateQuotaDisplay() {
     })
     let quota_json = await quota_result.json();
     if (quota_json.total !== 0) {
-        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of " + Math.floor(quota_json.total / 1000000) + " MB";
-        var quota_percent = Math.floor(quota_json.used.total_used / quota_json.total *100);
+        var quota_text = Math.floor(parseInt(quota_json.used) / 1000000) + " MB of " + Math.floor(parseInt(quota_json.total) / 1000000) + " MB";
+        var quota_percent = Math.floor(parseInt(quota_json.used) / parseInt(quota_json.total) *100);
     }
     else {
-        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of unlimited ";
+        var quota_text = Math.floor(parseInt(quota_json.used) / 1000000) + " MB of unlimited ";
         var quota_percent = 75
     }
     document.getElementById("quota-text").innerText = quota_text
@@ -109,6 +109,10 @@ async function deleteFile(code) {
     }
     await updateFilesDisplay();
     await updateQuotaDisplay();
+}
+
+function redirectToDashboard() {
+    location.href = "/admin/dashboard/"+localStorage.getItem("token");
 }
 
 let access_level = verifyAccessToken();
