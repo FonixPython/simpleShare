@@ -213,30 +213,63 @@
             <span style="color: #4c73f0">Select</span> files here
           </p>
         </div>
-        <div id="upload-status-box" class="hidden w-full max-w-2xl mx-auto p-8 flex flex-col items-center justify-center">
+        <div
+          id="upload-status-box"
+          class="hidden w-full max-w-2xl mx-auto p-8 flex flex-col items-center justify-center"
+        >
           <div class="text-center mb-8">
-            <span id="upload-status-symbol" class="material-icons-outlined hidden text-4xl mb-4"
+            <span
+              id="upload-status-symbol"
+              class="material-icons-outlined hidden text-4xl mb-4"
               >error</span
             >
-            <p id="upload-status-text" class="hidden text-xl font-inter"
-              >Error: File too large!</p
-            >
+            <p id="upload-status-text" class="hidden text-xl font-inter">
+              Error: File too large!
+            </p>
           </div>
-          
+
           <div id="success-content" class="hidden space-y-6">
-            <div class="text-center p-6 bg-black/20 rounded-xl border border-[#444]">
-              <p class="text-sm text-gray-400 mb-2 font-inter">Your file code:</p>
+            <div
+              class="text-center p-6 bg-black/20 rounded-xl border border-[#444]"
+            >
+              <p class="text-sm text-gray-400 mb-2 font-inter">
+                Your file code:
+              </p>
               <div class="flex items-center justify-center gap-3">
-                <span id="filecode-display" class="text-3xl font-red-hat font-bold text-primary-button cursor-pointer group relative" title="Click to copy">
-                  <span class="tooltip absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Click to copy</span>
+                <span
+                  id="filecode-display"
+                  class="text-3xl font-red-hat font-bold text-primary-button cursor-pointer group relative"
+                  title="Click to copy"
+                >
+                  <span
+                    class="tooltip absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
+                    >Click to copy</span
+                  >
                 </span>
               </div>
-              <p class="text-sm text-gray-400 mb-3 font-inter mt-6">or share via direct link:</p>
-              <div class="flex items-center gap-3 p-4 bg-black/20 rounded-xl border border-[#444]">
-                <span id="link-text" class="flex-1 font-red-hat text-sm truncate cursor-pointer hover:text-primary-button transition-colors"></span>
-                <button id="copy-link-btn" class="p-2 rounded-lg hover:bg-black/20 transition-colors group relative" title="Click to copy">
-                  <span class="material-icons-outlined text-xl text-gray-400 group-hover:text-white cursor-pointer">content_copy</span>
-                  <span class="tooltip absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Click to copy</span>
+              <p class="text-sm text-gray-400 mb-3 font-inter mt-6">
+                or share via direct link:
+              </p>
+              <div
+                class="flex items-center gap-3 p-4 bg-black/20 rounded-xl border border-[#444]"
+              >
+                <span
+                  id="link-text"
+                  class="flex-1 font-red-hat text-sm truncate cursor-pointer hover:text-primary-button transition-colors"
+                ></span>
+                <button
+                  id="copy-link-btn"
+                  class="p-2 rounded-lg hover:bg-black/20 transition-colors group relative"
+                  title="Click to copy"
+                >
+                  <span
+                    class="material-icons-outlined text-xl text-gray-400 group-hover:text-white cursor-pointer"
+                    >content_copy</span
+                  >
+                  <span
+                    class="tooltip absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
+                    >Click to copy</span
+                  >
                 </button>
               </div>
             </div>
@@ -435,22 +468,36 @@
         >
           <div class="flex h-full relative">
             <div class="flex-1 overflow-x-auto overflow-y-auto">
-              <table
-                id="my-files-table"
-                class="w-full border-collapse"
-              >
+              <table id="my-files-table" class="w-full border-collapse">
                 <thead class="sticky top-0 bg-black/20 z-10">
                   <tr>
-                    <th class="px-4 py-2 text-left border-b border-[#444]">Code</th>
-                    <th class="px-4 py-2 text-left border-b border-[#444] min-w-[200px]">Filename</th>
-                    <th class="px-4 py-2 text-left border-b border-[#444]">Added On</th>
-                    <th class="px-4 py-2 text-left border-b border-[#444]">Size</th>
-                    <th class="px-2 py-2 text-center border-b border-[#444] w-[80px]">Download</th>
-                    <th class="px-2 py-2 text-center border-b border-[#444] w-[80px]">Delete</th>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">
+                      Code
+                    </th>
+                    <th
+                      class="px-4 py-2 text-left border-b border-[#444] min-w-[200px]"
+                    >
+                      Filename
+                    </th>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">
+                      Added On
+                    </th>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">
+                      Size
+                    </th>
+                    <th
+                      class="px-2 py-2 text-center border-b border-[#444] w-[80px]"
+                    >
+                      Download
+                    </th>
+                    <th
+                      class="px-2 py-2 text-center border-b border-[#444] w-[80px]"
+                    >
+                      Delete
+                    </th>
                   </tr>
                 </thead>
-                <tbody id="my-files-tbody">
-                </tbody>
+                <tbody id="my-files-tbody"></tbody>
               </table>
             </div>
           </div>

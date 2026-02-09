@@ -16,7 +16,7 @@ const pool = mariadb.createPool({
   password: process.env.DB_PASSWORD,
   database: "simpleShare",
   connectionLimit: 5,
-  charset: 'utf8mb4',
+  charset: "utf8mb4",
 });
 const app = express();
 app.use(express.json());
@@ -26,7 +26,9 @@ async function verifyCredentials(username, password) {
   let conn;
   try {
     conn = await pool.getConnection();
-    const rows = await conn.query("SELECT * FROM users WHERE username = ?", [username]);
+    const rows = await conn.query("SELECT * FROM users WHERE username = ?", [
+      username,
+    ]);
 
     if (rows.length === 0) {
       return { valid: false, user_id: null };
@@ -36,15 +38,14 @@ async function verifyCredentials(username, password) {
     if (isMatch) {
       return {
         valid: true,
-        user_id: rows[0].id
+        user_id: rows[0].id,
       };
     } else {
       return {
         valid: false,
-        user_id: rows[0].id
+        user_id: rows[0].id,
       };
     }
-
   } catch (err) {
     console.error("Database error:", err);
     return { valid: false, user_id: null };
@@ -56,20 +57,23 @@ async function verifyCredentials(username, password) {
 async function retrieveUsersWithFiles(username) {
   let conn;
   try {
-    let return_obj = []
+    let return_obj = [];
     conn = await pool.getConnection();
     let users = await conn.query("SELECT * FROM users");
     for (let user of users) {
-      let curr_obj = {}
+      let curr_obj = {};
       curr_obj.user_id = user.id;
       curr_obj.username = user.username;
       curr_obj.quota = user.quota_in_bytes;
-      curr_obj.is_admin= user.is_admin;
-      curr_obj.creation_date = user.date_of_creation
-      curr_obj.files = []
-      let curr_files_result = await conn.query("SELECT FROM file_index WHERE user_id = ? ", [user.id]);
+      curr_obj.is_admin = user.is_admin;
+      curr_obj.creation_date = user.date_of_creation;
+      curr_obj.files = [];
+      let curr_files_result = await conn.query(
+        "SELECT FROM file_index WHERE user_id = ? ",
+        [user.id],
+      );
       for (let file of curr_files_result) {
-        curr_file_obj = {}
+        curr_file_obj = {};
         curr_file_obj.id = file.id;
         curr_file_obj.visibility = file.visibility;
         curr_file_obj.size = file.file_size_in_bytes;
@@ -78,8 +82,7 @@ async function retrieveUsersWithFiles(username) {
         curr_obj.files.push(curr_file_obj);
       }
     }
-  }
-  finally {
+  } finally {
     if (conn) conn.release();
   }
 }
@@ -88,14 +91,17 @@ async function getPermissions(token) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let res1 = await conn.query("SELECT * FROM session_tokens WHERE token = ?", [
-      token,
-    ]);
+    let res1 = await conn.query(
+      "SELECT * FROM session_tokens WHERE token = ?",
+      [token],
+    );
     if (res1.length > 0) {
-      if (res1[0].is_valid !== 1){
-        return "none"
+      if (res1[0].is_valid !== 1) {
+        return "none";
       }
-      let res2 = await conn.query("SELECT * FROM users WHERE id = ?", [res1[0].user_id]);
+      let res2 = await conn.query("SELECT * FROM users WHERE id = ?", [
+        res1[0].user_id,
+      ]);
       if (res2.length > 0) {
         if (res2[0].is_admin == 1) {
           return "admin";
@@ -117,9 +123,10 @@ async function logout(token) {
   let conn;
   try {
     conn = await pool.getConnection();
-    return await conn.query("DELETE FROM session_tokens WHERE token = ?", [token]);
-  }
-  finally {
+    return await conn.query("DELETE FROM session_tokens WHERE token = ?", [
+      token,
+    ]);
+  } finally {
     if (conn) {
       conn.release();
     }
@@ -136,10 +143,10 @@ async function generateSession(user_id) {
       token += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     conn = await pool.getConnection();
-    await conn.query("INSERT INTO session_tokens (token, user_id) value (?, ?)", [
-      token,
-      user_id,
-    ]);
+    await conn.query(
+      "INSERT INTO session_tokens (token, user_id) value (?, ?)",
+      [token, user_id],
+    );
     return token;
   } finally {
     if (conn) {
@@ -228,16 +235,18 @@ async function getTotalQuota(user_id) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let result = await conn.query("SELECT * FROM users WHERE id = ?", [user_id])
+    let result = await conn.query("SELECT * FROM users WHERE id = ?", [
+      user_id,
+    ]);
     if (result.length > 0) {
-      return result[0].quota_in_bytes
-    }
-    else {
+      return result[0].quota_in_bytes;
+    } else {
       return null;
     }
-  }
-  finally {
-    if (conn) {conn.release();}
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -246,13 +255,14 @@ async function getUsedQuota(user_id) {
   try {
     conn = await pool.getConnection();
     let used_res = await conn.query(
-        "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
-        [user_id]
+      "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
+      [user_id],
     );
     return used_res[0];
-  }
-  finally {
-    if (conn) {conn.release();}
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -261,15 +271,18 @@ async function calculateRemainFromQuota(user_id) {
   try {
     conn = await pool.getConnection();
 
-    let result = await conn.query("SELECT quota_in_bytes FROM users WHERE id = ?", [user_id]);
+    let result = await conn.query(
+      "SELECT quota_in_bytes FROM users WHERE id = ?",
+      [user_id],
+    );
     if (result.length === 0) return 0;
 
     let quota = BigInt(result[0].quota_in_bytes);
     if (quota == 0n) return null;
 
     let used_res = await conn.query(
-        "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
-        [user_id]
+      "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
+      [user_id],
     );
 
     let used_up = BigInt(used_res[0].total_used || 0);
@@ -297,34 +310,46 @@ async function userChangePassword(token, cur_password, new_password) {
     let token_perm = await getPermissions(token);
     let user_id = await validateToken(token);
     if (token_perm !== "none" && user_id !== false) {
-      let cur_db_entry = await conn.query("SELECT * FROM users WHERE id = ?", [user_id]);
+      let cur_db_entry = await conn.query("SELECT * FROM users WHERE id = ?", [
+        user_id,
+      ]);
       if (cur_db_entry.length > 0) {
-        const isMatch = await bcrypt.compare(cur_password, cur_db_entry[0].password_hash);
-        const isMatch_toNew = await bcrypt.compare(new_password, cur_db_entry[0].password_hash);
+        const isMatch = await bcrypt.compare(
+          cur_password,
+          cur_db_entry[0].password_hash,
+        );
+        const isMatch_toNew = await bcrypt.compare(
+          new_password,
+          cur_db_entry[0].password_hash,
+        );
         if (isMatch_toNew) {
           return 1; // Error New password cannot be the same as the old
         }
 
         if (isMatch) {
           let new_password_hash = await bcrypt.hash(new_password, 10);
-          let change_query = await conn.query("UPDATE users SET password_hash =? WHERE id = ?", [new_password_hash,user_id])
-          let delete_active_query = await conn.query("DELETE FROM session_tokens WHERE user_id = ?", [user_id]);
+          let change_query = await conn.query(
+            "UPDATE users SET password_hash =? WHERE id = ?",
+            [new_password_hash, user_id],
+          );
+          let delete_active_query = await conn.query(
+            "DELETE FROM session_tokens WHERE user_id = ?",
+            [user_id],
+          );
           return 0; // Everything was a success
-        }
-        else {
+        } else {
           return 2; // Invalid current password
         }
-        }
-      else {
-        return 3 // Invalid credentials
+      } else {
+        return 3; // Invalid credentials
       }
-    }
-    else {
+    } else {
       return 3; // Invalid credentials
     }
-  }
-  finally {
-    if (conn) {conn.release();}
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -360,13 +385,21 @@ async function retrieveFileInfo(file_code) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let result = await conn.query("SELECT * FROM file_index WHERE id = ?", [file_code])
-    if (result.length === 0) {return null}
-    if (result.length > 1) {return null}
-    else {return result[0]}
-  }
-  finally {
-    if (conn) {conn.release();}
+    let result = await conn.query("SELECT * FROM file_index WHERE id = ?", [
+      file_code,
+    ]);
+    if (result.length === 0) {
+      return null;
+    }
+    if (result.length > 1) {
+      return null;
+    } else {
+      return result[0];
+    }
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -376,15 +409,15 @@ async function registerUploadInIndex(req) {
     conn = await pool.getConnection();
 
     let res = await conn.query(
-        "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
-        [
-          req.fileCode,
-          req.file.mimetype,
-          req.file.filename,
-          req.file.originalname,
-          req.file.size,
-          req.user.id,
-        ],
+      "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
+      [
+        req.fileCode,
+        req.file.mimetype,
+        req.file.filename,
+        req.file.originalname,
+        req.file.size,
+        req.user.id,
+      ],
     );
     return !!res;
   } finally {
@@ -396,15 +429,25 @@ async function getAllUserFiles(user_id) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let results = await conn.query("SELECT * FROM file_index WHERE user_id = ?", [user_id]);
-    let return_list = []
+    let results = await conn.query(
+      "SELECT * FROM file_index WHERE user_id = ?",
+      [user_id],
+    );
+    let return_list = [];
     for (let file in results) {
-      return_list.push({code:results[file].id,name:results[file].original_name,mimetype:results[file].mime_type,size:results[file].file_size_in_bytes,date:results[file].date_added});
+      return_list.push({
+        code: results[file].id,
+        name: results[file].original_name,
+        mimetype: results[file].mime_type,
+        size: results[file].file_size_in_bytes,
+        date: results[file].date_added,
+      });
     }
     return return_list;
-  }
-  finally {
-    if (conn) {conn.release();}
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -412,20 +455,24 @@ async function deleteFile(file_code) {
   let conn;
   try {
     conn = await pool.getConnection();
-    let file_data = await conn.query("SELECT * FROM file_index WHERE id = ?", [file_code]);
-    if (file_data.length === 0) {return "no file found"}
-    try {
-      await fs.unlink(process.env.UPLOAD_PATH + file_data[0].stored_filename)
+    let file_data = await conn.query("SELECT * FROM file_index WHERE id = ?", [
+      file_code,
+    ]);
+    if (file_data.length === 0) {
+      return "no file found";
     }
-    catch(err) {
+    try {
+      await fs.unlink(process.env.UPLOAD_PATH + file_data[0].stored_filename);
+    } catch (err) {
       console.log(err);
-      return err
+      return err;
     }
     await conn.query("DELETE FROM file_index WHERE id = ?", [file_code]);
-    return true
-  }
-  finally {
-    if (conn) {conn.release();}
+    return true;
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 }
 
@@ -446,148 +493,160 @@ const upload = (req, res, next) => {
 };
 
 app.post("/verifySession", async (req, res, next) => {
-  let token = req.body.token
+  let token = req.body.token;
   if (!token) return res.sendStatus(401);
 
   let result = await getPermissions(token);
   if (result !== "none") {
-    return res.json({permission:result})
+    return res.json({ permission: result });
+  } else {
+    return res.sendStatus(401);
   }
-  else {
-    return res.sendStatus(401)
-  }
-})
+});
 
-app.get("/files/:file_code",async (req, res) => {
+app.get("/files/:file_code", async (req, res) => {
   let file_code = req.params.file_code;
-  if (file_code.length !== 6){return res.sendStatus(400)}
-  let regex =/\d/
-  if (regex.test(file_code)){return res.sendStatus(400)}
+  if (file_code.length !== 6) {
+    return res.sendStatus(400);
+  }
+  let regex = /\d/;
+  if (regex.test(file_code)) {
+    return res.sendStatus(400);
+  }
   let db_result = await retrieveFileInfo(file_code);
   if (db_result === null) {
-    return res.sendStatus(404)
+    return res.sendStatus(404);
   }
   if (db_result !== null) {
     let stored_name = db_result.stored_filename;
     let original_name = db_result.original_name;
-    return res.download(process.env.UPLOAD_PATH+stored_name, original_name);
+    return res.download(process.env.UPLOAD_PATH + stored_name, original_name);
   }
-})
+});
 
-app.get("/delete/:file_code",async (req, res) => {
-  if (!req.headers.authorization) {return res.sendStatus(401)}
+app.get("/delete/:file_code", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
   let file_code = req.params.file_code;
-  if (file_code.length !== 6){return res.sendStatus(400)}
-  let regex =/\d/
-  if (regex.test(file_code)){return res.sendStatus(400)}
+  if (file_code.length !== 6) {
+    return res.sendStatus(400);
+  }
+  let regex = /\d/;
+  if (regex.test(file_code)) {
+    return res.sendStatus(400);
+  }
   let perms = await getPermissions(req.headers.authorization);
   let user_id = await validateToken(req.headers.authorization);
   if (perms === "none") {
-    return res.sendStatus(401)
+    return res.sendStatus(401);
   }
   if (perms === "user") {
     let file_info = await retrieveFileInfo(file_code);
     if (file_info.user_id === user_id) {
       let result = await deleteFile(file_code);
       if (result === true) {
-        return res.sendStatus(200)
-      }
-      else {
-        return res.status(500).json({error: result})
+        return res.sendStatus(200);
+      } else {
+        return res.status(500).json({ error: result });
       }
     }
   }
   if (perms === "admin") {
     let result = await deleteFile(file_code);
     if (result === true) {
-      return res.sendStatus(200)
-    }
-    else {
-      return res.status(500).json({error: result})
+      return res.sendStatus(200);
+    } else {
+      return res.status(500).json({ error: result });
     }
   }
-})
+});
 
-app.get("/admin/getAllUsersWithFiles",async (req, res) => {
-  if (!req.headers.authorization) {return res.sendStatus(401)}
+app.get("/admin/getAllUsersWithFiles", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
   let perms = await getPermissions(req.headers.authorization);
   let user_id = await validateToken(req.headers.authorization);
   if (perms === "none") {
-    return res.sendStatus(401)
+    return res.sendStatus(401);
   }
   if (perms === "user") {
     let file_info = await retrieveFileInfo(file_code);
     if (file_info.user_id === user_id) {
       let result = await deleteFile(file_code);
       if (result === true) {
-        return res.sendStatus(200)
-      }
-      else {
-        return res.status(500).json({error: result})
+        return res.sendStatus(200);
+      } else {
+        return res.status(500).json({ error: result });
       }
     }
   }
   if (perms === "admin") {
     let result = await retrieveFileInfo();
     if (result === true) {
-      console.log(result)
-    }
-    else {
-      return res.status(500).json({error: result})
+      console.log(result);
+    } else {
+      return res.status(500).json({ error: result });
     }
   }
-})
+});
 
 app.post("/quota", async (req, res) => {
-  if (!req.body.token) return res.sendStatus(401)
+  if (!req.body.token) return res.sendStatus(401);
   let token = req.body.token;
   let user_id = await validateToken(token);
-  if (await getPermissions(token) === "none" || !user_id) {
-    return res.sendStatus(401)
+  if ((await getPermissions(token)) === "none" || !user_id) {
+    return res.sendStatus(401);
   }
-  let total_quota = await getTotalQuota(user_id)
-  let used_quota = await getUsedQuota(user_id)
-  used_quota = used_quota.total_used
-  used_quota = used_quota.toString()
-  total_quota = total_quota.toString()
+  let total_quota = await getTotalQuota(user_id);
+  let used_quota = await getUsedQuota(user_id);
+  used_quota = used_quota.total_used;
+  used_quota = used_quota.toString();
+  total_quota = total_quota.toString();
 
   return res.status(200).json({
-    "total": total_quota ? Number(total_quota) : total_quota,
-    "used": used_quota.total_used ? Number(used_quota.total_used) : used_quota.total_used
+    total: total_quota ? Number(total_quota) : total_quota,
+    used: used_quota.total_used
+      ? Number(used_quota.total_used)
+      : used_quota.total_used,
   });
-
-})
+});
 
 app.post("/getAllFiles", async (req, res) => {
-  if (!req.body.token) return res.sendStatus(400)
+  if (!req.body.token) return res.sendStatus(400);
   let token = req.body.token;
   let user_id = await validateToken(token);
-  if (await getPermissions(token) === "none" || !user_id) {
-    return res.sendStatus(401)
+  if ((await getPermissions(token)) === "none" || !user_id) {
+    return res.sendStatus(401);
   }
   let results = await getAllUserFiles(user_id);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
   return res.status(200).json(results);
-})
+});
 
-app.post("/upload", authenticateUser,prepareUploadContext, uploadMiddleware, async (req, res) => {
-
-      if (!req.file) {
-        return res.status(400).json({ error: "No file provided" });
-      }
-
-      let result = await registerUploadInIndex(req);
-
-      if (result == true) {
-        res.status(200).json({
-          error: null,
-          message: "Successfully uploaded file!",
-          code: req.fileCode,
-        });
-      } else {
-        res.status(500).json({ error: "Database registration failed" });
-      }
+app.post(
+  "/upload",
+  authenticateUser,
+  prepareUploadContext,
+  uploadMiddleware,
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file provided" });
     }
+
+    let result = await registerUploadInIndex(req);
+
+    if (result == true) {
+      res.status(200).json({
+        error: null,
+        message: "Successfully uploaded file!",
+        code: req.fileCode,
+      });
+    } else {
+      res.status(500).json({ error: "Database registration failed" });
+    }
+  },
 );
 // Error handling
 app.use((err, req, res, next) => {
@@ -625,30 +684,40 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/logout", async (req, res) => {
-  if (!req.body.token){return res.status(400)}
-  let result = await logout(req.body.token)
-  res.sendStatus(200)
-})
+  if (!req.body.token) {
+    return res.status(400);
+  }
+  let result = await logout(req.body.token);
+  res.sendStatus(200);
+});
 
 app.post("/userChangePassword", async (req, res) => {
-  if (!req.body.token || !req.body.cur_password || !req.body.new_password){
-    return res.status(400).json({message: "Invalid request!"})
+  if (!req.body.token || !req.body.cur_password || !req.body.new_password) {
+    return res.status(400).json({ message: "Invalid request!" });
   }
 
-  let result = await userChangePassword(req.body.token,req.body.cur_password ,req.body.new_password);
+  let result = await userChangePassword(
+    req.body.token,
+    req.body.cur_password,
+    req.body.new_password,
+  );
   if (result === 0) {
-    return res.status(200).json({message: "Password changed successfully!"});
+    return res.status(200).json({ message: "Password changed successfully!" });
   }
   if (result === 1) {
-    return res.status(400).json({message: "New password cannot be the same as the old password!"});
+    return res
+      .status(400)
+      .json({
+        message: "New password cannot be the same as the old password!",
+      });
   }
   if (result === 2) {
-    return res.status(401).json({message: "Invalid current password!"});
+    return res.status(401).json({ message: "Invalid current password!" });
   }
   if (result === 3) {
-    return res.status(401).json({message: "Invalid token!"});
+    return res.status(401).json({ message: "Invalid token!" });
   }
-})
+});
 
 app.post("/register", async (req, res) => {
   let new_username = req.body.username;
@@ -675,30 +744,30 @@ app.use("/", (req, res, next) => {
 });
 
 app.get("/admin/dashboard/:token", async (req, res) => {
-  if (!req.params.token) {return res.sendStatus(401)}
+  if (!req.params.token) {
+    return res.sendStatus(401);
+  }
   console.log(req.params.token);
   let perms = await getPermissions(req.params.token);
   let user_id = await validateToken(req.params.token);
   if (perms === "none") {
-    return res.sendStatus(401)
+    return res.sendStatus(401);
   }
   if (perms === "user") {
     let file_info = await retrieveFileInfo(file_code);
     if (file_info.user_id === user_id) {
       let result = await deleteFile(file_code);
       if (result === true) {
-        return res.sendStatus(200)
-      }
-      else {
-        return res.status(500).json({error: result})
+        return res.sendStatus(200);
+      } else {
+        return res.status(500).json({ error: result });
       }
     }
   }
   if (perms === "admin") {
     res.sendFile(path.join(__dirname, "./public/index.html"));
   }
-})
-
+});
 
 // Generic
 function getIPv4Addresses() {
