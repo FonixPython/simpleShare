@@ -23,6 +23,22 @@ async function verifyAccessToken() {
     }
 }
 
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    
+    const units = ['B', 'kB', 'MB', 'GB', 'TB'];
+    const threshold = 1024;
+    let unitIndex = 0;
+    let size = bytes;
+    
+    while (size >= threshold && unitIndex < units.length - 1) {
+        size /= threshold;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+}
+
 async function updateQuotaDisplay() {
     let quota_result = await fetch("/quota", {
         method: "POST",
@@ -33,12 +49,12 @@ async function updateQuotaDisplay() {
     })
     let quota_json = await quota_result.json();
     if (quota_json.total !== 0) {
-        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of " + Math.floor(quota_json.total / 1000000) + " MB";
+        var quota_text = formatBytes(quota_json.used.total_used) + " of " + formatBytes(quota_json.total);
         var quota_percent = Math.floor(quota_json.used.total_used / quota_json.total *100);
     }
     else {
-        var quota_text = Math.floor(quota_json.used.total_used / 1000000) + " MB of unlimited ";
-        var quota_percent = 75
+        var quota_text = formatBytes(quota_json.used.total_used) + " of unlimited";
+        var quota_percent = 0
     }
     document.getElementById("quota-text").innerText = quota_text
     document.getElementById("progress").style.width = quota_percent + "%"
@@ -54,16 +70,8 @@ async function updateQuotaDisplay() {
 }
 
 async function updateFilesDisplay() {
-    document.getElementById("my-files-table").innerHTML = "";
-    document.getElementById("my-files-table").insertAdjacentHTML('beforeend', `<tr>
-            <th>Code</th>
-            <th>Filename</th>
-            <th>Added On</th>
-            <th>Size</th>
-            <th>Type</th>
-            <th>Download</th>
-            <th>Delete</th>
-          </tr>`);
+    document.getElementById("my-files-tbody").innerHTML = "";
+    
     let result = await fetch("/getAllFiles",{
         method: "POST",
         body: JSON.stringify({token:localStorage.getItem("token")}),
@@ -73,17 +81,53 @@ async function updateFilesDisplay() {
     let result_json = await result.json();
     for (let file in result_json) {
         let file_data = result_json[file];
-        let html_code = `<tr>
-            <td>${file_data.code}</td>
-            <td>${file_data.name}</td>
-            <td>${file_data.date}</td>
-            <td>${file_data.size}</td>
-            <td>${file_data.mimetype}</td>
-            <td><button class="download-button" onclick=download("${file_data.code}")>Download</button></td>
-            <td><button class="delete-button" onclick=deleteFile("${file_data.code}")>Delete</button></td>
-            </tr>`
-        document.getElementById("my-files-table").insertAdjacentHTML('beforeend', html_code);
-        //console.log(file_data);
+        
+        // Decode filename to handle UTF-8 properly
+        let decodedName = file_data.name;
+        try {
+            // If the name is double-encoded, decode it
+            decodedName = decodeURIComponent(escape(file_data.name));
+        } catch (e) {
+            // If decoding fails, use original name
+            decodedName = file_data.name;
+        }
+        
+        // Format file size to human readable format
+        let formattedSize = formatBytes(file_data.size);
+        
+        // Format date to shorter human readable format (no line breaks)
+        let formattedDate = new Date(file_data.date).toLocaleDateString('hu-HU', {
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit'
+        }) + ' ' + new Date(file_data.date).toLocaleTimeString('hu-HU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Single table row with all columns including action buttons
+        let row = `<tr class="border-b border-[#444] hover:bg-black/20 h-[50px]">
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${file_data.code}</td>
+            <td class="px-4 py-2 align-middle min-w-[200px]">${decodedName}</td>
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${formattedDate}</td>
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${formattedSize}</td>
+            <td class="px-2 py-2 text-center align-middle">
+                <button class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
+                        onclick="download('${file_data.code}')" 
+                        title="Download">
+                    <span class="material-icons-outlined text-lg">download</span>
+                </button>
+            </td>
+            <td class="px-2 py-2 text-center align-middle">
+                <button class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
+                        onclick="deleteFile('${file_data.code}')" 
+                        title="Delete">
+                    <span class="material-icons-outlined text-lg">delete</span>
+                </button>
+            </td>
+        </tr>`;
+        
+        document.getElementById("my-files-tbody").insertAdjacentHTML('beforeend', row);
     }
 }
 

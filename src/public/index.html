@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simpleShare</title>
+    <meta
+      name="description"
+      content="három­száz­nyolc­millió­kilenc­száz­tizen­öt­ezer­hét­száz­hetven­hat"
+    />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
@@ -92,10 +96,18 @@
         </button>
         <div id="quota-container" class="hidden">
           <div class="flex flex-col items-center gap-2">
-            <span id="quota-text" class="text-sm whitespace-nowrap">68 MB of 100 MB</span>
+            <span id="quota-text" class="text-sm whitespace-nowrap"
+              >68 MB of 100 MB</span
+            >
             <div class="flex items-center gap-2">
-              <div id="progress-bar" class="w-32 h-2 bg-gray-600 rounded-full overflow-hidden">
-                <div id="progress" class="h-full bg-green-500 rounded-full transition-all duration-300 ease-out w-[68%]"></div>
+              <div
+                id="progress-bar"
+                class="w-32 h-2 bg-gray-600 rounded-full overflow-hidden"
+              >
+                <div
+                  id="progress"
+                  class="h-full bg-green-500 rounded-full transition-all duration-300 ease-out w-[68%]"
+                ></div>
               </div>
               <span id="percentage-text" class="text-sm font-medium">68%</span>
             </div>
@@ -399,7 +411,7 @@
         onclick="event.stopPropagation()"
       >
         <button
-          class="absolute top-5 h-[42px] right-5 bg-primary-button text-black border-none px-[10px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] text-center z-10 close-btn"
+          class="absolute top-2 right-2 bg-primary-button text-black border-none w-[42px] h-[42px] rounded-lg text-lg cursor-pointer tracking-[1px] text-center z-20 close-btn flex items-center justify-center"
           id="my-files-close-btn"
           onclick="
             document
@@ -409,20 +421,31 @@
         >
           <span class="material-icons-outlined">close</span>
         </button>
-        <table
-          id="my-files-table"
-          class="w-full rounded-[28px] h-full mt-20 border border-[#444] border-collapse overflow-x-scroll overflow-y-scroll table-fixed bg-black/10 block"
+        <div
+          class="w-full h-full p-4 pt-12 rounded-[28px] border border-[#444] bg-black/10 overflow-hidden"
         >
-          <tr>
-            <th>Code</th>
-            <th>Filename</th>
-            <th>Added On</th>
-            <th>Size</th>
-            <th>Type</th>
-            <th>Download</th>
-            <th>Delete</th>
-          </tr>
-        </table>
+          <div class="flex h-full relative">
+            <div class="flex-1 overflow-x-auto overflow-y-auto">
+              <table
+                id="my-files-table"
+                class="w-full border-collapse"
+              >
+                <thead class="sticky top-0 bg-black/20 z-10">
+                  <tr>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">Code</th>
+                    <th class="px-4 py-2 text-left border-b border-[#444] min-w-[200px]">Filename</th>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">Added On</th>
+                    <th class="px-4 py-2 text-left border-b border-[#444]">Size</th>
+                    <th class="px-2 py-2 text-center border-b border-[#444] w-[80px]">Download</th>
+                    <th class="px-2 py-2 text-center border-b border-[#444] w-[80px]">Delete</th>
+                  </tr>
+                </thead>
+                <tbody id="my-files-tbody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

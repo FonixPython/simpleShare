@@ -16,6 +16,7 @@ const pool = mariadb.createPool({
   password: process.env.DB_PASSWORD,
   database: "simpleShare",
   connectionLimit: 5,
+  charset: 'utf8mb4',
 });
 const app = express();
 app.use(express.json());
@@ -500,6 +501,7 @@ app.post("/getAllFiles", async (req, res) => {
     return res.sendStatus(401)
   }
   let results = await getAllUserFiles(user_id);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   return res.status(200).json(results);
 })
 
