@@ -184,6 +184,25 @@ inputs.forEach((input, index) => {
             inputs[index - 1].focus();
         }
     });
+
+    input.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData("text").toLowerCase().replace(/[^a-z]/g, "");
+        
+        let charIndex = 0;
+        for (let i = index; i < inputs.length && charIndex < pastedData.length; i++) {
+            inputs[i].value = pastedData[charIndex];
+            charIndex++;
+        }
+        
+        // Focus the next empty input or the last one if all are filled
+        const nextEmptyIndex = Array.from(inputs).findIndex(input => input.value === "");
+        if (nextEmptyIndex !== -1) {
+            inputs[nextEmptyIndex].focus();
+        } else {
+            inputs[inputs.length - 1].focus();
+        }
+    });
 });
 
 inputs[0].focus();
