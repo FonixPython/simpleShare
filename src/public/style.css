@@ -576,6 +576,18 @@ td:nth-last-child(2) {
   margin: auto;
   text-align: center;
 }
+a {
+  text-decoration: none;
+  color: white;
+  margin:auto;
+}
+
+.selected {
+  border-bottom-color: var(--primary-button);
+  border-bottom-radius: 0;
+  border-bottom-width: 1px;
+}
+
 .hidden{
   display: none;
 }
