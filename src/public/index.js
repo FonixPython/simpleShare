@@ -301,6 +301,12 @@ async function handleFiles(files) {
 document.getElementById("changePasswordForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    // Show confirmation popup
+    const confirmed = confirm("WARNING: This will log out all logged in instances! Are you sure you want to continue?");
+    if (!confirmed) {
+        return; // User cancelled the operation
+    }
+
     const old_password = document.getElementById("old-password").value;
     const new_password = document.getElementById("new-password").value;
 
