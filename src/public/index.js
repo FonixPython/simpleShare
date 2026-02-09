@@ -307,6 +307,7 @@ dropZone.addEventListener("click", (event) => {
 
 async function handleFiles(files) {
     document.getElementById("drop_zone").style.display = "none";
+    document.getElementById("upload-status-box").classList.remove("hidden");
     document.getElementById("upload-status-box").style.display = "flex";
     document.getElementById("upload-status-symbol").classList.add("yellow-working");
     document.getElementById("upload-status-symbol").innerText = "construction";
@@ -349,19 +350,65 @@ async function handleFiles(files) {
         document.getElementById("upload-status-text").innerText = "Upload successful!";
         let response_data = await response.json()
         console.log(response_data)
-        document.getElementById("filecode-display").style.display = "flex";
-        document.getElementById("filecode-display").innerText=response_data.code;
-        document.getElementById("or").style.display = "flex";
+        
+        // Show success content
+        document.getElementById("success-content").classList.remove("hidden");
+        document.getElementById("filecode-display").innerText = response_data.code;
+        
         const base_url = location.href;
-        document.getElementById("link-display").style.display = "flex";
-        document.getElementById("link-text").innerText=base_url+"files/"+response_data.code;
-        document.getElementById("copy-icon").addEventListener("click", (e) => {
+        const full_url = base_url + "files/" + response_data.code;
+        document.getElementById("link-text").innerText = full_url;
+        
+        // Copy code functionality
+        document.getElementById("copy-code-btn").addEventListener("click", async (e) => {
             e.preventDefault();
-            navigator.clipboard.writeText(base_url+"files/"+response_data.code);
-            alert("Link copied!");
+            try {
+                await navigator.clipboard.writeText(response_data.code);
+                showCopyFeedback(e.target.closest('button'), 'Copied!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
         });
+        
+        // Copy link functionality
+        document.getElementById("copy-link-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                await navigator.clipboard.writeText(full_url);
+                showCopyFeedback(e.target.closest('button'), 'Link copied!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
+        // Copy on click of URL text
+        document.getElementById("link-text").addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                await navigator.clipboard.writeText(full_url);
+                showCopyFeedback(e.target, 'Link copied!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
         await updateQuotaDisplay();
     }
+}
+
+// Function to show copy feedback
+function showCopyFeedback(element, message) {
+    const tooltip = element.querySelector('.tooltip') || element;
+    const originalText = tooltip.textContent;
+    tooltip.textContent = message;
+    tooltip.style.backgroundColor = '#5ef78c';
+    tooltip.style.color = '#000';
+    
+    setTimeout(() => {
+        tooltip.textContent = originalText;
+        tooltip.style.backgroundColor = '';
+        tooltip.style.color = '';
+    }, 2000);
 }
 
 document.getElementById("changePasswordForm").addEventListener("submit", async function (e) {
