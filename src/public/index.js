@@ -23,6 +23,22 @@ async function verifyAccessToken() {
     }
 }
 
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    
+    const units = ['B', 'kB', 'MB', 'GB', 'TB'];
+    const threshold = 1024;
+    let unitIndex = 0;
+    let size = bytes;
+    
+    while (size >= threshold && unitIndex < units.length - 1) {
+        size /= threshold;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+}
+
 async function updateQuotaDisplay() {
     let quota_result = await fetch("/quota", {
         method: "POST",
@@ -33,34 +49,29 @@ async function updateQuotaDisplay() {
     })
     let quota_json = await quota_result.json();
     if (quota_json.total !== 0) {
-        var quota_text = Math.floor(parseInt(quota_json.used) / 1000000) + " MB of " + Math.floor(parseInt(quota_json.total) / 1000000) + " MB";
-        var quota_percent = Math.floor(parseInt(quota_json.used) / parseInt(quota_json.total) *100);
+        var quota_text = formatBytes(quota_json.used.total_used) + " of " + formatBytes(quota_json.total);
+        var quota_percent = Math.floor(quota_json.used.total_used / quota_json.total *100);
     }
     else {
-        var quota_text = Math.floor(parseInt(quota_json.used) / 1000000) + " MB of unlimited ";
-        var quota_percent = 75
+        var quota_text = formatBytes(quota_json.used.total_used) + " of unlimited";
+        var quota_percent = 0
     }
     document.getElementById("quota-text").innerText = quota_text
-    document.getElementById("progress").innerText = quota_percent + "%"
     document.getElementById("progress").style.width = quota_percent + "%"
-    if (quota_percent <= 100 ) {document.getElementById("progress").style.backgroundColor = "#f77b5e"; }
-    if (quota_percent <= 90 ) {document.getElementById("progress").style.backgroundColor = "#f7e15e"; }
-    if (quota_percent <= 75 ) {document.getElementById("progress").style.backgroundColor = "#5ef78c"; }
+    document.getElementById("percentage-text").innerText = quota_percent + "%"
+    
+    // Update progress bar color based on percentage
+    const progressElement = document.getElementById("progress");
+    if (quota_percent <= 100 ) { progressElement.style.backgroundColor = "#f77b5e"; }
+    if (quota_percent <= 90 ) { progressElement.style.backgroundColor = "#f7e15e"; }
+    if (quota_percent <= 75 ) { progressElement.style.backgroundColor = "#5ef78c"; }
 
-    document.getElementById("quota-container").style.display = "flex";
+    document.getElementById("quota-container").classList.remove("hidden");
 }
 
 async function updateFilesDisplay() {
-    document.getElementById("my-files-table").innerHTML = "";
-    document.getElementById("my-files-table").insertAdjacentHTML('beforeend', `<tr>
-            <th>Code</th>
-            <th>Filename</th>
-            <th>Added On</th>
-            <th>Size</th>
-            <th>Type</th>
-            <th>Download</th>
-            <th>Delete</th>
-          </tr>`);
+    document.getElementById("my-files-tbody").innerHTML = "";
+    
     let result = await fetch("/getAllFiles",{
         method: "POST",
         body: JSON.stringify({token:localStorage.getItem("token")}),
@@ -70,17 +81,53 @@ async function updateFilesDisplay() {
     let result_json = await result.json();
     for (let file in result_json) {
         let file_data = result_json[file];
-        let html_code = `<tr>
-            <td>${file_data.code}</td>
-            <td>${file_data.name}</td>
-            <td>${file_data.date}</td>
-            <td>${file_data.size}</td>
-            <td>${file_data.mimetype}</td>
-            <td><button class="download-button" onclick=download("${file_data.code}")>Download</button></td>
-            <td><button class="delete-button" onclick=deleteFile("${file_data.code}")>Delete</button></td>
-            </tr>`
-        document.getElementById("my-files-table").insertAdjacentHTML('beforeend', html_code);
-        //console.log(file_data);
+        
+        // Decode filename to handle UTF-8 properly
+        let decodedName = file_data.name;
+        try {
+            // If the name is double-encoded, decode it
+            decodedName = decodeURIComponent(escape(file_data.name));
+        } catch (e) {
+            // If decoding fails, use original name
+            decodedName = file_data.name;
+        }
+        
+        // Format file size to human readable format
+        let formattedSize = formatBytes(file_data.size);
+        
+        // Format date to shorter human readable format (no line breaks)
+        let formattedDate = new Date(file_data.date).toLocaleDateString('hu-HU', {
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit'
+        }) + ' ' + new Date(file_data.date).toLocaleTimeString('hu-HU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Single table row with all columns including action buttons
+        let row = `<tr class="border-b border-[#444] hover:bg-black/20 h-[50px]">
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${file_data.code}</td>
+            <td class="px-4 py-2 align-middle min-w-[200px]">${decodedName}</td>
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${formattedDate}</td>
+            <td class="px-4 py-2 align-middle whitespace-nowrap">${formattedSize}</td>
+            <td class="px-2 py-2 text-center align-middle">
+                <button class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
+                        onclick="download('${file_data.code}')" 
+                        title="Download">
+                    <span class="material-icons-outlined text-lg">download</span>
+                </button>
+            </td>
+            <td class="px-2 py-2 text-center align-middle">
+                <button class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
+                        onclick="deleteFile('${file_data.code}')" 
+                        title="Delete">
+                    <span class="material-icons-outlined text-lg">delete</span>
+                </button>
+            </td>
+        </tr>`;
+        
+        document.getElementById("my-files-tbody").insertAdjacentHTML('beforeend', row);
     }
 }
 
@@ -188,6 +235,25 @@ inputs.forEach((input, index) => {
             inputs[index - 1].focus();
         }
     });
+
+    input.addEventListener("paste", (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData("text").toLowerCase().replace(/[^a-z]/g, "");
+        
+        let charIndex = 0;
+        for (let i = index; i < inputs.length && charIndex < pastedData.length; i++) {
+            inputs[i].value = pastedData[charIndex];
+            charIndex++;
+        }
+        
+        // Focus the next empty input or the last one if all are filled
+        const nextEmptyIndex = Array.from(inputs).findIndex(input => input.value === "");
+        if (nextEmptyIndex !== -1) {
+            inputs[nextEmptyIndex].focus();
+        } else {
+            inputs[inputs.length - 1].focus();
+        }
+    });
 });
 
 inputs[0].focus();
@@ -245,6 +311,7 @@ dropZone.addEventListener("click", (event) => {
 
 async function handleFiles(files) {
     document.getElementById("drop_zone").style.display = "none";
+    document.getElementById("upload-status-box").classList.remove("hidden");
     document.getElementById("upload-status-box").style.display = "flex";
     document.getElementById("upload-status-symbol").classList.add("yellow-working");
     document.getElementById("upload-status-symbol").innerText = "construction";
@@ -287,23 +354,86 @@ async function handleFiles(files) {
         document.getElementById("upload-status-text").innerText = "Upload successful!";
         let response_data = await response.json()
         console.log(response_data)
-        document.getElementById("filecode-display").style.display = "flex";
-        document.getElementById("filecode-display").innerText=response_data.code;
-        document.getElementById("or").style.display = "flex";
+        
+        // Show success content
+        document.getElementById("success-content").classList.remove("hidden");
+        document.getElementById("filecode-display").innerText = response_data.code;
+        
         const base_url = location.href;
-        document.getElementById("link-display").style.display = "flex";
-        document.getElementById("link-text").innerText=base_url+"files/"+response_data.code;
-        document.getElementById("copy-icon").addEventListener("click", (e) => {
+        const full_url = base_url + "files/" + response_data.code;
+        document.getElementById("link-text").innerText = full_url;
+        
+        // Copy code functionality
+        document.getElementById("filecode-display").addEventListener("click", async (e) => {
             e.preventDefault();
-            navigator.clipboard.writeText(base_url+"files/"+response_data.code);
-            alert("Link copied!");
+            try {
+                await navigator.clipboard.writeText(response_data.code);
+                
+                // Visual feedback
+                const element = e.target;
+                const originalColor = element.style.color;
+                element.style.color = '#5ef78c';
+                element.style.transform = 'scale(1.1)';
+                element.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    element.style.color = originalColor;
+                    element.style.transform = 'scale(1)';
+                }, 800);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
         });
+        
+        // Copy link functionality
+        document.getElementById("copy-link-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                await navigator.clipboard.writeText(full_url);
+                showCopyFeedback(e.target.closest('button'), 'Link copied!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
+        // Copy on click of URL text
+        document.getElementById("link-text").addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                await navigator.clipboard.writeText(full_url);
+                showCopyFeedback(e.target, 'Link copied!');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
         await updateQuotaDisplay();
     }
 }
 
+// Function to show copy feedback
+function showCopyFeedback(element, message) {
+    const tooltip = element.querySelector('.tooltip') || element;
+    const originalText = tooltip.textContent;
+    tooltip.textContent = message;
+    tooltip.style.backgroundColor = '#5ef78c';
+    tooltip.style.color = '#000';
+    
+    setTimeout(() => {
+        tooltip.textContent = originalText;
+        tooltip.style.backgroundColor = '';
+        tooltip.style.color = '';
+    }, 2000);
+}
+
 document.getElementById("changePasswordForm").addEventListener("submit", async function (e) {
     e.preventDefault();
+
+    // Show confirmation popup
+    const confirmed = confirm("WARNING: This will log out all logged in instances! Are you sure you want to continue?");
+    if (!confirmed) {
+        return; // User cancelled the operation
+    }
 
     const old_password = document.getElementById("old-password").value;
     const new_password = document.getElementById("new-password").value;

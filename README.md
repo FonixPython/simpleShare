@@ -24,16 +24,17 @@ SimpleShare is a web application that allows users to upload and share files eas
    npm install
    ```
 
-3. Start the server:
+3. Copy .env
+
+   ```bash
+   cp src/.env.example src/.env
+   ```
+
+4. Start the server:
 
    ```bash
    node src/server.js
    ```
-
-## Usage
-
-- Open your web browser and navigate to `http://localhost:3000` to access the application.
-- Use the upload feature to share your files.
 
 ## Contributing
 

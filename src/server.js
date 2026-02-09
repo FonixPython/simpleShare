@@ -16,6 +16,7 @@ const pool = mariadb.createPool({
   password: process.env.DB_PASSWORD,
   database: "simpleShare",
   connectionLimit: 5,
+  charset: 'utf8mb4',
 });
 const app = express();
 app.use(express.json());
@@ -263,17 +264,17 @@ async function calculateRemainFromQuota(user_id) {
     let result = await conn.query("SELECT quota_in_bytes FROM users WHERE id = ?", [user_id]);
     if (result.length === 0) return 0;
 
-    let quota = result[0].quota_in_bytes;
-    if (quota == 0) return null;
+    let quota = BigInt(result[0].quota_in_bytes);
+    if (quota == 0n) return null;
 
     let used_res = await conn.query(
         "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",
         [user_id]
     );
 
-    let used_up = used_res[0].total_used || 0;
+    let used_up = BigInt(used_res[0].total_used || 0);
 
-    return quota - used_up;
+    return Number(quota - used_up);
   } finally {
     if (conn) conn.release();
   }
@@ -550,7 +551,10 @@ app.post("/quota", async (req, res) => {
   used_quota = used_quota.toString()
   total_quota = total_quota.toString()
 
-  return res.status(200).json({"total":total_quota,"used":used_quota});
+  return res.status(200).json({
+    "total": total_quota ? Number(total_quota) : total_quota,
+    "used": used_quota.total_used ? Number(used_quota.total_used) : used_quota.total_used
+  });
 
 })
 
@@ -562,6 +566,7 @@ app.post("/getAllFiles", async (req, res) => {
     return res.sendStatus(401)
   }
   let results = await getAllUserFiles(user_id);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   return res.status(200).json(results);
 })
 
