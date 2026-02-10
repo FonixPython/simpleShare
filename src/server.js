@@ -162,7 +162,7 @@ async function generateSession(user_id) {
   }
 }
 
-async function registerUser(username, password) {
+async function registerUser(username, password, isAdmin = false, quota = 52428800) {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -170,8 +170,8 @@ async function registerUser(username, password) {
     let verified = await verifyCredentials(username, password);
     if (verified.user_id === null) {
       await conn.query(
-        "INSERT INTO users (username,password_hash) VALUES (?, ?)",
-        [username, password_hash],
+        "INSERT INTO users (username, password_hash, is_admin, quota_in_bytes) VALUES (?, ?, ?, ?)",
+        [username, password_hash, isAdmin ? 1 : 0, quota],
       );
       return { success: true, error: null };
     } else {
@@ -760,12 +760,15 @@ app.post("/register", async (req, res) => {
   let new_username = req.body.username;
   let new_password = req.body.password;
   let auth_token = req.body.token;
+  let is_admin = req.body.isAdmin || false;
+  let quota = req.body.quota || 52428800; // Default to 50MB
+  
   if (!new_username || !new_password || !auth_token) {
     res.status(400).json({ status: 400, error: "Invalid request!" });
   }
   let request_maker_permission = await getPermissions(auth_token);
   if (request_maker_permission == "admin") {
-    let result = await registerUser(new_username, new_password);
+    let result = await registerUser(new_username, new_password, is_admin, quota);
     if (result.success == true) {
       res.status(200).json({ status: 200, error: null });
     } else {

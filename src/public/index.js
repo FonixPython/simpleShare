@@ -319,6 +319,8 @@ document
 
     const username = document.getElementById("reg-username").value;
     const password = document.getElementById("reg-password").value;
+    const isAdmin = document.getElementById("reg-is-admin").checked;
+    const quota = document.getElementById("reg-quota").value;
     const token = localStorage.getItem("token");
 
     // Clear previous messages
@@ -334,6 +336,8 @@ document
         body: JSON.stringify({
           username: username,
           password: password,
+          isAdmin: isAdmin,
+          quota: quota,
           token: token,
         }),
       });
@@ -346,6 +350,8 @@ document
         // Clear form
         document.getElementById("reg-username").value = "";
         document.getElementById("reg-password").value = "";
+        document.getElementById("reg-is-admin").checked = false;
+        document.getElementById("reg-quota").value = "52428800";
         // Close modal after 2 seconds
         setTimeout(() => {
           document.getElementById("register-user-background").classList.add("hidden");
