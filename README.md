@@ -48,9 +48,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Thanks to all contributors and users for their support!
 
-<br>
-<br>
-<br>
-<br>
+## Creators
 
-###### Created by: skyFonix & zeti1223
+- [zeti1223](https://github.com/zeti1223)
+- [FonixPython](https://github.com/FonixPython)

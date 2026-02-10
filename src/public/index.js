@@ -158,7 +158,6 @@ async function download(code) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  form.reset();
   
   // Reset animation
   const fileInfoElement = document.getElementById("file-info");
@@ -396,16 +395,7 @@ async function checkFileExists() {
       if (response.ok) {
         const result = await response.json();
         if (result.exists) {
-          // Ensure proper display of special characters
           let filename = result.filename;
-          try {
-            // Additional safety check for encoding
-            filename = decodeURIComponent(escape(filename));
-          } catch (e) {
-            // Use original if decoding fails
-            filename = result.filename;
-          }
-          
           fileInfoElement.textContent = filename;
           fileInfoElement.style.color = "#5ef78c";
         } else {

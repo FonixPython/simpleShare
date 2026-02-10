@@ -143,9 +143,9 @@ function createUserRow(user) {
             <td class="px-4 py-3 text-white">${fileCount}</td>
             <td class="px-4 py-3 text-white">${createdDate}</td>
             <td class="px-4 py-3 text-center">
-                <button onclick="viewUserFiles(${user.user_id}, '${user.username}')" 
-                        class="bg-primary-button text-black px-3 py-1 rounded text-sm hover:scale-105 transition-transform">
-                    View Files
+                <button onclick="deleteUser('${user.user_id}', '${user.username}')" 
+                        class="bg-error text-white px-3 py-1 rounded text-sm hover:scale-105 transition-transform">
+                    Delete User
                 </button>
             </td>
         </tr>
@@ -217,13 +217,11 @@ function displayAllFiles(files) {
 function createFileRow(file) {
     const date = new Date(file.date_added).toLocaleDateString();
     
-    // Decode filename to handle UTF-8 properly (same fix as in main app)
+    // Decode filename to handle UTF-8 properly
     let decodedName = file.originalname;
     try {
-      // If name is double-encoded, decode it
       decodedName = decodeURIComponent(escape(file.originalname));
     } catch (e) {
-      // If decoding fails, use original name
       decodedName = file.originalname;
     }
     
@@ -249,111 +247,90 @@ function createFileRow(file) {
     `;
 }
 
-function viewUserFiles(userId, username) {
-    // Switch to files view and filter by user
-    currentView = 'files';
-    document.getElementById('users-container').classList.add('hidden');
-    document.getElementById('all-files-container').classList.remove('hidden');
+
+function deleteUser(userId, username) {
+    // Create password confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-main border border-[#444] rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-white mb-4">Delete User Confirmation</h3>
+            <p class="text-gray-300 mb-4">
+                Are you sure you want to delete user <span class="text-error font-bold">${username}</span>? 
+                This action will permanently delete:
+            </p>
+            <ul class="text-gray-300 mb-4 list-disc list-inside">
+                <li>The user account</li>
+                <li>All files uploaded by this user</li>
+                <li>All session tokens for this user</li>
+            </ul>
+            <p class="text-error font-semibold mb-4">This action cannot be undone!</p>
+            
+            <div class="mb-4">
+                <label class="block text-white text-sm font-medium mb-2">
+                    Enter your admin password to confirm:
+                </label>
+                <input type="password" id="adminPassword" 
+                       class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded text-white focus:border-primary-button focus:outline-none"
+                       placeholder="Enter your password">
+            </div>
+            
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeDeleteModal()" 
+                        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmDeleteUser('${userId}', '${username}')" 
+                        class="px-4 py-2 bg-error text-white rounded hover:bg-red-600 transition-colors">
+                    Delete User
+                </button>
+            </div>
+        </div>
+    `;
     
-    // Update button states
-    document.querySelectorAll('.button-container button').forEach(btn => {
-        btn.classList.remove('bg-primary-button', 'text-black');
-        btn.classList.add('bg-gray-600', 'text-white');
-    });
-    document.querySelectorAll('.button-container button')[1].classList.remove('bg-gray-600', 'text-white');
-    document.querySelectorAll('.button-container button')[1].classList.add('bg-primary-button', 'text-black');
-    
-    // Load files for specific user
-    loadUserFiles(userId, username);
+    document.body.appendChild(modal);
+    document.getElementById('adminPassword').focus();
 }
 
-async function loadUserFiles(userId, username) {
+function closeDeleteModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function confirmDeleteUser(userId, username) {
+    const password = document.getElementById('adminPassword').value;
+    
+    if (!password) {
+        showError('Please enter your admin password');
+        return;
+    }
+    
     try {
-        const response = await fetch('/admin/getAllUsersWithFiles', {
-            method: 'GET',
+        const response = await fetch('/admin/deleteUser', {
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': authToken
-            }
+            },
+            body: JSON.stringify({
+                userId: userId,
+                adminPassword: password
+            })
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to load files');
-        }
-        
-        const users = await response.json();
-        const user = users.find(u => u.user_id === userId);
-        
-        if (user) {
-            const files = user.files.map(file => ({
-                ...file,
-                username: user.username,
-                user_id: user.user_id
-            }));
-            
-            const container = document.getElementById('all-files-container');
-            container.innerHTML = `
-                <div class="w-full max-w-6xl mx-auto p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-white">Files for ${username}</h2>
-                        <button onclick="loadAllFiles()" 
-                                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
-                            Back to All Files
-                        </button>
-                    </div>
-                    <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-black/30">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-white border-b border-[#444]">Code</th>
-                                        <th class="px-4 py-3 text-left text-white border-b border-[#444]">Filename</th>
-                                        <th class="px-4 py-3 text-left text-white border-b border-[#444]">Size</th>
-                                        <th class="px-4 py-3 text-left text-white border-b border-[#444]">Type</th>
-                                        <th class="px-4 py-3 text-left text-white border-b border-[#444]">Date</th>
-                                        <th class="px-4 py-3 text-center text-white border-b border-[#444]">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${files.map(file => {
-                                        // Decode filename to handle UTF-8 properly (same fix as in main app)
-                                        let decodedName = file.originalname;
-                                        try {
-                                          // If name is double-encoded, decode it
-                                          decodedName = decodeURIComponent(escape(file.originalname));
-                                        } catch (e) {
-                                          // If decoding fails, use original name
-                                          decodedName = file.originalname;
-                                        }
-                                        
-                                        return `
-                                        <tr class="border-b border-[#444] hover:bg-black/10 transition-colors">
-                                            <td class="px-4 py-3 text-white font-mono">${file.id}</td>
-                                            <td class="px-4 py-3 text-white">${decodedName}</td>
-                                            <td class="px-4 py-3 text-white">${formatBytes(file.size)}</td>
-                                            <td class="px-4 py-3 text-white">${file.mimetype}</td>
-                                            <td class="px-4 py-3 text-white">${new Date(file.date_added).toLocaleDateString()}</td>
-                                            <td class="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                                <button onclick="downloadFile('${file.id}')" 
-                                                        class="bg-secondary-button text-black p-2 rounded text-sm hover:scale-105 transition-transform">
-                                                    <span class="material-icons-outlined text-base">download</span>
-                                                </button>
-                                                <button onclick="deleteFile('${file.id}')" 
-                                                        class="bg-error text-white p-2 rounded text-sm hover:scale-105 transition-transform">
-                                                    <span class="material-icons-outlined text-base">delete</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    `;}).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
+        if (response.ok) {
+            showSuccess(`User ${username} and all their files have been deleted`);
+            closeDeleteModal();
+            loadUsers(); // Reload the users list
+        } else {
+            const error = await response.json();
+            showError(error.error || 'Failed to delete user');
         }
     } catch (error) {
-        console.error('Error loading user files:', error);
-        showError('Failed to load user files');
+        console.error('Error deleting user:', error);
+        showError('Failed to delete user');
     }
 }
 

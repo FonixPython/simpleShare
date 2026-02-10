@@ -8,7 +8,6 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const PORT = process.env.PORT || 3000;
 
-console.log(process.env.DB_HOST);
 const pool = mariadb.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -474,8 +473,8 @@ async function deleteFile(file_code) {
     try {
       await fs.unlink(process.env.UPLOAD_PATH + file_data[0].stored_filename);
     } catch (err) {
-      console.log(err);
-      return err;
+      // File deletion error - continue with database cleanup
+      console.log("File deletion error:", err);
     }
     await conn.query("DELETE FROM file_index WHERE id = ?", [file_code]);
     return true;
@@ -495,12 +494,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = (req, res, next) => {
-  multer({
-    storage: storage,
-    limits: { fileSize: req.maxUploadSize },
-  }).single("file")(req, res, next);
-};
 
 app.post("/verifySession", async (req, res, next) => {
   let token = req.body.token;
@@ -782,7 +775,6 @@ app.get("/admin/dashboard/:token", async (req, res) => {
   if (!req.params.token) {
     return res.sendStatus(401);
   }
-  console.log(req.params.token);
   let perms = await getPermissions(req.params.token);
   let user_id = await validateToken(req.params.token);
   if (perms === "none") {
@@ -793,6 +785,83 @@ app.get("/admin/dashboard/:token", async (req, res) => {
   }
   if (perms === "admin") {
     res.sendFile(path.join(__dirname, "./public/admin.html"));
+  }
+});
+
+app.post("/admin/deleteUser", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  
+  const { userId, adminPassword } = req.body;
+  
+  if (!userId || !adminPassword) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // Verify admin permissions and password
+    const adminToken = req.headers.authorization;
+    const adminUserId = await validateToken(adminToken);
+    
+    if (adminUserId === false) {
+      return res.sendStatus(401);
+    }
+    
+    const adminPerms = await getPermissions(adminToken);
+    if (adminPerms !== "admin") {
+      return res.sendStatus(403);
+    }
+    
+    // Get admin user data to verify password
+    const adminData = await conn.query("SELECT * FROM users WHERE id = ?", [adminUserId]);
+    if (adminData.length === 0) {
+      return res.status(401).json({ error: "Admin user not found" });
+    }
+    
+    // Verify admin password
+    const isPasswordValid = await bcrypt.compare(adminPassword, adminData[0].password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid admin password" });
+    }
+    
+    // Prevent admin from deleting themselves
+    if (userId === adminUserId.toString()) {
+      return res.status(400).json({ error: "Cannot delete your own account" });
+    }
+    
+    // Get user's files to delete from filesystem
+    const userFiles = await conn.query("SELECT * FROM file_index WHERE user_id = ?", [userId]);
+    
+    // Delete files from filesystem
+    for (const file of userFiles) {
+      try {
+        await fs.unlink(process.env.UPLOAD_PATH + file.stored_filename);
+      } catch (err) {
+        console.log("File deletion error:", err);
+        // Continue even if file deletion fails
+      }
+    }
+    
+    // Delete user's files from database
+    await conn.query("DELETE FROM file_index WHERE user_id = ?", [userId]);
+    
+    // Delete user's session tokens
+    await conn.query("DELETE FROM session_tokens WHERE user_id = ?", [userId]);
+    
+    // Delete user account
+    await conn.query("DELETE FROM users WHERE id = ?", [userId]);
+    
+    return res.status(200).json({ message: "User and all associated data deleted successfully" });
+    
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
