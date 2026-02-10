@@ -608,15 +608,14 @@ app.post("/quota", async (req, res) => {
   }
   let total_quota = await getTotalQuota(user_id);
   let used_quota = await getUsedQuota(user_id);
-  used_quota = used_quota.total_used;
-  used_quota = used_quota.toString();
-  total_quota = total_quota.toString();
+  
+  // Handle case where user has no files (used_quota is null/undefined)
+  let used_quota_value = used_quota && used_quota.total_used ? used_quota.total_used : 0;
+  let total_quota_value = total_quota ? total_quota : 0;
 
   return res.status(200).json({
-    total: total_quota ? Number(total_quota) : total_quota,
-    used: used_quota.total_used
-      ? Number(used_quota.total_used)
-      : used_quota.total_used,
+    total: Number(total_quota_value),
+    used: Number(used_quota_value),
   });
 });
 

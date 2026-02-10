@@ -53,14 +53,14 @@ async function updateQuotaDisplay() {
   let quota_json = await quota_result.json();
   if (quota_json.total !== 0) {
     var quota_text =
-      formatBytes(quota_json.used.total_used) +
+      formatBytes(quota_json.used) +
       " of " +
       formatBytes(quota_json.total);
     var quota_percent = Math.floor(
-      (quota_json.used.total_used / quota_json.total) * 100,
+      (quota_json.used / quota_json.total) * 100,
     );
   } else {
-    var quota_text = formatBytes(quota_json.used.total_used) + " of unlimited";
+    var quota_text = formatBytes(quota_json.used) + " of unlimited";
     var quota_percent = 0;
   }
   document.getElementById("quota-text").innerText = quota_text;
