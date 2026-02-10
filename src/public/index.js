@@ -187,7 +187,13 @@ async function deleteFile(code) {
 }
 
 function redirectToDashboard() {
-  location.href = "/admin/dashboard/" + localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("No token found in localStorage");
+    return;
+  }
+  console.log("Redirecting to admin dashboard with token:", token);
+  location.href = "/admin/dashboard/" + token;
 }
 
 let access_level = verifyAccessToken();

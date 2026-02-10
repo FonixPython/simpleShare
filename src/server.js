@@ -61,7 +61,7 @@ async function verifyCredentials(username, password) {
   }
 }
 
-async function retrieveUsersWithFiles(username) {
+async function retrieveUsersWithFiles() {
   let conn;
   try {
     let return_obj = [];
@@ -76,7 +76,7 @@ async function retrieveUsersWithFiles(username) {
       curr_obj.creation_date = user.date_of_creation;
       curr_obj.files = [];
       let curr_files_result = await conn.query(
-        "SELECT FROM file_index WHERE user_id = ? ",
+        "SELECT * FROM file_index WHERE user_id = ? ",
         [user.id],
       );
       for (let file of curr_files_result) {
@@ -86,9 +86,12 @@ async function retrieveUsersWithFiles(username) {
         curr_file_obj.size = file.file_size_in_bytes;
         curr_file_obj.originalname = file.original_name;
         curr_file_obj.mimetype = file.mime_type;
+        curr_file_obj.date_added = file.date_added;
         curr_obj.files.push(curr_file_obj);
       }
+      return_obj.push(curr_obj);
     }
+    return return_obj;
   } finally {
     if (conn) conn.release();
   }
@@ -574,27 +577,23 @@ app.get("/admin/getAllUsersWithFiles", async (req, res) => {
     return res.sendStatus(401);
   }
   let perms = await getPermissions(req.headers.authorization);
-  let user_id = await validateToken(req.headers.authorization);
   if (perms === "none") {
     return res.sendStatus(401);
   }
   if (perms === "user") {
-    let file_info = await retrieveFileInfo(file_code);
-    if (file_info.user_id === user_id) {
-      let result = await deleteFile(file_code);
-      if (result === true) {
-        return res.sendStatus(200);
-      } else {
-        return res.status(500).json({ error: result });
-      }
-    }
+    return res.sendStatus(403);
   }
   if (perms === "admin") {
-    let result = await retrieveFileInfo();
-    if (result === true) {
-      console.log(result);
+    let result = await retrieveUsersWithFiles();
+    if (result) {
+      // Convert BigInt values to regular numbers for JSON serialization
+      result = JSON.parse(JSON.stringify(result, (key, value) =>
+        typeof value === 'bigint' ? Number(value) : value
+      ));
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).json(result);
     } else {
-      return res.status(500).json({ error: result });
+      return res.status(500).json({ error: "Failed to retrieve data" });
     }
   }
 });
@@ -779,10 +778,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.use("/", (req, res, next) => {
-  res.sendFile(path.join(__dirname, "./public/index.html"));
-});
-
 app.get("/admin/dashboard/:token", async (req, res) => {
   if (!req.params.token) {
     return res.sendStatus(401);
@@ -794,19 +789,19 @@ app.get("/admin/dashboard/:token", async (req, res) => {
     return res.sendStatus(401);
   }
   if (perms === "user") {
-    let file_info = await retrieveFileInfo(file_code);
-    if (file_info.user_id === user_id) {
-      let result = await deleteFile(file_code);
-      if (result === true) {
-        return res.sendStatus(200);
-      } else {
-        return res.status(500).json({ error: result });
-      }
-    }
+    return res.sendStatus(403);
   }
   if (perms === "admin") {
-    res.sendFile(path.join(__dirname, "./public/index.html"));
+    res.sendFile(path.join(__dirname, "./public/admin.html"));
   }
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/admin.html"));
+});
+
+app.use("/", (req, res, next) => {
+  res.sendFile(path.join(__dirname, "./public/index.html"));
 });
 
 // Generic
