@@ -46,8 +46,8 @@
               "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
               "spin-slow": "spin 2s linear infinite",
               "bounce-gentle": "bounceGentle 0.6s ease-out",
-              "shake": "shake 0.5s ease-in-out",
-              "glow": "glow 2s ease-in-out infinite alternate",
+              shake: "shake 0.5s ease-in-out",
+              glow: "glow 2s ease-in-out infinite alternate",
             },
             keyframes: {
               fadeIn: {
@@ -101,7 +101,10 @@
       class="absolute top-0 left-0 w-full h-[100px] border-b border-b-[length:1px] border-b-gradient-to-r from-blue-400 via-green-400 to-blue-400 animate-slide-down"
     >
       <!-- Top header bar -->
-      <a href="/" class="absolute p-0 m-[10px] top-5 left-5 font-inter font-normal text-white text-3xl animate-fade-in no-underline">
+      <a
+        href="/"
+        class="absolute p-0 m-[10px] top-5 left-5 font-inter font-normal text-white text-3xl animate-fade-in no-underline"
+      >
         simple<span
           class="bg-gradient-to-r from-primary-button to-secondary-button bg-clip-text text-transparent"
           >Share</span
@@ -109,21 +112,34 @@
         <span class="text-error ml-2 text-sm">admin panel</span>
       </a>
       <div class="button-container absolute top-5 right-5 flex gap-2">
-        <a href="/" class="bg-secondary-button text-black border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-secondary-button/50 animate-fade-in no-underline inline-block">
+        <a
+          href="/"
+          class="bg-secondary-button text-black border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-secondary-button/50 animate-fade-in no-underline inline-block"
+        >
           Back to App
         </a>
-        <button class="bg-gray-600 text-white border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 animate-fade-in">
+        <button
+          class="bg-gray-600 text-white border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 animate-fade-in"
+        >
           Users
         </button>
-        <button class="bg-gray-600 text-white border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 animate-fade-in">
+        <button
+          class="bg-gray-600 text-white border-none px-[25px] py-[10px] rounded-lg text-lg cursor-pointer tracking-[1px] m-[10px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 animate-fade-in"
+        >
           All Files
         </button>
       </div>
     </div>
-    
-    <div id="users-container" class="w-full h-full pt-[100px] overflow-y-auto"></div>
-    <div id="all-files-container" class="w-full h-full pt-[100px] overflow-y-auto hidden"></div>
-    
+
+    <div
+      id="users-container"
+      class="w-full h-full pt-[100px] overflow-y-auto"
+    ></div>
+    <div
+      id="all-files-container"
+      class="w-full h-full pt-[100px] overflow-y-auto hidden"
+    ></div>
+
     <script src="/admin.js"></script>
   </body>
 </html>

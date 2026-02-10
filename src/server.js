@@ -21,11 +21,11 @@ const app = express();
 
 // Set proper encoding headers
 app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
   next();
 });
 
-app.use(express.json({ charset: 'utf-8' }));
+app.use(express.json({ charset: "utf-8" }));
 app.use(express.static(path.join(__dirname, "./public")));
 
 async function verifyCredentials(username, password) {
@@ -164,7 +164,12 @@ async function generateSession(user_id) {
   }
 }
 
-async function registerUser(username, password, isAdmin = false, quota = 52428800) {
+async function registerUser(
+  username,
+  password,
+  isAdmin = false,
+  quota = 52428800,
+) {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -494,7 +499,6 @@ const storage = multer.diskStorage({
   },
 });
 
-
 app.post("/verifySession", async (req, res, next) => {
   let token = req.body.token;
   if (!token) return res.sendStatus(401);
@@ -580,9 +584,11 @@ app.get("/admin/getAllUsersWithFiles", async (req, res) => {
     let result = await retrieveUsersWithFiles();
     if (result) {
       // Convert BigInt values to regular numbers for JSON serialization
-      result = JSON.parse(JSON.stringify(result, (key, value) =>
-        typeof value === 'bigint' ? Number(value) : value
-      ));
+      result = JSON.parse(
+        JSON.stringify(result, (key, value) =>
+          typeof value === "bigint" ? Number(value) : value,
+        ),
+      );
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       return res.status(200).json(result);
     } else {
@@ -600,9 +606,10 @@ app.post("/quota", async (req, res) => {
   }
   let total_quota = await getTotalQuota(user_id);
   let used_quota = await getUsedQuota(user_id);
-  
+
   // Handle case where user has no files (used_quota is null/undefined)
-  let used_quota_value = used_quota && used_quota.total_used ? used_quota.total_used : 0;
+  let used_quota_value =
+    used_quota && used_quota.total_used ? used_quota.total_used : 0;
   let total_quota_value = total_quota ? total_quota : 0;
 
   return res.status(200).json({
@@ -633,11 +640,11 @@ app.post("/checkFile", async (req, res) => {
       // If decoding fails, use original
       filename = db_result.original_name;
     }
-    
+
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    return res.status(200).json({ 
-      exists: true, 
-      filename: filename 
+    return res.status(200).json({
+      exists: true,
+      filename: filename,
     });
   }
 });
@@ -734,11 +741,9 @@ app.post("/userChangePassword", async (req, res) => {
     return res.status(200).json({ message: "Password changed successfully!" });
   }
   if (result === 1) {
-    return res
-      .status(400)
-      .json({
-        message: "New password cannot be the same as the old password!",
-      });
+    return res.status(400).json({
+      message: "New password cannot be the same as the old password!",
+    });
   }
   if (result === 2) {
     return res.status(401).json({ message: "Invalid current password!" });
@@ -754,13 +759,18 @@ app.post("/register", async (req, res) => {
   let auth_token = req.body.token;
   let is_admin = req.body.isAdmin || false;
   let quota = req.body.quota || 52428800; // Default to 50MB
-  
+
   if (!new_username || !new_password || !auth_token) {
     res.status(400).json({ status: 400, error: "Invalid request!" });
   }
   let request_maker_permission = await getPermissions(auth_token);
   if (request_maker_permission == "admin") {
-    let result = await registerUser(new_username, new_password, is_admin, quota);
+    let result = await registerUser(
+      new_username,
+      new_password,
+      is_admin,
+      quota,
+    );
     if (result.success == true) {
       res.status(200).json({ status: 200, error: null });
     } else {
@@ -792,50 +802,58 @@ app.post("/admin/deleteUser", async (req, res) => {
   if (!req.headers.authorization) {
     return res.sendStatus(401);
   }
-  
+
   const { userId, adminPassword } = req.body;
-  
+
   if (!userId || !adminPassword) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  
+
   let conn;
   try {
     conn = await pool.getConnection();
-    
+
     // Verify admin permissions and password
     const adminToken = req.headers.authorization;
     const adminUserId = await validateToken(adminToken);
-    
+
     if (adminUserId === false) {
       return res.sendStatus(401);
     }
-    
+
     const adminPerms = await getPermissions(adminToken);
     if (adminPerms !== "admin") {
       return res.sendStatus(403);
     }
-    
+
     // Get admin user data to verify password
-    const adminData = await conn.query("SELECT * FROM users WHERE id = ?", [adminUserId]);
+    const adminData = await conn.query("SELECT * FROM users WHERE id = ?", [
+      adminUserId,
+    ]);
     if (adminData.length === 0) {
       return res.status(401).json({ error: "Admin user not found" });
     }
-    
+
     // Verify admin password
-    const isPasswordValid = await bcrypt.compare(adminPassword, adminData[0].password_hash);
+    const isPasswordValid = await bcrypt.compare(
+      adminPassword,
+      adminData[0].password_hash,
+    );
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid admin password" });
     }
-    
+
     // Prevent admin from deleting themselves
     if (userId === adminUserId.toString()) {
       return res.status(400).json({ error: "Cannot delete your own account" });
     }
-    
+
     // Get user's files to delete from filesystem
-    const userFiles = await conn.query("SELECT * FROM file_index WHERE user_id = ?", [userId]);
-    
+    const userFiles = await conn.query(
+      "SELECT * FROM file_index WHERE user_id = ?",
+      [userId],
+    );
+
     // Delete files from filesystem
     for (const file of userFiles) {
       try {
@@ -845,18 +863,19 @@ app.post("/admin/deleteUser", async (req, res) => {
         // Continue even if file deletion fails
       }
     }
-    
+
     // Delete user's files from database
     await conn.query("DELETE FROM file_index WHERE user_id = ?", [userId]);
-    
+
     // Delete user's session tokens
     await conn.query("DELETE FROM session_tokens WHERE user_id = ?", [userId]);
-    
+
     // Delete user account
     await conn.query("DELETE FROM users WHERE id = ?", [userId]);
-    
-    return res.status(200).json({ message: "User and all associated data deleted successfully" });
-    
+
+    return res
+      .status(200)
+      .json({ message: "User and all associated data deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
     return res.status(500).json({ error: "Internal server error" });

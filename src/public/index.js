@@ -53,12 +53,8 @@ async function updateQuotaDisplay() {
   let quota_json = await quota_result.json();
   if (quota_json.total !== 0) {
     var quota_text =
-      formatBytes(quota_json.used) +
-      " of " +
-      formatBytes(quota_json.total);
-    var quota_percent = Math.floor(
-      (quota_json.used / quota_json.total) * 100,
-    );
+      formatBytes(quota_json.used) + " of " + formatBytes(quota_json.total);
+    var quota_percent = Math.floor((quota_json.used / quota_json.total) * 100);
   } else {
     var quota_text = formatBytes(quota_json.used) + " of unlimited";
     var quota_percent = 0;
@@ -69,16 +65,21 @@ async function updateQuotaDisplay() {
 
   // Update progress bar color based on percentage
   const progressElement = document.getElementById("progress");
-  progressElement.style.transition = "background-color 0.5s ease, background 0.5s ease";
-  
+  progressElement.style.transition =
+    "background-color 0.5s ease, background 0.5s ease";
+
   if (quota_percent > 100) {
-    progressElement.style.background = "linear-gradient(to right, #f77b5e, #f7e15e)";
+    progressElement.style.background =
+      "linear-gradient(to right, #f77b5e, #f7e15e)";
   } else if (quota_percent > 90) {
-    progressElement.style.background = "linear-gradient(to right, #f7e15e, #f7e15e)";
+    progressElement.style.background =
+      "linear-gradient(to right, #f7e15e, #f7e15e)";
   } else if (quota_percent > 75) {
-    progressElement.style.background = "linear-gradient(to right, #5ef78c, #f7e15e)";
+    progressElement.style.background =
+      "linear-gradient(to right, #5ef78c, #f7e15e)";
   } else {
-    progressElement.style.background = "linear-gradient(to right, #5ef78c, #5ef78c)";
+    progressElement.style.background =
+      "linear-gradient(to right, #5ef78c, #5ef78c)";
   }
 
   document.getElementById("quota-container").classList.remove("hidden");
@@ -158,7 +159,7 @@ async function download(code) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   // Reset animation
   const fileInfoElement = document.getElementById("file-info");
   const downloadBtn = document.getElementById("download-btn");
@@ -259,7 +260,7 @@ const form = document.getElementById("downloadForm");
 inputs.forEach((input, index) => {
   input.addEventListener("input", (e) => {
     e.target.value = e.target.value.toLowerCase().replace(/[^a-z]/g, "");
-    
+
     // Add subtle animation on input
     e.target.style.transform = "scale(1.1)";
     e.target.style.backgroundColor = "#e8f5e8";
@@ -350,7 +351,7 @@ document
       const result = await response.json();
 
       if (response.status === 200) {
-        document.getElementById("register-success-label").innerText = 
+        document.getElementById("register-success-label").innerText =
           "User registered successfully!";
         // Clear form
         document.getElementById("reg-username").value = "";
@@ -359,16 +360,18 @@ document
         document.getElementById("reg-quota").value = "52428800";
         // Close modal after 2 seconds
         setTimeout(() => {
-          document.getElementById("register-user-background").classList.add("hidden");
+          document
+            .getElementById("register-user-background")
+            .classList.add("hidden");
           document.getElementById("register-success-label").innerText = "";
         }, 2000);
       } else {
-        document.getElementById("register-error-label").innerText = 
+        document.getElementById("register-error-label").innerText =
           result.error || "Registration failed!";
       }
     } catch (err) {
       console.error("Registration error:", err);
-      document.getElementById("register-error-label").innerText = 
+      document.getElementById("register-error-label").innerText =
         "Network error. Please try again.";
     }
   });
@@ -378,10 +381,10 @@ async function checkFileExists() {
   const fullCode = Array.from(inputs)
     .map((input) => input.value)
     .join("");
-  
+
   const fileInfoElement = document.getElementById("file-info");
   const downloadBtn = document.getElementById("download-btn");
-  
+
   if (fullCode.length === 6) {
     try {
       const response = await fetch("/checkFile", {
@@ -391,7 +394,7 @@ async function checkFileExists() {
         },
         body: JSON.stringify({ code: fullCode }),
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.exists) {
@@ -402,7 +405,7 @@ async function checkFileExists() {
           fileInfoElement.textContent = "Check ID";
           fileInfoElement.style.color = "#f77b5e";
         }
-        
+
         // Animate: add margin to button and show text
         downloadBtn.classList.add("mb-5");
         fileInfoElement.classList.remove("opacity-0");
@@ -410,7 +413,7 @@ async function checkFileExists() {
       } else {
         fileInfoElement.textContent = "Check ID";
         fileInfoElement.style.color = "#f77b5e";
-        
+
         // Animate: add margin to button and show text
         downloadBtn.classList.add("mb-5");
         fileInfoElement.classList.remove("opacity-0");
@@ -420,7 +423,7 @@ async function checkFileExists() {
       console.error("Error checking file:", error);
       fileInfoElement.textContent = "Check ID";
       fileInfoElement.style.color = "#f77b5e";
-      
+
       // Animate: add margin to button and show text
       downloadBtn.classList.add("mb-5");
       fileInfoElement.classList.remove("opacity-0");
@@ -454,7 +457,7 @@ form.addEventListener("submit", (e) => {
         }, 600);
       }, index * 50);
     });
-    
+
     setTimeout(() => {
       const link = document.createElement("a");
       link.href = "/files/" + fullCode;
@@ -463,7 +466,7 @@ form.addEventListener("submit", (e) => {
       link.click();
       document.body.removeChild(link);
       form.reset();
-      
+
       // Reset animation
       const fileInfoElement = document.getElementById("file-info");
       const downloadBtn = document.getElementById("download-btn");
@@ -537,7 +540,9 @@ async function handleFiles(files) {
     .getElementById("upload-status-symbol")
     .classList.add("animate-spin-slow");
   document.getElementById("upload-status-symbol").innerText = "hourglass_empty";
-  document.getElementById("upload-status-text").classList.add("animate-pulse-slow");
+  document
+    .getElementById("upload-status-text")
+    .classList.add("animate-pulse-slow");
   document.getElementById("upload-status-text").innerText = "Working...";
   document
     .getElementById("upload-close-btn")
@@ -564,8 +569,12 @@ async function handleFiles(files) {
     document
       .getElementById("upload-status-text")
       .classList.remove("animate-pulse-slow");
-    document.getElementById("upload-status-symbol").classList.add("animate-shake");
-    document.getElementById("upload-status-text").classList.add("animate-shake");
+    document
+      .getElementById("upload-status-symbol")
+      .classList.add("animate-shake");
+    document
+      .getElementById("upload-status-text")
+      .classList.add("animate-shake");
     document.getElementById("upload-status-symbol").innerText = "error";
     console.log(response.status);
     if (response.status == 400) {

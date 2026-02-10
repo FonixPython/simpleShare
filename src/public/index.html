@@ -50,8 +50,8 @@
               "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
               "spin-slow": "spin 2s linear infinite",
               "bounce-gentle": "bounceGentle 0.6s ease-out",
-              "shake": "shake 0.5s ease-in-out",
-              "glow": "glow 2s ease-in-out infinite alternate",
+              shake: "shake 0.5s ease-in-out",
+              glow: "glow 2s ease-in-out infinite alternate",
             },
             keyframes: {
               fadeIn: {
@@ -161,7 +161,11 @@
                   class="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-700 ease-out w-[68%]"
                 ></div>
               </div>
-              <span id="percentage-text" class="text-sm font-medium transition-all duration-300">68%</span>
+              <span
+                id="percentage-text"
+                class="text-sm font-medium transition-all duration-300"
+                >68%</span
+              >
             </div>
           </div>
         </div>
@@ -228,7 +232,10 @@
         >
           Download
         </button>
-        <div id="file-info" class="text-lg font-inter text-gray-300 min-h-[28px] opacity-0 transition-all duration-300"></div>
+        <div
+          id="file-info"
+          class="text-lg font-inter text-gray-300 min-h-[28px] opacity-0 transition-all duration-300"
+        ></div>
       </form>
     </div>
 
@@ -617,7 +624,9 @@
           />
           <br />
           <div class="min-w-[300px] m-[10px_0] space-y-4">
-            <label class="flex items-center text-white bg-black/20 p-4 rounded-xl border border-[#444] cursor-pointer hover:bg-black/30 transition-all duration-200">
+            <label
+              class="flex items-center text-white bg-black/20 p-4 rounded-xl border border-[#444] cursor-pointer hover:bg-black/30 transition-all duration-200"
+            >
               <input
                 type="checkbox"
                 id="reg-is-admin"
@@ -636,11 +645,21 @@
                 class="w-full p-3 rounded-lg border border-[#555] outline-none text-base bg-[#2a2a2a] font-red-hat text-white transition-all duration-200 focus:border-primary-button focus:shadow-lg focus:shadow-primary-button/30 hover:bg-[#333333] appearance-none cursor-pointer"
                 required
               >
-                <option value="52428800" class="bg-[#2a2a2a] text-white">50 MB</option>
-                <option value="104857600" class="bg-[#2a2a2a] text-white">100 MB</option>
-                <option value="524288000" class="bg-[#2a2a2a] text-white">500 MB</option>
-                <option value="1073741824" class="bg-[#2a2a2a] text-white">1 GB</option>
-                <option value="0" class="bg-[#2a2a2a] text-white">Unlimited</option>
+                <option value="52428800" class="bg-[#2a2a2a] text-white">
+                  50 MB
+                </option>
+                <option value="104857600" class="bg-[#2a2a2a] text-white">
+                  100 MB
+                </option>
+                <option value="524288000" class="bg-[#2a2a2a] text-white">
+                  500 MB
+                </option>
+                <option value="1073741824" class="bg-[#2a2a2a] text-white">
+                  1 GB
+                </option>
+                <option value="0" class="bg-[#2a2a2a] text-white">
+                  Unlimited
+                </option>
               </select>
             </div>
           </div>
@@ -652,17 +671,35 @@
           >
             Register User
           </button>
-          <label id="register-error-label" class="font-red-hat text-error mt-2"></label>
-          <label id="register-success-label" class="font-red-hat text-ok mt-2"></label>
+          <label
+            id="register-error-label"
+            class="font-red-hat text-error mt-2"
+          ></label>
+          <label
+            id="register-success-label"
+            class="font-red-hat text-ok mt-2"
+          ></label>
         </form>
       </div>
     </div>
 
     <!-- Footer with creators -->
     <div class="absolute bottom-5 left-5 text-sm text-gray-400 animate-fade-in">
-      <p>Created by: 
-        <a href="https://github.com/zeti1223" target="_blank" class="text-primary-button hover:text-secondary-button transition-colors">zeti1223</a> & 
-        <a href="https://github.com/FonixPython" target="_blank" class="text-primary-button hover:text-secondary-button transition-colors">FonixPython</a>
+      <p>
+        Created by:
+        <a
+          href="https://github.com/zeti1223"
+          target="_blank"
+          class="text-primary-button hover:text-secondary-button transition-colors"
+          >zeti1223</a
+        >
+        &
+        <a
+          href="https://github.com/FonixPython"
+          target="_blank"
+          class="text-primary-button hover:text-secondary-button transition-colors"
+          >FonixPython</a
+        >
       </p>
     </div>
 
