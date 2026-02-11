@@ -459,8 +459,6 @@ function changeUsername(userId, currentUsername) {
 }
 
 function changeQuota(userId, username, currentQuota) {
-  alert('changeQuota called!');
-  console.log('changeQuota called with:', { userId, username, currentQuota });
   const currentQuotaText = currentQuota === 0 ? "Unlimited" : formatBytes(currentQuota);
   
   // Create quota change modal
@@ -523,11 +521,9 @@ function changeQuota(userId, username, currentQuota) {
         </div>
     `;
   document.body.appendChild(modal);
-  console.log('Quota modal appended to body');
   
   // Focus on admin password field
   document.getElementById('adminPassword').focus();
-  console.log('Quota modal admin password field focused');
 }
 
 function confirmPasswordChange(userId, username) {
@@ -673,23 +669,6 @@ async function updateUsername(userId, newUsername, adminPassword) {
     console.error("Error changing username:", error);
     showError("Failed to change username");
   }
-}
-
-function changeQuota(userId, username, currentQuota) {
-  const adminPassword = prompt(`Enter your admin password to change quota for user "${username}":`);
-  if (!adminPassword) return;
-
-  const currentQuotaText = currentQuota === 0 ? "Unlimited" : formatBytes(currentQuota);
-  const newQuotaInput = prompt(`Enter new quota for user "${username}" (in bytes, 0 for unlimited):\nCurrent quota: ${currentQuotaText}`);
-  if (newQuotaInput === null) return;
-
-  const newQuota = parseInt(newQuotaInput);
-  if (isNaN(newQuota) || newQuota < 0) {
-    showError("Quota must be a non-negative number (0 for unlimited)");
-    return;
-  }
-
-  updateQuota(userId, newQuota, adminPassword);
 }
 
 async function updateQuota(userId, newQuota, adminPassword) {
