@@ -350,11 +350,33 @@ function displayGlobalStorage(stats) {
             <!-- Configuration Info -->
             <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-300">Environment Variable:</span>
-                        <code class="text-primary-button font-mono text-sm">GLOBAL_STORAGE_LIMIT</code>
+                
+                <!-- Storage Limit Modifier -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        Global Storage Limit
+                    </label>
+                    <div class="flex gap-3">
+                        <select id="storageLimitUnit" class="bg-black/30 border border-[#444] text-white px-3 py-2 rounded-lg focus:outline-none focus:border-primary-button">
+                            <option value="0">Unlimited</option>
+                            <option value="104857600">100 MB</option>
+                            <option value="1073741824">1 GB</option>
+                            <option value="10737418240">10 GB</option>
+                            <option value="107374182400">100 GB</option>
+                            <option value="1099511627776">1 TB</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                        <input type="number" id="customStorageLimit" placeholder="Bytes" min="104857600" max="1099511627776" 
+                               class="bg-black/30 border border-[#444] text-white px-3 py-2 rounded-lg focus:outline-none focus:border-primary-button hidden">
+                        <button onclick="updateGlobalStorageLimit()" 
+                                class="bg-primary-button text-black px-4 py-2 rounded-lg hover:bg-primary-button/80 transition-colors">
+                            Update Limit
+                        </button>
                     </div>
+                    <div id="storageLimitMessage" class="mt-2 text-sm hidden"></div>
+                </div>
+                
+                <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-300">Current Value:</span>
                         <code class="text-primary-button font-mono text-sm">${stats.limit} bytes</code>
@@ -369,8 +391,7 @@ function displayGlobalStorage(stats) {
                 
                 <div class="mt-4 p-3 bg-black/30 rounded-lg">
                     <p class="text-gray-400 text-sm">
-                        💡 To set a global storage limit, configure the <code class="text-primary-button">GLOBAL_STORAGE_LIMIT</code> 
-                        environment variable in your .env file. Set to 0 for unlimited storage.
+                        💡 Set a global storage limit between 100MB and 1TB, or choose Unlimited for no restrictions.
                     </p>
                 </div>
             </div>
@@ -1012,5 +1033,74 @@ function showSuccess(message) {
 
   setTimeout(() => {
     notification.remove();
+  }, 3000);
+}
+
+// Handle storage limit unit change
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'storageLimitUnit') {
+    const customInput = document.getElementById('customStorageLimit');
+    if (e.target.value === 'custom') {
+      customInput.classList.remove('hidden');
+      customInput.focus();
+    } else {
+      customInput.classList.add('hidden');
+    }
+  }
+});
+
+// Update global storage limit
+async function updateGlobalStorageLimit() {
+  const unitSelect = document.getElementById('storageLimitUnit');
+  const customInput = document.getElementById('customStorageLimit');
+  const messageDiv = document.getElementById('storageLimitMessage');
+  
+  let limit;
+  if (unitSelect.value === 'custom') {
+    limit = parseInt(customInput.value);
+    if (!limit || limit < 104857600 || limit > 1099511627776) {
+      showStorageLimitMessage('Please enter a value between 100MB and 1TB', 'error');
+      return;
+    }
+  } else {
+    limit = parseInt(unitSelect.value);
+  }
+  
+  try {
+    const response = await fetch('/admin/setGlobalStorageLimit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authToken
+      },
+      body: JSON.stringify({ limit })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      showStorageLimitMessage('Global storage limit updated successfully!', 'success');
+      // Refresh the storage stats after a short delay
+      setTimeout(() => {
+        loadGlobalStorage();
+      }, 1000);
+    } else {
+      showStorageLimitMessage(data.error || 'Failed to update storage limit', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating storage limit:', error);
+    showStorageLimitMessage('Failed to update storage limit', 'error');
+  }
+}
+
+function showStorageLimitMessage(message, type) {
+  const messageDiv = document.getElementById('storageLimitMessage');
+  messageDiv.textContent = message;
+  messageDiv.classList.remove('hidden', 'text-green-400', 'text-red-400');
+  messageDiv.classList.add(type === 'success' ? 'text-green-400' : 'text-red-400');
+  
+  // Hide message after 3 seconds
+  setTimeout(() => {
+    messageDiv.classList.add('hidden');
   }, 3000);
 }

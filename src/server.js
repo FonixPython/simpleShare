@@ -336,7 +336,35 @@ async function getGlobalStorageLimit() {
     const result = await conn.query("SELECT num_value FROM settings WHERE name = ?", [
       "global-storage-limit",
     ]);
-    return result.length > 0 ? Number(result[0].num_value) : 0;
+    return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+async function setGlobalStorageLimit(limit) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // First check if the setting already exists
+    const existing = await conn.query("SELECT * FROM settings WHERE name = ?", [
+      "global-storage-limit",
+    ]);
+    
+    if (existing.length > 0) {
+      // Update existing record
+      await conn.query("UPDATE settings SET num_value = ? WHERE name = ?", [
+        limit, "global-storage-limit"
+      ]);
+    } else {
+      // Insert new record
+      await conn.query("INSERT INTO settings (name, num_value) VALUES (?, ?)", [
+        "global-storage-limit", limit
+      ]);
+    }
+    
+    return true;
   } finally {
     if (conn) conn.release();
   }
@@ -681,6 +709,41 @@ app.get("/admin/getGlobalStorageStats", async (req, res) => {
     } catch (error) {
       console.error("Error getting global storage stats:", error);
       return res.status(500).json({ error: "Failed to retrieve storage statistics" });
+    }
+  }
+});
+
+app.post("/admin/setGlobalStorageLimit", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401);
+  }
+  if (perms === "user") {
+    return res.sendStatus(403);
+  }
+  if (perms === "admin") {
+    try {
+      const { limit } = req.body;
+      
+      // Validate limit (0 for unlimited, or between 100MB and 1TB)
+      if (limit !== 0 && (limit < 104857600 || limit > 1099511627776)) {
+        return res.status(400).json({ 
+          error: "Storage limit must be 0 (unlimited) or between 100MB and 1TB" 
+        });
+      }
+      
+      await setGlobalStorageLimit(limit);
+      return res.status(200).json({ 
+        success: true, 
+        message: "Global storage limit updated successfully",
+        limit: limit 
+      });
+    } catch (error) {
+      console.error("Error setting global storage limit:", error);
+      return res.status(500).json({ error: "Failed to update storage limit" });
     }
   }
 });
