@@ -563,51 +563,23 @@ async function handleFiles(files) {
   if (!response.ok) {
     const error = await response.json();
     console.error("Upload failed:", error.error);
-    document
-      .getElementById("upload-status-symbol")
-      .classList.remove("animate-spin-slow");
-    document
-      .getElementById("upload-status-text")
-      .classList.remove("animate-pulse-slow");
-    document
-      .getElementById("upload-status-symbol")
-      .classList.add("animate-shake");
-    document
-      .getElementById("upload-status-text")
-      .classList.add("animate-shake");
-    document.getElementById("upload-status-symbol").innerText = "error";
+    document.getElementById("failure-content").classList.remove("hidden");
+    let messageP = document.getElementById("upload-error-message")
     console.log(response.status);
     if (response.status == 400) {
-      document.getElementById("upload-status-text").innerText = "Bad request!";
+      messageP.innerText = "Bad request!"
     } else if (response.status == 401) {
-      document.getElementById("upload-status-text").innerText = "Unauthorized!";
+      messageP.innerText= "Unauthorized!";
     } else if (response.status == 413) {
-      document.getElementById("upload-status-text").innerText =
-        "File too large! You ran out of quota!";
+      messageP.innerText= "File too large! You ran out of quota!";
     } else if (response.status == 500) {
-      document.getElementById("upload-status-text").innerText =
-        "Internal Server Error!";
+      messageP.innertText="Internal Server Error!";
     } else {
-      document.getElementById("upload-status-text").innerText =
+      messageP.innerText =
         "Unknown Error!";
     }
     return;
   } else {
-    document
-      .getElementById("upload-status-symbol")
-      .classList.remove("animate-spin-slow");
-    document
-      .getElementById("upload-status-text")
-      .classList.remove("animate-pulse-slow");
-    document
-      .getElementById("upload-status-symbol")
-      .classList.add("animate-bounce-gentle");
-    document
-      .getElementById("upload-status-text")
-      .classList.add("animate-bounce-gentle");
-    document.getElementById("upload-status-symbol").innerText = "check";
-    document.getElementById("upload-status-text").innerText =
-      "Upload successful!";
     let response_data = await response.json();
     console.log(response_data);
 

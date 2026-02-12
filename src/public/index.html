@@ -288,12 +288,23 @@
               Error: File too large!
             </p>
           </div>
+          <div id="failure-content" class="hidden space-y-6">
+            <div
+                    class="text-center p-6 bg-black/20 rounded-xl border border-[#444]"
+            >
+              <p class="text-sm text-gray-400 mb-2 font-inter">
+                Failed to upload:
+              </p>
+              <p class="text-sm text-error mb-2 font-inter" id="upload-error-message"></p>
+              </div>
+            </div>
+          </div>
 
           <div id="success-content" class="hidden space-y-6">
             <div
               class="text-center p-6 bg-black/20 rounded-xl border border-[#444]"
             >
-              <p class="text-sm text-gray-400 mb-2 font-inter">
+              <p class="text-gray-400 text-3xl font-inter">
                 Your file code:
               </p>
               <div class="flex items-center justify-center gap-3">
