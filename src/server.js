@@ -318,14 +318,51 @@ async function countAdmins() {
   }
 }
 
+async function getTotalStorageUsed() {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index");
+    return result[0].total_used || 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+async function getGlobalStorageLimit() {
+  const limit = process.env.GLOBAL_STORAGE_LIMIT;
+  return limit ? parseInt(limit) : 0;
+}
+
+async function calculateRemainingGlobalStorage() {
+  const totalLimit = await getGlobalStorageLimit();
+  if (totalLimit === 0) return null; // Unlimited
+  const totalUsed = await getTotalStorageUsed();
+  return totalLimit - totalUsed;
+}
+
 async function prepareUploadContext(req, res, next) {
   const code = await generateUniqueFileID(6);
   req.fileCode = code;
+  
+  // Check global storage limit first
+  const globalRemaining = await calculateRemainingGlobalStorage();
+  if (globalRemaining !== null && globalRemaining <= 0) {
+    return res.status(413).json({ error: "Global storage limit reached" });
+  }
+  
+  // Check user quota
   let remaining = await calculateRemainFromQuota(req.user.id);
   if (remaining < 0) {return res.sendStatus(413)}
   if (remaining !== null) {
     req.maxUploadSize = remaining;
   }
+  
+  // Apply global storage limit to max upload size if it's more restrictive
+  if (globalRemaining !== null && req.maxUploadSize && globalRemaining < req.maxUploadSize) {
+    req.maxUploadSize = globalRemaining;
+  }
+  
   next();
 }
 
@@ -605,6 +642,37 @@ app.get("/admin/getAllUsersWithFiles", async (req, res) => {
       return res.status(200).json(result);
     } else {
       return res.status(500).json({ error: "Failed to retrieve data" });
+    }
+  }
+});
+
+app.get("/admin/getGlobalStorageStats", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401);
+  }
+  if (perms === "user") {
+    return res.sendStatus(403);
+  }
+  if (perms === "admin") {
+    try {
+      const totalLimit = await getGlobalStorageLimit();
+      const totalUsed = await getTotalStorageUsed();
+      const remaining = totalLimit === 0 ? null : totalLimit - totalUsed;
+      
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).json({
+        limit: totalLimit,
+        used: totalUsed,
+        remaining: remaining,
+        percentage: totalLimit === 0 ? 0 : Math.round((totalUsed / totalLimit) * 100)
+      });
+    } catch (error) {
+      console.error("Error getting global storage stats:", error);
+      return res.status(500).json({ error: "Failed to retrieve storage statistics" });
     }
   }
 });
