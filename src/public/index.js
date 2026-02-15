@@ -211,7 +211,6 @@ function switchHamburber() {
     document.getElementById("hamburber-separator").classList.add("hidden");
     document.getElementById("logout-menu-item").classList.add("hidden");
     document.getElementById("admin-dash").classList.add("hidden");
-    document.getElementById("database-management").classList.add("hidden");
     document.getElementById("register-user").classList.add("hidden");
 
     burber_open = false;
@@ -228,7 +227,6 @@ function switchHamburber() {
       access_level.then((value) => {
         if (value === "admin") {
           document.getElementById("admin-dash").classList.remove("hidden");
-          document.getElementById("database-management").classList.remove("hidden");
           document.getElementById("register-user").classList.remove("hidden");
         }
       });

@@ -1484,10 +1484,6 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "./public/admin.html"));
 });
 
-app.get("/database", (req, res) => {
-  res.sendFile(path.join(__dirname, "./public/database.html"));
-});
-
 app.use("/", (req, res, next) => {
   if (req.method === "GET") {
     res.sendFile(path.join(__dirname, "./public/index.html"));
