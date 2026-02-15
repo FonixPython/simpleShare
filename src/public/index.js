@@ -170,20 +170,84 @@ async function download(code) {
 }
 
 async function deleteFile(code) {
-  let result = await fetch("/delete/" + code, {
-    METHOD: "GET",
-    headers: {
-      Authorization: `${localStorage.getItem("token")}`,
-    },
+  // Find the delete button in the table
+  const deleteButtons = document.querySelectorAll('.delete-button');
+  let targetButton = null;
+  deleteButtons.forEach(btn => {
+    if (btn.getAttribute('onclick').includes(code)) {
+      targetButton = btn;
+    }
   });
-  if (result.status !== 200) {
-    console.log("Error while deleting file");
-    console.log(result.status);
-    let result = await result.json();
-    console.log(result.body.message);
+
+  if (targetButton) {
+    // Show loading state on the button
+    const originalBtnHTML = targetButton.innerHTML;
+    targetButton.innerHTML = '<span class="material-icons-outlined animate-spin-slow">hourglass_empty</span>';
+    targetButton.disabled = true;
+    targetButton.classList.add("opacity-75", "cursor-not-allowed");
   }
-  await updateFilesDisplay();
-  await updateQuotaDisplay();
+
+  try {
+    let result = await fetch("/delete/" + code, {
+      METHOD: "GET",
+      headers: {
+        Authorization: `${localStorage.getItem("token")}`,
+      },
+    });
+    
+    if (result.status !== 200) {
+      console.log("Error while deleting file");
+      console.log(result.status);
+      let errorResult = await result.json();
+      console.log(errorResult.message);
+      
+      // Show error state on button
+      if (targetButton) {
+        targetButton.innerHTML = '<span class="material-icons-outlined">error</span>';
+        targetButton.style.backgroundColor = "#f77b5e";
+        
+        // Reset button after delay
+        setTimeout(() => {
+          targetButton.innerHTML = originalBtnHTML;
+          targetButton.style.backgroundColor = "";
+          targetButton.disabled = false;
+          targetButton.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 2000);
+      }
+    } else {
+      // Show success state on button briefly
+      if (targetButton) {
+        targetButton.innerHTML = '<span class="material-icons-outlined">check_circle</span>';
+        targetButton.style.backgroundColor = "#5ef78c";
+        
+        setTimeout(() => {
+          targetButton.innerHTML = originalBtnHTML;
+          targetButton.style.backgroundColor = "";
+          targetButton.disabled = false;
+          targetButton.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 1000);
+      }
+      
+      await updateFilesDisplay();
+      await updateQuotaDisplay();
+    }
+  } catch (err) {
+    console.error("Network error during file deletion:", err);
+    
+    // Show network error state on button
+    if (targetButton) {
+      targetButton.innerHTML = '<span class="material-icons-outlined">wifi_off</span>';
+      targetButton.style.backgroundColor = "#f77b5e";
+      
+      // Reset button after delay
+      setTimeout(() => {
+        targetButton.innerHTML = originalBtnHTML;
+        targetButton.style.backgroundColor = "";
+        targetButton.disabled = false;
+        targetButton.classList.remove("opacity-75", "cursor-not-allowed");
+      }, 2000);
+    }
+  }
 }
 
 function redirectToDashboard() {
@@ -328,10 +392,19 @@ document
     const isAdmin = document.getElementById("reg-is-admin").checked;
     const quota = document.getElementById("reg-quota").value;
     const token = localStorage.getItem("token");
+    const submitBtn = document.getElementById("register-user-button");
+    const errorLabel = document.getElementById("register-error-label");
+    const successLabel = document.getElementById("register-success-label");
 
     // Clear previous messages
-    document.getElementById("register-error-label").innerText = "";
-    document.getElementById("register-success-label").innerText = "";
+    errorLabel.innerText = "";
+    successLabel.innerText = "";
+
+    // Show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.innerHTML = '<span class="material-icons-outlined animate-spin-slow mr-2">hourglass_empty</span>Registering...';
+    submitBtn.disabled = true;
+    submitBtn.classList.add("opacity-75", "cursor-not-allowed");
 
     try {
       const response = await fetch("/register", {
@@ -351,13 +424,25 @@ document
       const result = await response.json();
 
       if (response.status === 200) {
-        document.getElementById("register-success-label").innerText =
-          "User registered successfully!";
+        // Show success state briefly
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">check_circle</span>Success!';
+        submitBtn.style.backgroundColor = "#5ef78c";
+        successLabel.innerText = "User registered successfully!";
+        
         // Clear form
         document.getElementById("reg-username").value = "";
         document.getElementById("reg-password").value = "";
         document.getElementById("reg-is-admin").checked = false;
         document.getElementById("reg-quota").value = "52428800";
+        
+        // Reset button after delay
+        setTimeout(() => {
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.style.backgroundColor = "";
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 2000);
+        
         // Close modal after 2 seconds
         setTimeout(() => {
           document
@@ -366,13 +451,33 @@ document
           document.getElementById("register-success-label").innerText = "";
         }, 2000);
       } else {
-        document.getElementById("register-error-label").innerText =
-          result.error || "Registration failed!";
+        // Show error state
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">error</span>Registration Failed';
+        submitBtn.style.backgroundColor = "#f77b5e";
+        errorLabel.innerText = result.error || "Registration failed!";
+        
+        // Reset button after delay
+        setTimeout(() => {
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.style.backgroundColor = "";
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 2000);
       }
     } catch (err) {
       console.error("Registration error:", err);
-      document.getElementById("register-error-label").innerText =
-        "Network error. Please try again.";
+      // Show network error state
+      submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">wifi_off</span>Network Error';
+      submitBtn.style.backgroundColor = "#f77b5e";
+      errorLabel.innerText = "Network error. Please try again.";
+      
+      // Reset button after delay
+      setTimeout(() => {
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.style.backgroundColor = "";
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+      }, 2000);
     }
   });
 
@@ -386,6 +491,15 @@ async function checkFileExists() {
   const downloadBtn = document.getElementById("download-btn");
 
   if (fullCode.length === 6) {
+    // Show loading state
+    fileInfoElement.innerHTML = '<span class="material-icons-outlined animate-spin-slow">hourglass_empty</span> Checking...';
+    fileInfoElement.style.color = "#6792ff";
+    
+    // Animate: add margin to button and show text
+    downloadBtn.classList.add("mb-5");
+    fileInfoElement.classList.remove("opacity-0");
+    fileInfoElement.classList.add("opacity-100");
+
     try {
       const response = await fetch("/checkFile", {
         method: "POST",
@@ -402,32 +516,17 @@ async function checkFileExists() {
           fileInfoElement.textContent = filename;
           fileInfoElement.style.color = "#5ef78c";
         } else {
-          fileInfoElement.textContent = "Check ID";
+          fileInfoElement.textContent = "File not found";
           fileInfoElement.style.color = "#f77b5e";
         }
-
-        // Animate: add margin to button and show text
-        downloadBtn.classList.add("mb-5");
-        fileInfoElement.classList.remove("opacity-0");
-        fileInfoElement.classList.add("opacity-100");
       } else {
         fileInfoElement.textContent = "Check ID";
         fileInfoElement.style.color = "#f77b5e";
-
-        // Animate: add margin to button and show text
-        downloadBtn.classList.add("mb-5");
-        fileInfoElement.classList.remove("opacity-0");
-        fileInfoElement.classList.add("opacity-100");
       }
     } catch (error) {
       console.error("Error checking file:", error);
-      fileInfoElement.textContent = "Check ID";
+      fileInfoElement.textContent = "Network error";
       fileInfoElement.style.color = "#f77b5e";
-
-      // Animate: add margin to button and show text
-      downloadBtn.classList.add("mb-5");
-      fileInfoElement.classList.remove("opacity-0");
-      fileInfoElement.classList.add("opacity-100");
     }
   } else {
     // Hide text and remove margin when not 6 characters
@@ -536,21 +635,26 @@ async function handleFiles(files) {
   document.getElementById("drop_zone").style.display = "none";
   document.getElementById("upload-status-box").classList.remove("hidden");
   document.getElementById("upload-status-box").style.display = "flex";
-  document
-    .getElementById("upload-status-symbol")
-    .classList.add("animate-spin-slow");
+  
+  // Enhanced loading animation
+  document.getElementById("upload-status-symbol").classList.remove("hidden");
+  document.getElementById("upload-status-symbol").classList.add("animate-spin-slow");
   document.getElementById("upload-status-symbol").innerText = "hourglass_empty";
-  document
-    .getElementById("upload-status-text")
-    .classList.add("animate-pulse-slow");
-  document.getElementById("upload-status-text").innerText = "Working...";
+  document.getElementById("upload-status-text").classList.remove("hidden");
+  document.getElementById("upload-status-text").classList.add("animate-pulse-slow");
+  document.getElementById("upload-status-text").innerText = "Preparing upload...";
+  
   document
     .getElementById("upload-close-btn")
     .addEventListener("click", (event) => {
       location.reload();
     });
+  
   const formData = new FormData();
   formData.append("file", files[0]);
+
+  // Update status to show uploading
+  document.getElementById("upload-status-text").innerText = "Uploading file...";
 
   const response = await fetch("/upload", {
     method: "POST",
@@ -560,9 +664,22 @@ async function handleFiles(files) {
     body: formData,
   });
 
+  // Update status to show processing
+  document.getElementById("upload-status-text").innerText = "Processing response...";
+  document.getElementById("upload-status-symbol").innerText = "cached";
+
   if (!response.ok) {
     const error = await response.json();
     console.error("Upload failed:", error.error);
+    
+    // Show error state
+    document.getElementById("upload-status-symbol").classList.remove("animate-spin-slow");
+    document.getElementById("upload-status-symbol").innerText = "error";
+    document.getElementById("upload-status-symbol").style.color = "#f77b5e";
+    document.getElementById("upload-status-text").classList.remove("animate-pulse-slow");
+    document.getElementById("upload-status-text").innerText = "Upload failed!";
+    document.getElementById("upload-status-text").style.color = "#f77b5e";
+    
     document.getElementById("failure-content").classList.remove("hidden");
     let messageP = document.getElementById("upload-error-message")
     console.log(response.status);
@@ -583,65 +700,75 @@ async function handleFiles(files) {
     let response_data = await response.json();
     console.log(response_data);
 
-    // Show success content
-    document.getElementById("success-content").classList.remove("hidden");
-    document.getElementById("filecode-display").innerText = response_data.code;
+    // Show success state
+    document.getElementById("upload-status-symbol").classList.remove("animate-spin-slow");
+    document.getElementById("upload-status-symbol").innerText = "check_circle";
+    document.getElementById("upload-status-symbol").style.color = "#5ef78c";
+    document.getElementById("upload-status-text").classList.remove("animate-pulse-slow");
+    document.getElementById("upload-status-text").innerText = "Upload successful!";
+    document.getElementById("upload-status-text").style.color = "#5ef78c";
 
-    const base_url = location.href;
-    const full_url = base_url + "files/" + response_data.code;
-    document.getElementById("link-text").innerText = full_url;
+    // Show success content after a brief delay
+    setTimeout(async () => {
+      document.getElementById("success-content").classList.remove("hidden");
+      document.getElementById("filecode-display").innerText = response_data.code;
 
-    // Copy code functionality
-    document
-      .getElementById("filecode-display")
-      .addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await navigator.clipboard.writeText(response_data.code);
+      const base_url = location.href;
+      const full_url = base_url + "files/" + response_data.code;
+      document.getElementById("link-text").innerText = full_url;
 
-          // Visual feedback
-          const element = e.target;
-          const originalColor = element.style.color;
-          element.style.color = "#5ef78c";
-          element.style.transform = "scale(1.1)";
-          element.style.transition = "all 0.3s ease";
+      // Copy code functionality
+      document
+        .getElementById("filecode-display")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            await navigator.clipboard.writeText(response_data.code);
 
-          setTimeout(() => {
-            element.style.color = originalColor;
-            element.style.transform = "scale(1)";
-          }, 800);
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      });
+            // Visual feedback
+            const element = e.target;
+            const originalColor = element.style.color;
+            element.style.color = "#5ef78c";
+            element.style.transform = "scale(1.1)";
+            element.style.transition = "all 0.3s ease";
 
-    // Copy link functionality
-    document
-      .getElementById("copy-link-btn")
-      .addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await navigator.clipboard.writeText(full_url);
-          showCopyFeedback(e.target.closest("button"), "Link copied!");
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      });
+            setTimeout(() => {
+              element.style.color = originalColor;
+              element.style.transform = "scale(1)";
+            }, 800);
+          } catch (err) {
+            console.error("Failed to copy:", err);
+          }
+        });
 
-    // Copy on click of URL text
-    document
-      .getElementById("link-text")
-      .addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await navigator.clipboard.writeText(full_url);
-          showCopyFeedback(e.target, "Link copied!");
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      });
+      // Copy link functionality
+      document
+        .getElementById("copy-link-btn")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            await navigator.clipboard.writeText(full_url);
+            showCopyFeedback(e.target.closest("button"), "Link copied!");
+          } catch (err) {
+            console.error("Failed to copy:", err);
+          }
+        });
 
-    await updateQuotaDisplay();
+      // Copy on click of URL text
+      document
+        .getElementById("link-text")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            await navigator.clipboard.writeText(full_url);
+            showCopyFeedback(e.target, "Link copied!");
+          } catch (err) {
+            console.error("Failed to copy:", err);
+          }
+        });
+
+      await updateQuotaDisplay();
+    }, 1000);
   }
 }
 
@@ -675,6 +802,19 @@ document
 
     const old_password = document.getElementById("old-password").value;
     const new_password = document.getElementById("new-password").value;
+    const submitBtn = document.getElementById("change-password-button");
+    const errorLabel = document.getElementById("change-password-error-label");
+    const successLabel = document.getElementById("change-password-success-label");
+
+    // Clear previous messages
+    errorLabel.innerText = "";
+    successLabel.innerText = "";
+
+    // Show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.innerHTML = '<span class="material-icons-outlined animate-spin-slow mr-2">hourglass_empty</span>Changing...';
+    submitBtn.disabled = true;
+    submitBtn.classList.add("opacity-75", "cursor-not-allowed");
 
     try {
       const response = await fetch("/userChangePassword", {
@@ -687,21 +827,48 @@ document
         headers: { "Content-type": "application/json; charset=UTF-8" },
       });
       const json = await response.json();
+      
       if (response.status === 200) {
-        document.getElementById("change-password-label").innerText =
-          json.message;
-        location.reload();
-      }
-      if (response.status === 400) {
-        document.getElementById("change-password-label").innerText =
-          json.message;
-      }
-      if (response.status === 401) {
-        document.getElementById("change-password-label").innerText =
-          json.message;
+        // Show success state briefly
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">check_circle</span>Success!';
+        submitBtn.style.backgroundColor = "#5ef78c";
+        successLabel.innerText = json.message;
+        
+        // Clear form
+        document.getElementById("old-password").value = "";
+        document.getElementById("new-password").value = "";
+        
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        // Show error state
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">error</span>Failed';
+        submitBtn.style.backgroundColor = "#f77b5e";
+        errorLabel.innerText = json.message;
+        
+        // Reset button after delay
+        setTimeout(() => {
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.style.backgroundColor = "";
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 2000);
       }
     } catch (err) {
       console.error("Fetch error:", err);
+      // Show network error state
+      submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">wifi_off</span>Network Error';
+      submitBtn.style.backgroundColor = "#f77b5e";
+      errorLabel.innerText = "Network error. Please try again.";
+      
+      // Reset button after delay
+      setTimeout(() => {
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.style.backgroundColor = "";
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+      }, 2000);
     }
   });
 
@@ -709,10 +876,19 @@ document
 document
   .getElementById("loginForm")
   .addEventListener("submit", async function (e) {
-    e.preventDefault(); // This stops the page from refreshing!
+    e.preventDefault(); // This stops of page from refreshing!
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const errorLabel = document.getElementById("login-error-label");
+    
+    // Show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.innerHTML = '<span class="material-icons-outlined animate-spin-slow mr-2">hourglass_empty</span>Logging in...';
+    submitBtn.disabled = true;
+    submitBtn.classList.add("opacity-75", "cursor-not-allowed");
+    errorLabel.textContent = "";
 
     try {
       const response = await fetch("/login", {
@@ -721,15 +897,43 @@ document
         headers: { "Content-type": "application/json; charset=UTF-8" },
       });
       const json = await response.json();
+      
       if (response.status === 200) {
-        localStorage.setItem("token", json.token);
-        location.reload();
-      }
-      if (response.status === 401) {
-        document.getElementById("login-error-label").innerText =
-          "Login Failed! Invalid Credentials";
+        // Show success state briefly
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">check_circle</span>Success!';
+        submitBtn.style.backgroundColor = "#5ef78c";
+        
+        setTimeout(() => {
+          localStorage.setItem("token", json.token);
+          location.reload();
+        }, 500);
+      } else {
+        // Show error state
+        submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">error</span>Login Failed';
+        submitBtn.style.backgroundColor = "#f77b5e";
+        errorLabel.innerText = "Login Failed! Invalid Credentials";
+        
+        // Reset button after delay
+        setTimeout(() => {
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.style.backgroundColor = "";
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+        }, 2000);
       }
     } catch (err) {
       console.error("Fetch error:", err);
+      // Show network error state
+      submitBtn.innerHTML = '<span class="material-icons-outlined mr-2">wifi_off</span>Network Error';
+      submitBtn.style.backgroundColor = "#f77b5e";
+      errorLabel.innerText = "Network error. Please try again.";
+      
+      // Reset button after delay
+      setTimeout(() => {
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.style.backgroundColor = "";
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-75", "cursor-not-allowed");
+      }, 2000);
     }
   });

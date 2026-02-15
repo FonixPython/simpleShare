@@ -103,6 +103,17 @@ function setupEventListeners() {
 }
 
 async function loadUsers() {
+  // Show loading state
+  const container = document.getElementById("users-container");
+  container.innerHTML = `
+    <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading users...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getAllUsersWithFiles", {
       method: "GET",
@@ -119,7 +130,17 @@ async function loadUsers() {
     displayUsers(users);
   } catch (error) {
     console.error("Error loading users:", error);
-    showError("Failed to load users");
+    container.innerHTML = `
+      <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load users</p>
+          <button onclick="loadUsers()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -210,6 +231,17 @@ function createUserRow(user) {
 }
 
 async function loadAllFiles() {
+  // Show loading state
+  const container = document.getElementById("all-files-container");
+  container.innerHTML = `
+    <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading all files...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getAllUsersWithFiles", {
       method: "GET",
@@ -238,11 +270,32 @@ async function loadAllFiles() {
     displayAllFiles(allFiles);
   } catch (error) {
     console.error("Error loading files:", error);
-    showError("Failed to load files");
+    container.innerHTML = `
+      <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load files</p>
+          <button onclick="loadAllFiles()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
 async function loadGlobalStorage() {
+  // Show loading state
+  const container = document.getElementById("global-storage-container");
+  container.innerHTML = `
+    <div class="w-full max-w-4xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading storage statistics...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getGlobalStorageStats", {
       method: "GET",
@@ -259,7 +312,17 @@ async function loadGlobalStorage() {
     displayGlobalStorage(stats);
   } catch (error) {
     console.error("Error loading global storage stats:", error);
-    showError("Failed to load global storage statistics");
+    container.innerHTML = `
+      <div class="w-full max-w-4xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load storage statistics</p>
+          <button onclick="loadGlobalStorage()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -510,6 +573,9 @@ function confirmAdminStatusChange(userId, username, newIsAdmin) {
 }
 
 async function updateAdminStatus(userId, isAdmin, adminPassword) {
+  // Show loading notification
+  showLoading("Changing admin status...");
+  
   try {
     const response = await fetch("/admin/changeAdminStatus", {
       method: "POST",
@@ -539,6 +605,8 @@ async function updateAdminStatus(userId, isAdmin, adminPassword) {
       throw new Error(`Invalid JSON response: ${responseText}`);
     }
 
+    hideLoading();
+    
     if (response.ok) {
       showSuccess(data.message || "Admin status changed successfully");
       loadUsers(); // Refresh users list
@@ -546,6 +614,7 @@ async function updateAdminStatus(userId, isAdmin, adminPassword) {
       showError(data.error || "Failed to change admin status");
     }
   } catch (error) {
+    hideLoading();
     console.error("Error changing admin status:", error);
     showError(`Failed to change admin status: ${error.message}`);
   }
@@ -611,6 +680,9 @@ async function confirmDeleteUser(userId, username) {
     return;
   }
 
+  // Show loading notification
+  showLoading("Deleting user...");
+
   try {
     const response = await fetch("/admin/deleteUser", {
       method: "POST",
@@ -624,15 +696,18 @@ async function confirmDeleteUser(userId, username) {
       }),
     });
 
+    hideLoading();
+
     if (response.ok) {
       showSuccess(`User ${username} and all their files have been deleted`);
       closeDeleteModal();
-      loadUsers(); // Reload the users list
+      loadUsers(); // Reload users list
     } else {
       const error = await response.json();
       showError(error.error || "Failed to delete user");
     }
   } catch (error) {
+    hideLoading();
     console.error("Error deleting user:", error);
     showError("Failed to delete user");
   }
@@ -1502,5 +1577,28 @@ function refreshData() {
     showSuccess("Data refreshed");
   } else {
     showError("Please select a table first");
+  }
+}
+
+// Loading notification functions
+function showLoading(message) {
+  // Remove any existing loading notifications
+  hideLoading();
+  
+  const notification = document.createElement("div");
+  notification.id = "loading-notification";
+  notification.className = "fixed top-4 right-4 z-50 bg-black/90 backdrop-blur-md text-white px-6 py-4 rounded-lg shadow-lg border border-[#444] flex items-center gap-3 animate-slide-down";
+  notification.innerHTML = `
+    <span class="material-icons-outlined animate-spin-slow text-primary-button">hourglass_empty</span>
+    <span class="font-medium">${message}</span>
+  `;
+  
+  document.body.appendChild(notification);
+}
+
+function hideLoading() {
+  const loading = document.getElementById("loading-notification");
+  if (loading) {
+    loading.remove();
   }
 }
