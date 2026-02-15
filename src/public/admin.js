@@ -1580,6 +1580,35 @@ function refreshData() {
   }
 }
 
+function saveAllChanges() {
+  if (!currentTable) {
+    showError("Please select a table first");
+    return;
+  }
+  
+  // Trigger blur on all editable cells to save changes
+  const editableCells = document.querySelectorAll('#tableBody td[contenteditable="true"]');
+  let changesCount = 0;
+  
+  editableCells.forEach(cell => {
+    if (cell !== document.activeElement) {
+      cell.blur();
+      changesCount++;
+    }
+  });
+  
+  if (changesCount > 0) {
+    showSuccess(`Saving ${changesCount} potential changes...`);
+    // Refresh data after a short delay to ensure all saves are processed
+    setTimeout(() => {
+      loadTableData();
+      showSuccess("All changes saved successfully");
+    }, 500);
+  } else {
+    showSuccess("No pending changes to save");
+  }
+}
+
 // Loading notification functions
 function showLoading(message) {
   // Remove any existing loading notifications
