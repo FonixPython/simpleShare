@@ -311,7 +311,9 @@ async function countAdmins() {
   let conn;
   try {
     conn = await pool.getConnection();
-    const result = await conn.query("SELECT COUNT(*) as admin_count FROM users WHERE is_admin = 1");
+    const result = await conn.query(
+      "SELECT COUNT(*) as admin_count FROM users WHERE is_admin = 1",
+    );
     return result[0].admin_count;
   } finally {
     if (conn) conn.release();
@@ -322,7 +324,9 @@ async function getTotalStorageUsed() {
   let conn;
   try {
     conn = await pool.getConnection();
-    const result = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index");
+    const result = await conn.query(
+      "SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",
+    );
     return Number(result[0].total_used || 0);
   } finally {
     if (conn) conn.release();
@@ -333,9 +337,10 @@ async function getGlobalStorageLimit() {
   let conn;
   try {
     conn = await pool.getConnection();
-    const result = await conn.query("SELECT num_value FROM settings WHERE name = ?", [
-      "global-storage-limit",
-    ]);
+    const result = await conn.query(
+      "SELECT num_value FROM settings WHERE name = ?",
+      ["global-storage-limit"],
+    );
     return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
   } finally {
     if (conn) conn.release();
@@ -346,24 +351,26 @@ async function setGlobalStorageLimit(limit) {
   let conn;
   try {
     conn = await pool.getConnection();
-    
+
     // First check if the setting already exists
     const existing = await conn.query("SELECT * FROM settings WHERE name = ?", [
       "global-storage-limit",
     ]);
-    
+
     if (existing.length > 0) {
       // Update existing record
       await conn.query("UPDATE settings SET num_value = ? WHERE name = ?", [
-        limit, "global-storage-limit"
+        limit,
+        "global-storage-limit",
       ]);
     } else {
       // Insert new record
       await conn.query("INSERT INTO settings (name, num_value) VALUES (?, ?)", [
-        "global-storage-limit", limit
+        "global-storage-limit",
+        limit,
       ]);
     }
-    
+
     return true;
   } finally {
     if (conn) conn.release();
@@ -386,31 +393,31 @@ async function prepareUploadContext(req, res, next) {
   if (globalRemaining !== null && globalRemaining <= 0) {
     return res.status(500).json({ error: "Global storage limit reached" });
   }
-  
+
   // Check user quota
   let remaining = await calculateRemainFromQuota(req.user.id);
-  if (remaining < 0) {return res.sendStatus(413)}
+  if (remaining < 0) {
+    return res.sendStatus(413);
+  }
   if (remaining !== null) {
     req.maxUploadSize = remaining;
-  }
-  else if(globalRemaining !== null && remaining === null) {
-    if(globalRemaining <= 0) {
-      res.sendStatus(500);
-    }
-    else {
-      req.maxUploadSize = globalRemaining;
-    }
-  }
-  
-  // Apply global storage limit to max upload size if it's more restrictive
-  if (globalRemaining !== null && remaining > globalRemaining) {
+  } else if (globalRemaining !== null && remaining === null) {
     if (globalRemaining <= 0) {
-      res.sendStatus(500)
+      res.sendStatus(500);
     } else {
       req.maxUploadSize = globalRemaining;
     }
   }
-  
+
+  // Apply global storage limit to max upload size if it's more restrictive
+  if (globalRemaining !== null && remaining > globalRemaining) {
+    if (globalRemaining <= 0) {
+      res.sendStatus(500);
+    } else {
+      req.maxUploadSize = globalRemaining;
+    }
+  }
+
   next();
 }
 
@@ -694,6 +701,141 @@ app.get("/admin/getAllUsersWithFiles", async (req, res) => {
   }
 });
 
+app.get("/admin/getTables", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401);
+  }
+  if (perms === "user") {
+    return res.sendStatus(403);
+  }
+  if (perms === "admin") {
+    let conn;
+    try {
+      conn = await pool.getConnection();
+      const result = await conn.execute("SHOW TABLES");
+
+      // The result is already array of rows, not [rows, fields]
+      const rows = result;
+
+      if (!Array.isArray(rows)) {
+        console.error("Rows is not an array:", rows);
+        return res.status(500).json({ error: "Invalid query result format" });
+      }
+
+      // Extract table names from the result
+      const tables = rows.map((row) => {
+        // MySQL SHOW TABLES returns objects with key like "Tables_in_databaseName"
+        const keys = Object.keys(row);
+        return row[keys[0]];
+      });
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).json(tables);
+    } catch (error) {
+      console.error("Error getting tables:", error);
+      return res.status(500).json({ error: "Failed to retrieve tables" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
+});
+
+app.get("/admin/getTableData", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401);
+  }
+  if (perms === "user") {
+    return res.sendStatus(403);
+  }
+  if (perms === "admin") {
+    let conn;
+    try {
+      const tableName = req.query.table;
+      if (!tableName) {
+        return res.status(400).json({ error: "Table name is required" });
+      }
+
+      conn = await pool.getConnection();
+
+      // Get column information
+      const columns = await conn.execute(`DESCRIBE ${tableName}`);
+      const columnNames = columns.map((col) => col.Field);
+
+      // Get table data
+      const rows = await conn.execute(`SELECT * FROM ${tableName} LIMIT 100`);
+
+      // Convert rows to array format and handle BigInt
+      const data = rows.map((row) => {
+        return columnNames.map((col) => {
+          const value = row[col];
+          return typeof value === "bigint" ? Number(value) : value;
+        });
+      });
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).json({
+        columns: columnNames,
+        rows: data,
+      });
+    } catch (error) {
+      console.error("Error getting table data:", error);
+      return res.status(500).json({ error: "Failed to retrieve table data" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
+});
+
+app.get("/admin/getTableSchema", async (req, res) => {
+  if (!req.headers.authorization) {
+    return res.sendStatus(401);
+  }
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.sendStatus(401);
+  }
+  if (perms === "user") {
+    return res.sendStatus(403);
+  }
+  if (perms === "admin") {
+    let conn;
+    try {
+      const tableName = req.query.table;
+      if (!tableName) {
+        return res.status(400).json({ error: "Table name is required" });
+      }
+
+      conn = await pool.getConnection();
+      const columns = await conn.execute(`DESCRIBE ${tableName}`);
+
+      const schema = columns.map((col) => ({
+        name: col.Field,
+        type: col.Type,
+        nullable: col.Null,
+        key: col.Key,
+        default: col.Default,
+        extra: col.Extra,
+      }));
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).json(schema);
+    } catch (error) {
+      console.error("Error getting table schema:", error);
+      return res.status(500).json({ error: "Failed to retrieve table schema" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
+});
+
 app.get("/admin/getGlobalStorageStats", async (req, res) => {
   if (!req.headers.authorization) {
     return res.sendStatus(401);
@@ -710,17 +852,20 @@ app.get("/admin/getGlobalStorageStats", async (req, res) => {
       const totalLimit = await getGlobalStorageLimit();
       const totalUsed = await getTotalStorageUsed();
       const remaining = totalLimit === 0 ? null : totalLimit - totalUsed;
-      
+
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       return res.status(200).json({
         limit: totalLimit,
         used: totalUsed,
         remaining: remaining,
-        percentage: totalLimit === 0 ? 0 : Math.round((totalUsed / totalLimit) * 100)
+        percentage:
+          totalLimit === 0 ? 0 : Math.round((totalUsed / totalLimit) * 100),
       });
     } catch (error) {
       console.error("Error getting global storage stats:", error);
-      return res.status(500).json({ error: "Failed to retrieve storage statistics" });
+      return res
+        .status(500)
+        .json({ error: "Failed to retrieve storage statistics" });
     }
   }
 });
@@ -739,19 +884,19 @@ app.post("/admin/setGlobalStorageLimit", async (req, res) => {
   if (perms === "admin") {
     try {
       const { limit } = req.body;
-      
+
       // Validate limit (0 for unlimited, or between 100MB and 1TB)
       if (limit !== 0 && (limit < 104857600 || limit > 1099511627776)) {
-        return res.status(400).json({ 
-          error: "Storage limit must be 0 (unlimited) or between 100MB and 1TB" 
+        return res.status(400).json({
+          error: "Storage limit must be 0 (unlimited) or between 100MB and 1TB",
         });
       }
-      
+
       await setGlobalStorageLimit(limit);
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         message: "Global storage limit updated successfully",
-        limit: limit 
+        limit: limit,
       });
     } catch (error) {
       console.error("Error setting global storage limit:", error);
@@ -1059,7 +1204,9 @@ app.post("/admin/changePassword", async (req, res) => {
   }
 
   if (newPassword.length < 6) {
-    return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long" });
   }
 
   let conn;
@@ -1097,7 +1244,9 @@ app.post("/admin/changePassword", async (req, res) => {
     }
 
     // Check if target user exists
-    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
     if (targetUser.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1132,7 +1281,9 @@ app.post("/admin/changeUsername", async (req, res) => {
   }
 
   if (newUsername.length < 3) {
-    return res.status(400).json({ error: "Username must be at least 3 characters long" });
+    return res
+      .status(400)
+      .json({ error: "Username must be at least 3 characters long" });
   }
 
   let conn;
@@ -1170,13 +1321,18 @@ app.post("/admin/changeUsername", async (req, res) => {
     }
 
     // Check if target user exists
-    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
     if (targetUser.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
 
     // Check if new username is already taken
-    const existingUser = await conn.query("SELECT * FROM users WHERE username = ?", [newUsername]);
+    const existingUser = await conn.query(
+      "SELECT * FROM users WHERE username = ?",
+      [newUsername],
+    );
     if (existingUser.length > 0) {
       return res.status(400).json({ error: "Username already exists" });
     }
@@ -1210,7 +1366,9 @@ app.post("/admin/changeQuota", async (req, res) => {
   // Validate quota (must be a non-negative number, 0 means unlimited)
   const quotaNum = parseInt(newQuota);
   if (isNaN(quotaNum) || quotaNum < 0) {
-    return res.status(400).json({ error: "Quota must be a non-negative number (0 for unlimited)" });
+    return res
+      .status(400)
+      .json({ error: "Quota must be a non-negative number (0 for unlimited)" });
   }
 
   let conn;
@@ -1248,7 +1406,9 @@ app.post("/admin/changeQuota", async (req, res) => {
     }
 
     // Check if target user exists
-    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
     if (targetUser.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -1271,7 +1431,7 @@ app.post("/admin/changeQuota", async (req, res) => {
 app.post("/admin/changeAdminStatus", async (req, res) => {
   // Set proper content type for JSON responses
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  
+
   if (!req.headers.authorization) {
     return res.status(401).json({ error: "Authorization required" });
   }
@@ -1317,21 +1477,30 @@ app.post("/admin/changeAdminStatus", async (req, res) => {
     }
 
     // Check if target user exists
-    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const targetUser = await conn.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
     if (targetUser.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
 
     // Prevent admin from changing their own admin status
     if (userId === adminUserId.toString()) {
-      return res.status(400).json({ error: "Cannot change your own admin status" });
+      return res
+        .status(400)
+        .json({ error: "Cannot change your own admin status" });
     }
 
     // If trying to remove admin status, check if this would leave zero admins
     if (!isAdmin && targetUser[0].is_admin === 1) {
       const adminCount = await countAdmins();
       if (adminCount <= 1) {
-        return res.status(400).json({ error: "Cannot remove admin status: there must be at least one admin on the server" });
+        return res
+          .status(400)
+          .json({
+            error:
+              "Cannot remove admin status: there must be at least one admin on the server",
+          });
       }
     }
 
@@ -1360,6 +1529,260 @@ app.use("/", (req, res, next) => {
     res.sendFile(path.join(__dirname, "./public/index.html"));
   } else {
     next();
+  }
+});
+
+app.post("/admin/updateCell", async (req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Authorization required" });
+  }
+
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  if (perms === "user") {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+
+  if (perms === "admin") {
+    let conn;
+    try {
+      const { table, rowIndex, cellIndex, value } = req.body;
+
+      if (!table || rowIndex === undefined || cellIndex === undefined) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+
+      conn = await pool.getConnection();
+
+      // Get column names
+      const columns = await conn.execute(`DESCRIBE ${table}`);
+      const columnNames = columns.map((col) => col.Field);
+
+      if (cellIndex >= columnNames.length) {
+        return res.status(400).json({ error: "Invalid cell index" });
+      }
+
+      const columnName = columnNames[cellIndex];
+
+      // Get primary key to identify the row
+      const primaryKeyInfo = await conn.execute(
+        `
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY'
+      `,
+        [table],
+      );
+
+      let whereClause;
+      if (primaryKeyInfo.length > 0) {
+        // Use primary key
+        const primaryKey = primaryKeyInfo[0].COLUMN_NAME;
+        const rowData = await conn.execute(
+          `SELECT ${primaryKey} FROM ${table} LIMIT 1 OFFSET ?`,
+          [rowIndex],
+        );
+        if (rowData.length === 0) {
+          return res.status(404).json({ error: "Row not found" });
+        }
+        whereClause = `${primaryKey} = ${conn.escape(rowData[0][primaryKey])}`;
+      } else {
+        // Fallback to LIMIT/OFFSET (not ideal but works for simple cases)
+        // Since UPDATE does not support OFFSET, we fetch the row first to identify it
+        const rowData = await conn.execute(
+          `SELECT * FROM ${table} LIMIT 1 OFFSET ?`,
+          [rowIndex],
+        );
+        if (rowData.length === 0) {
+          return res.status(404).json({ error: "Row not found" });
+        }
+
+        const row = rowData[0];
+        const conditions = [];
+        for (const col of columnNames) {
+          const val = row[col];
+          if (val === null) {
+            conditions.push(`${col} IS NULL`);
+          } else {
+            conditions.push(`${col} = ${conn.escape(val)}`);
+          }
+        }
+        whereClause = `${conditions.join(" AND ")} LIMIT 1`;
+      }
+
+      // Update the cell
+      const updateQuery = `UPDATE ${table} SET ${columnName} = ${value === null ? "NULL" : conn.escape(value)} WHERE ${whereClause}`;
+      await conn.execute(updateQuery);
+
+      return res.status(200).json({ message: "Cell updated successfully" });
+    } catch (error) {
+      console.error("Error updating cell:", error);
+      return res.status(500).json({ error: "Failed to update cell" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
+});
+
+app.post("/admin/insertRow", async (req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Authorization required" });
+  }
+
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  if (perms === "user") {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+
+  if (perms === "admin") {
+    let conn;
+    try {
+      const { table, values } = req.body;
+
+      if (!table || !values) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+
+      conn = await pool.getConnection();
+
+      // Get column names and types
+      const columns = await conn.execute(`DESCRIBE ${table}`);
+
+      // Build INSERT query
+      const columnNames = Object.keys(values);
+      const columnValues = Object.values(values);
+
+      const placeholders = columnValues.map(() => "?").join(", ");
+      const query = `INSERT INTO ${table} (${columnNames.join(", ")}) VALUES (${placeholders})`;
+
+      await conn.execute(query, columnValues);
+
+      return res.status(200).json({ message: "Row inserted successfully" });
+    } catch (error) {
+      console.error("Error inserting row:", error);
+      return res.status(500).json({ error: "Failed to insert row" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
+});
+
+app.post("/admin/deleteRow", async (req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Authorization required" });
+  }
+
+  let perms = await getPermissions(req.headers.authorization);
+  if (perms === "none") {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  if (perms === "user") {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+
+  if (perms === "admin") {
+    let conn;
+    try {
+      const { table, rowIndex, adminPassword } = req.body;
+
+      if (!table || rowIndex === undefined || !adminPassword) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+
+      // Verify admin password
+      const adminToken = req.headers.authorization;
+      const adminUserId = await validateToken(adminToken);
+
+      if (adminUserId === false) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      conn = await pool.getConnection();
+
+      const adminData = await conn.query(
+        "SELECT password_hash FROM users WHERE id = ?",
+        [adminUserId],
+      );
+      if (adminData.length === 0) {
+        return res.status(401).json({ error: "Admin user not found" });
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        adminPassword,
+        adminData[0].password_hash,
+      );
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid admin password" });
+      }
+
+      // Get primary key to identify the row
+      const primaryKeyInfo = await conn.execute(
+        `
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY'
+      `,
+        [table],
+      );
+
+      let whereClause;
+      if (primaryKeyInfo.length > 0) {
+        // Use primary key
+        const primaryKey = primaryKeyInfo[0].COLUMN_NAME;
+        const rowData = await conn.execute(
+          `SELECT ${primaryKey} FROM ${table} LIMIT 1 OFFSET ?`,
+          [rowIndex],
+        );
+        if (rowData.length === 0) {
+          return res.status(404).json({ error: "Row not found" });
+        }
+        whereClause = `${primaryKey} = ${conn.escape(rowData[0][primaryKey])}`;
+      } else {
+        // Fallback to LIMIT/OFFSET
+        // Since DELETE does not support OFFSET, we fetch the row first to identify it
+        const rowData = await conn.execute(
+          `SELECT * FROM ${table} LIMIT 1 OFFSET ?`,
+          [rowIndex],
+        );
+        if (rowData.length === 0) {
+          return res.status(404).json({ error: "Row not found" });
+        }
+
+        const row = rowData[0];
+        const conditions = [];
+        for (const col of Object.keys(row)) {
+          const val = row[col];
+          if (val === null) {
+            conditions.push(`${col} IS NULL`);
+          } else {
+            conditions.push(`${col} = ${conn.escape(val)}`);
+          }
+        }
+        whereClause = `${conditions.join(" AND ")} LIMIT 1`;
+      }
+
+      // Delete the row
+      const deleteQuery = `DELETE FROM ${table} WHERE ${whereClause}`;
+      await conn.execute(deleteQuery);
+
+      return res.status(200).json({ message: "Row deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting row:", error);
+      return res.status(500).json({ error: "Failed to delete row" });
+    } finally {
+      if (conn) conn.release();
+    }
   }
 });
 

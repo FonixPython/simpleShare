@@ -8,6 +8,9 @@ fetch("/admin/getAllUsersWithFiles",{
 // Admin panel JavaScript
 let authToken = localStorage.getItem("token");
 let currentView = "users";
+let currentTable = "";
+let selectedRow = null;
+let selectedCell = null;
 
 // Check admin authentication on page load
 document.addEventListener("DOMContentLoaded", function () {
@@ -39,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Load initial data
       loadUsers();
       setupEventListeners();
+      loadTables(); // Load database tables
     })
     .catch((error) => {
       console.error("Authentication error:", error);
@@ -61,26 +65,38 @@ function setupEventListeners() {
       this.classList.add("bg-primary-button", "text-black");
 
       // Switch views
+      // First hide all containers
+      document.getElementById("users-container").classList.add("hidden");
+      document.getElementById("all-files-container").classList.add("hidden");
+      document.getElementById("global-storage-container").classList.add("hidden");
+      document.getElementById("database-container").classList.add("hidden");
+
       if (buttonText === "Users") {
         currentView = "users";
         document.getElementById("users-container").classList.remove("hidden");
-        document.getElementById("all-files-container").classList.add("hidden");
-        document.getElementById("global-storage-container").classList.add("hidden");
         loadUsers();
       } else if (buttonText === "All Files") {
         currentView = "files";
-        document.getElementById("users-container").classList.add("hidden");
-        document
-          .getElementById("all-files-container")
-          .classList.remove("hidden");
-        document.getElementById("global-storage-container").classList.add("hidden");
+        document.getElementById("all-files-container").classList.remove("hidden");
         loadAllFiles();
       } else if (buttonText === "Global Storage") {
         currentView = "storage";
-        document.getElementById("users-container").classList.add("hidden");
-        document.getElementById("all-files-container").classList.add("hidden");
         document.getElementById("global-storage-container").classList.remove("hidden");
         loadGlobalStorage();
+      } else if (buttonText === "Database") {
+        currentView = "database";
+        document.getElementById("database-container").classList.remove("hidden");
+        // Load tables if not already loaded
+        if (document.getElementById("tableSelector").options.length <= 1) {
+          loadTables();
+        }
+      }
+
+      // Clean up database state when switching away from Database tab
+      if (currentView !== "database" && buttonText !== "Database") {
+        clearTable();
+        selectedRow = null;
+        selectedCell = null;
       }
     });
   });
@@ -92,6 +108,17 @@ function setupEventListeners() {
 }
 
 async function loadUsers() {
+  // Show loading state
+  const container = document.getElementById("users-container");
+  container.innerHTML = `
+    <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading users...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getAllUsersWithFiles", {
       method: "GET",
@@ -108,7 +135,17 @@ async function loadUsers() {
     displayUsers(users);
   } catch (error) {
     console.error("Error loading users:", error);
-    showError("Failed to load users");
+    container.innerHTML = `
+      <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load users</p>
+          <button onclick="loadUsers()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -199,6 +236,17 @@ function createUserRow(user) {
 }
 
 async function loadAllFiles() {
+  // Show loading state
+  const container = document.getElementById("all-files-container");
+  container.innerHTML = `
+    <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading all files...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getAllUsersWithFiles", {
       method: "GET",
@@ -227,11 +275,32 @@ async function loadAllFiles() {
     displayAllFiles(allFiles);
   } catch (error) {
     console.error("Error loading files:", error);
-    showError("Failed to load files");
+    container.innerHTML = `
+      <div class="w-full max-w-6xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load files</p>
+          <button onclick="loadAllFiles()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
 async function loadGlobalStorage() {
+  // Show loading state
+  const container = document.getElementById("global-storage-container");
+  container.innerHTML = `
+    <div class="w-full max-w-4xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+      <div class="text-center">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button mb-4">hourglass_empty</span>
+        <p class="text-white text-lg">Loading storage statistics...</p>
+      </div>
+    </div>
+  `;
+
   try {
     const response = await fetch("/admin/getGlobalStorageStats", {
       method: "GET",
@@ -248,7 +317,17 @@ async function loadGlobalStorage() {
     displayGlobalStorage(stats);
   } catch (error) {
     console.error("Error loading global storage stats:", error);
-    showError("Failed to load global storage statistics");
+    container.innerHTML = `
+      <div class="w-full max-w-4xl mx-auto p-6 flex items-center justify-center" style="min-height: 200px;">
+        <div class="text-center">
+          <span class="material-icons-outlined text-4xl text-error mb-4">error</span>
+          <p class="text-error text-lg">Failed to load storage statistics</p>
+          <button onclick="loadGlobalStorage()" class="mt-4 px-4 py-2 bg-primary-button text-black rounded-lg hover:bg-primary-button/80 transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -499,6 +578,9 @@ function confirmAdminStatusChange(userId, username, newIsAdmin) {
 }
 
 async function updateAdminStatus(userId, isAdmin, adminPassword) {
+  // Show loading notification
+  showLoading("Changing admin status...");
+  
   try {
     const response = await fetch("/admin/changeAdminStatus", {
       method: "POST",
@@ -528,6 +610,8 @@ async function updateAdminStatus(userId, isAdmin, adminPassword) {
       throw new Error(`Invalid JSON response: ${responseText}`);
     }
 
+    hideLoading();
+    
     if (response.ok) {
       showSuccess(data.message || "Admin status changed successfully");
       loadUsers(); // Refresh users list
@@ -535,6 +619,7 @@ async function updateAdminStatus(userId, isAdmin, adminPassword) {
       showError(data.error || "Failed to change admin status");
     }
   } catch (error) {
+    hideLoading();
     console.error("Error changing admin status:", error);
     showError(`Failed to change admin status: ${error.message}`);
   }
@@ -600,6 +685,9 @@ async function confirmDeleteUser(userId, username) {
     return;
   }
 
+  // Show loading notification
+  showLoading("Deleting user...");
+
   try {
     const response = await fetch("/admin/deleteUser", {
       method: "POST",
@@ -613,15 +701,18 @@ async function confirmDeleteUser(userId, username) {
       }),
     });
 
+    hideLoading();
+
     if (response.ok) {
       showSuccess(`User ${username} and all their files have been deleted`);
       closeDeleteModal();
-      loadUsers(); // Reload the users list
+      loadUsers(); // Reload users list
     } else {
       const error = await response.json();
       showError(error.error || "Failed to delete user");
     }
   } catch (error) {
+    hideLoading();
     console.error("Error deleting user:", error);
     showError("Failed to delete user");
   }
@@ -1102,4 +1193,473 @@ function showStorageLimitMessage(message, type) {
   setTimeout(() => {
     messageDiv.classList.add('hidden');
   }, 3000);
+}
+
+// Database management functions
+async function loadTables() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    const response = await fetch("/admin/getTables", {
+      method: "GET",
+      headers: {
+        Authorization: authToken,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load tables: ${response.status} ${response.statusText}`);
+    }
+
+    const tables = await response.json();
+    populateTableSelector(tables);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error("Load tables request timed out");
+      showError("Request timed out. Please try again.");
+    } else {
+      console.error("Error loading tables:", error);
+      showError("Failed to load database tables");
+    }
+  }
+}
+
+function populateTableSelector(tables) {
+  const selector = document.getElementById("tableSelector");
+  if (selector) {
+    selector.innerHTML = `
+      ${tables.map((table, index) => `<option value="${table}" ${index === 0 ? 'selected' : ''}>${table}</option>`).join('')}
+    `;
+    
+    // Automatically load first table data
+    if (tables.length > 0) {
+      currentTable = tables[0];
+      loadTableData();
+    }
+  }
+}
+
+async function loadTableData() {
+  const selector = document.getElementById("tableSelector");
+  if (!selector) return;
+  
+  currentTable = selector.value;
+
+  if (!currentTable) {
+    clearTable();
+    return;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for data loading
+
+    const response = await fetch(`/admin/getTableData?table=${encodeURIComponent(currentTable)}`, {
+      method: "GET",
+      headers: {
+        Authorization: authToken,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load table data: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    displayTableData(data);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error("Load table data request timed out");
+      showError("Request timed out. The table might be too large. Please try again.");
+    } else {
+      console.error("Error loading table data:", error);
+      showError("Failed to load table data");
+    }
+  }
+}
+
+function displayTableData(data) {
+  const header = document.getElementById("tableHeader");
+  const body = document.getElementById("tableBody");
+
+  if (!header || !body) return;
+
+  if (!data.columns || !data.rows) {
+    header.innerHTML = '<tr><th class="px-4 py-3 text-left text-white border-b border-[#444]">No data</th></tr>';
+    body.innerHTML = '<tr><td class="px-4 py-3 text-white">No data available</td></tr>';
+    return;
+  }
+
+  // Create headers
+  header.innerHTML = `
+    <tr>
+      <th class="px-4 py-3 text-left text-white border-b border-[#444]">#</th>
+      ${data.columns.map(col => `<th class="px-4 py-3 text-left text-white border-b border-[#444]">${col}</th>`).join('')}
+    </tr>
+  `;
+
+  // Create rows
+  body.innerHTML = data.rows.map((row, index) => `
+    <tr class="border-b border-[#444] hover:bg-black/10 transition-colors cursor-pointer" 
+        onclick="selectRow(this, ${index})">
+      <td class="px-4 py-3 text-white font-medium">${index + 1}</td>
+      ${row.map((cell, cellIndex) => `
+        <td class="px-4 py-3 text-white font-mono text-sm" 
+            onclick="selectCell(event, this, ${index}, ${cellIndex})" 
+            contenteditable="true"
+            onblur="updateCell(${index}, ${cellIndex}, this.textContent)">
+          ${cell === null ? '<span class="text-gray-500">NULL</span>' : cell}
+        </td>
+      `).join('')}
+    </tr>
+  `).join('');
+}
+
+function clearTable() {
+  const header = document.getElementById("tableHeader");
+  const body = document.getElementById("tableBody");
+  if (header) header.innerHTML = '';
+  if (body) body.innerHTML = '';
+  selectedRow = null;
+  selectedCell = null;
+}
+
+function selectRow(row, index) {
+  // Remove previous selection
+  if (selectedRow) {
+    selectedRow.classList.remove('bg-primary-button/20');
+  }
+  
+  // Add selection to current row
+  selectedRow = row;
+  selectedRow.classList.add('bg-primary-button/20');
+}
+
+function selectCell(event, cell, rowIndex, cellIndex) {
+  event.stopPropagation();
+  
+  // Remove previous cell selection
+  if (selectedCell) {
+    selectedCell.classList.remove('ring-2', 'ring-primary-button');
+  }
+  
+  // Add selection to current cell
+  selectedCell = cell;
+  selectedCell.classList.add('ring-2', 'ring-primary-button');
+}
+
+async function updateCell(rowIndex, cellIndex, newValue) {
+  if (!currentTable) return;
+
+  try {
+    const response = await fetch("/admin/updateCell", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authToken,
+      },
+      body: JSON.stringify({
+        table: currentTable,
+        rowIndex: rowIndex,
+        cellIndex: cellIndex,
+        value: newValue.trim() === '' ? null : newValue.trim()
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update cell");
+    }
+
+    showSuccess("Cell updated successfully");
+    loadTableData(); // Refresh data
+  } catch (error) {
+    console.error("Error updating cell:", error);
+    showError("Failed to update cell");
+    loadTableData(); // Refresh to restore original value
+  }
+}
+
+function insertRow() {
+  if (!currentTable) {
+    showError("Please select a table first");
+    return;
+  }
+
+  // Create insert row modal
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 bg-black/50 flex items-center justify-center z-50";
+  modal.innerHTML = `
+    <div class="bg-main border border-[#444] rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <h3 class="text-xl font-bold text-white mb-4">Insert New Row</h3>
+      <div id="insertForm" class="space-y-3">
+        <!-- Form fields will be populated here -->
+      </div>
+      <div class="flex gap-3 justify-end mt-6">
+        <button onclick="this.closest('.fixed').remove()" 
+                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+          Cancel
+        </button>
+        <button onclick="confirmInsertRow()" 
+                class="px-4 py-2 bg-secondary-button text-black rounded hover:opacity-90 transition-opacity">
+          Insert Row
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Populate form fields
+  populateInsertForm();
+}
+
+async function populateInsertForm() {
+  try {
+    const response = await fetch(`/admin/getTableSchema?table=${currentTable}`, {
+      method: "GET",
+      headers: {
+        Authorization: authToken,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get table schema");
+    }
+
+    const schema = await response.json();
+    const form = document.getElementById("insertForm");
+    
+    if (form) {
+      form.innerHTML = schema.map(column => `
+        <div>
+          <label class="block text-white text-sm font-medium mb-1">
+            ${column.name} ${column.nullable === 'NO' ? '<span class="text-red-400">*</span>' : ''}
+          </label>
+          <input type="text" 
+                 id="insert_${column.name}" 
+                 class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded text-white focus:border-primary-button focus:outline-none"
+                 placeholder="${column.nullable === 'YES' ? 'NULL or value' : 'Required value'}"
+                 ${column.nullable === 'NO' ? 'required' : ''}>
+          <div class="text-xs text-gray-400 mt-1">Type: ${column.type}</div>
+        </div>
+      `).join('');
+    }
+  } catch (error) {
+    console.error("Error getting table schema:", error);
+    showError("Failed to get table schema");
+  }
+}
+
+async function confirmInsertRow() {
+  try {
+    const response = await fetch(`/admin/getTableSchema?table=${currentTable}`, {
+      method: "GET",
+      headers: {
+        Authorization: authToken,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get table schema");
+    }
+
+    const schema = await response.json();
+    const values = {};
+    
+    schema.forEach(column => {
+      const input = document.getElementById(`insert_${column.name}`);
+      if (input) {
+        const value = input.value.trim();
+        values[column.name] = value === '' ? null : value;
+      }
+    });
+
+    const insertResponse = await fetch("/admin/insertRow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authToken,
+      },
+      body: JSON.stringify({
+        table: currentTable,
+        values: values
+      }),
+    });
+
+    if (!insertResponse.ok) {
+      throw new Error("Failed to insert row");
+    }
+
+    showSuccess("Row inserted successfully");
+    document.querySelector(".fixed.inset-0").remove();
+    loadTableData(); // Refresh data
+  } catch (error) {
+    console.error("Error inserting row:", error);
+    showError("Failed to insert row");
+  }
+}
+
+function deleteSelectedRow() {
+  if (!selectedRow) {
+    showError("Please select a row to delete");
+    return;
+  }
+
+  if (!currentTable) {
+    showError("Please select a table first");
+    return;
+  }
+
+  // Create delete confirmation modal
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 bg-black/50 flex items-center justify-center z-50";
+  modal.innerHTML = `
+    <div class="bg-main border border-[#444] rounded-xl p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold text-white mb-4">Delete Row Confirmation</h3>
+      <p class="text-gray-300 mb-4">
+        Are you sure you want to delete the selected row? This action cannot be undone!
+      </p>
+      
+      <div class="mb-4">
+        <label class="block text-white text-sm font-medium mb-2">
+          Enter your admin password to confirm:
+        </label>
+        <input type="password" id="adminPassword" 
+               class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded text-white focus:border-primary-button focus:outline-none"
+               placeholder="Enter your admin password">
+      </div>
+      
+      <div class="flex gap-3 justify-end">
+        <button onclick="this.closest('.fixed').remove()" 
+                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+          Cancel
+        </button>
+        <button onclick="confirmDeleteRow()" 
+                class="px-4 py-2 bg-error text-white rounded hover:bg-red-600 transition-colors">
+          Delete Row
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  const passwordInput = document.getElementById("adminPassword");
+  if (passwordInput) passwordInput.focus();
+}
+
+async function confirmDeleteRow() {
+  const passwordInput = document.getElementById("adminPassword");
+  if (!passwordInput) return;
+  
+  const password = passwordInput.value;
+
+  if (!password) {
+    showError("Please enter your admin password");
+    return;
+  }
+
+  try {
+    const rowIndex = Array.from(selectedRow.parentNode.children).indexOf(selectedRow);
+    
+    const response = await fetch("/admin/deleteRow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authToken,
+      },
+      body: JSON.stringify({
+        table: currentTable,
+        rowIndex: rowIndex,
+        adminPassword: password
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete row");
+    }
+
+    showSuccess("Row deleted successfully");
+    document.querySelector(".fixed.inset-0").remove();
+    selectedRow = null;
+    loadTableData(); // Refresh data
+  } catch (error) {
+    console.error("Error deleting row:", error);
+    showError("Failed to delete row");
+  }
+}
+
+function clearSelectedCell() {
+  if (!selectedCell) {
+    showError("Please select a cell to clear");
+    return;
+  }
+
+  selectedCell.textContent = '';
+  selectedCell.focus();
+}
+
+function refreshData() {
+  if (currentTable) {
+    loadTableData();
+    showSuccess("Data refreshed");
+  } else {
+    showError("Please select a table first");
+  }
+}
+
+function saveAllChanges() {
+  if (!currentTable) {
+    showError("Please select a table first");
+    return;
+  }
+  
+  // Trigger blur on all editable cells to save changes
+  const editableCells = document.querySelectorAll('#tableBody td[contenteditable="true"]');
+  let changesCount = 0;
+  
+  editableCells.forEach(cell => {
+    if (cell !== document.activeElement) {
+      cell.blur();
+      changesCount++;
+    }
+  });
+  
+  if (changesCount > 0) {
+    showSuccess(`Saving ${changesCount} potential changes...`);
+    // Refresh data after a short delay to ensure all saves are processed
+    setTimeout(() => {
+      loadTableData();
+      showSuccess("All changes saved successfully");
+    }, 500);
+  } else {
+    showSuccess("No pending changes to save");
+  }
+}
+
+// Loading notification functions
+function showLoading(message) {
+  // Remove any existing loading notifications
+  hideLoading();
+  
+  const notification = document.createElement("div");
+  notification.id = "loading-notification";
+  notification.className = "fixed top-4 right-4 z-50 bg-black/90 backdrop-blur-md text-white px-6 py-4 rounded-lg shadow-lg border border-[#444] flex items-center gap-3 animate-slide-down";
+  notification.innerHTML = `
+    <span class="material-icons-outlined animate-spin-slow text-primary-button">hourglass_empty</span>
+    <span class="font-medium">${message}</span>
+  `;
+  
+  document.body.appendChild(notification);
+}
+
+function hideLoading() {
+  const loading = document.getElementById("loading-notification");
+  if (loading) {
+    loading.remove();
+  }
 }
