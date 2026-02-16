@@ -1314,7 +1314,7 @@ function displayTableData(data) {
         <td class="px-4 py-3 text-white font-mono text-sm" 
             onclick="selectCell(event, this, ${index}, ${cellIndex})" 
             contenteditable="true"
-            onblur="updateCell(${index}, ${cellIndex}, this.textContent)">
+            data-original-value="${cell === null ? '' : cell}">
           ${cell === null ? '<span class="text-gray-500">NULL</span>' : cell}
         </td>
       `).join('')}
@@ -1612,32 +1612,69 @@ function refreshData() {
   }
 }
 
-function saveAllChanges() {
+async function saveAllChanges() {
   if (!currentTable) {
     showError("Please select a table first");
     return;
   }
   
-  // Trigger blur on all editable cells to save changes
+  // Collect all edited cells and their values
   const editableCells = document.querySelectorAll('#tableBody td[contenteditable="true"]');
-  let changesCount = 0;
+  const changes = [];
   
-  editableCells.forEach(cell => {
-    if (cell !== document.activeElement) {
-      cell.blur();
-      changesCount++;
+  editableCells.forEach((cell, index) => {
+    const row = cell.parentElement;
+    const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+    const cellIndex = Array.from(row.children).indexOf(cell) - 1; // Subtract 1 for the row number column
+    
+    const originalValue = cell.dataset.originalValue || '';
+    const currentValue = cell.textContent.trim();
+    
+    if (originalValue !== currentValue) {
+      changes.push({
+        rowIndex,
+        cellIndex,
+        value: currentValue === '' ? null : currentValue
+      });
     }
   });
   
-  if (changesCount > 0) {
-    showSuccess(`Saving ${changesCount} potential changes...`);
-    // Refresh data after a short delay to ensure all saves are processed
-    setTimeout(() => {
-      loadTableData();
-      showSuccess("All changes saved successfully");
-    }, 500);
-  } else {
-    showSuccess("No pending changes to save");
+  if (changes.length === 0) {
+    showSuccess("No changes to save");
+    return;
+  }
+  
+  showLoading(`Saving ${changes.length} changes...`);
+  
+  try {
+    // Save each change
+    for (const change of changes) {
+      const response = await fetch("/admin/updateCell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authToken,
+        },
+        body: JSON.stringify({
+          table: currentTable,
+          rowIndex: change.rowIndex,
+          cellIndex: change.cellIndex,
+          value: change.value
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update cell at row ${change.rowIndex + 1}, column ${change.cellIndex + 1}`);
+      }
+    }
+    
+    hideLoading();
+    showSuccess(`Successfully saved ${changes.length} changes`);
+    loadTableData(); // Refresh data to show updated values
+  } catch (error) {
+    hideLoading();
+    console.error("Error saving changes:", error);
+    showError(`Failed to save changes: ${error.message}`);
   }
 }
 
