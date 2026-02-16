@@ -637,6 +637,7 @@ app.get("/files/:file_code", async (req, res) => {
   if (db_result !== null) {
     let stored_name = db_result.stored_filename;
     let original_name = db_result.original_name;
+    res.contentType(db_result.mime_type)
     return res.download(process.env.UPLOAD_PATH + stored_name, original_name);
   }
 });
