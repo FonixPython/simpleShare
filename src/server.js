@@ -637,8 +637,18 @@ app.get("/files/:file_code", async (req, res) => {
   if (db_result !== null) {
     let stored_name = db_result.stored_filename;
     let original_name = db_result.original_name;
-    res.contentType(db_result.mime_type)
-    return res.download(process.env.UPLOAD_PATH + stored_name, original_name);
+    
+    // Fix encoding for special characters (handle double-encoding)
+    try {
+      // Try to decode if it's double-encoded
+      original_name = decodeURIComponent(escape(original_name));
+    } catch (e) {
+      // If decoding fails, use original
+      original_name = db_result.original_name;
+    }
+    
+    const filePath = path.join(__dirname, process.env.UPLOAD_PATH || './uploads/', stored_name);
+    return res.download(filePath, original_name);
   }
 });
 
