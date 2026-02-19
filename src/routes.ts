@@ -22,17 +22,17 @@ router.get("/", (req: Request,res:Response) => {
 
 // Serve Vue app for all non-API routes
 
-router.get('*', (req:Request, res:Response) => {
-  // Don't intercept API routes or static files
-  if (req.path.startsWith('/api') || 
-      req.path.startsWith('/files') || 
-      req.path.startsWith('/admin') ||
-      req.path.includes('.')) {
-    return next();
-  }
+// router.get('*', (req:Request, res:Response) => {
+//   // Don't intercept API routes or static files
+//   if (req.path.startsWith('/api') || 
+//       req.path.startsWith('/files') || 
+//       req.path.startsWith('/admin') ||
+//       req.path.includes('.')) {
+//     return next();
+//   }
   
-  res.sendFile(path.join(__dirname, './public/index.html'));
-});
+//   res.sendFile(path.join(__dirname, './public/index.html'));
+// });
 
 
-module.exports = router
+export default router;
