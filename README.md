@@ -71,26 +71,20 @@ For development with hot reload:
 
 The frontend will be available at `http://localhost:5173` and the backend API at `http://localhost:3000`.
 
-## Project Structure
+## Folder Structure
 
 ```
-simpleShare/
-├── src/
-│   ├── frontend/          # Vue.js frontend application
-│   │   ├── src/
-│   │   │   ├── components/    # Vue components
-│   │   │   ├── views/         # Vue views/pages
-│   │   │   ├── composables/   # Vue composables (logic)
-│   │   │   ├── router/        # Vue Router configuration
-│   │   │   └── assets/        # Static assets
-│   │   ├── index.html         # HTML entry point
-│   │   ├── vite.config.js     # Vite configuration
-│   │   └── tailwind.config.js # Tailwind CSS configuration
-│   ├── server.js          # Express.js backend server
-│   ├── public/            # Built frontend assets (generated)
-│   └── .env              # Environment variables
-├── src/backup/           # Backup of old static files
-└── package.json          # Dependencies and scripts
+└── 📁public
+   ├── favicon.ico
+└── 📁src
+   └── 📁assets
+   └── 📁components
+      └── 📁admin
+   └── 📁composables
+   └── 📁router
+   └── 📁views
+      └── 📁admin
+└── 📁uploads
 ```
 
 ## Contributing
