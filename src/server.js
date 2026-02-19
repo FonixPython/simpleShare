@@ -672,17 +672,19 @@ async function createFileGroup(groupName, fileIds, userId) {
 async function getUserFileGroups(userId) {
   let conn;
   try {
+    console.log("fasz");
     conn = await pool.getConnection();
     let results = await conn.query(
       "SELECT * FROM file_groups WHERE user_id = ? ORDER BY created_at DESC",
       [userId]
     );
+    console.log(results);
     let return_list = [];
     for (let group of results) {
       return_list.push({
         id: group.id,
         name: group.name,
-        file_ids: JSON.parse(group.file_ids),
+        file_ids: group.file_ids,
         created_at: group.created_at
       });
     }
@@ -1313,6 +1315,7 @@ app.post("/getFileGroups", async (req, res) => {
   }
   
   let results = await getUserFileGroups(user_id);
+  console.log(results);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   return res.status(200).json(results);
 });

@@ -85,68 +85,6 @@ async function updateQuotaDisplay() {
   document.getElementById("quota-container").classList.remove("hidden");
 }
 
-async function updateGroupsDisplay() {
-  document.getElementById("my-groups-tbody").innerHTML = "";
-
-  let result = await fetch("/getFileGroups", {
-    method: "POST",
-    body: JSON.stringify({ token: localStorage.getItem("token") }),
-    headers: { "Content-type": "application/json; charset=UTF-8" },
-  });
-  
-  if (result.status === 401) {
-    console.log("Unauthorized to fetch groups");
-    return;
-  }
-  
-  let result_json = await result.json();
-  for (let group of result_json) {
-    // Format date to shorter human readable format
-    let formattedDate =
-      new Date(group.created_at).toLocaleDateString("hu-HU", {
-        year: "2-digit",
-        month: "2-digit",
-        day: "2-digit",
-      }) +
-      " " +
-      new Date(group.created_at).toLocaleTimeString("hu-HU", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-    // Single table row with all columns including action buttons
-    let row = `<tr class="border-b border-[#444] hover:bg-black/20 h-[50px]">
-            <td class="px-4 py-2 align-middle whitespace-nowrap">${group.id}</td>
-            <td class="px-4 py-2 align-middle min-w-[200px]">
-              <div class="flex items-center gap-2">
-                <span class="material-icons text-primary-button">folder</span>
-                <span>${group.name}</span>
-              </div>
-            </td>
-            <td class="px-4 py-2 align-middle whitespace-nowrap">${formattedDate}</td>
-            <td class="px-4 py-2 align-middle whitespace-nowrap">${group.file_ids.length} files</td>
-            <td class="px-2 py-2 text-center align-middle">
-                <button class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
-                        onclick="window.open('/groups/${group.id}', '_blank')" 
-                        title="View Group">
-                    <span class="material-icons-outlined text-lg">folder_open</span>
-                </button>
-            </td>
-            <td class="px-2 py-2 text-center align-middle">
-                <button class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center mx-auto" 
-                        onclick="deleteGroup('${group.id}')" 
-                        title="Delete Group">
-                    <span class="material-icons-outlined text-lg">delete</span>
-                </button>
-            </td>
-        </tr>`;
-
-    document
-      .getElementById("my-groups-tbody")
-      .insertAdjacentHTML("beforeend", row);
-  }
-}
-
 async function deleteGroup(groupId) {
   if (!confirm('Are you sure you want to delete this group? This will not delete the individual files.')) {
     return;
@@ -201,8 +139,44 @@ async function updateFilesDisplay() {
     body: JSON.stringify({ token: localStorage.getItem("token") }),
     headers: { "Content-type": "application/json; charset=UTF-8" },
   });
-  console.log(result.status);
-  let result_json = await result.json();
+  let result2 = await fetch("/getFileGroups", {
+    method: "POST",
+    body: JSON.stringify({ token: localStorage.getItem("token") }),
+    headers: { "Content-type": "application/json; charset=UTF-8" },
+  });
+
+  let return_files = await result.json();
+  let return_groups = await result2.json();
+
+  let key_value_pairs = {}
+  for (let file of return_files) {
+    key_value_pairs[file.code] = file;
+  }
+  let used_list = []
+
+  let final_dict = {}
+  final_dict["individuals"] = []
+  for (let group of return_groups) {
+    final_dict[group.id] = group;
+    final_dict[group.id]["files"] = []
+    for (let file_id of group.file_ids) {
+      final_dict[group.id]["files"].push(key_value_pairs[file_id]);
+      used_list.push(file_id)
+    }
+  }
+  let res = Object.keys(key_value_pairs).filter((e) => !used_list.includes(e));
+  for (let id of res) {
+    final_dict["individuals"].push(key_value_pairs[id]);
+  }
+  console.log(final_dict);
+
+
+  let result_json = return_files
+
+  for (let group of final_dict) {
+    
+  }
+
   for (let file in result_json) {
     let file_data = result_json[file];
 
