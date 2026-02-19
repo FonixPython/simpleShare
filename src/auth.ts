@@ -1,3 +1,5 @@
+import { isEmptyBindingElement, PollingWatchKind } from "typescript";
+
 const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
@@ -18,6 +20,11 @@ interface PermissionResponse {
     user_id: string | null;
     level: PermissionLevel;
     met: boolean;
+}
+interface LoginResponse {
+    token: string | null;
+    success: boolean;
+    message: string;
 }
 
 
@@ -62,7 +69,7 @@ async function validateUserToken(token:string, validateTo:PermissionLevel | null
     }
 }
 
-async function generateSession(user_id:string): Promise<string | null>{
+async function generateSession(user_id:string,user_agent:string | null): Promise<string | null>{
     let conn;
     try {
         const chars:string =
@@ -71,7 +78,9 @@ async function generateSession(user_id:string): Promise<string | null>{
         for (let i:number = 0; i < chars.length; i++) {
         token += chars.charAt(Math.floor(Math.random() * chars.length));}
         conn = await pool.getConnection();
-        await conn.query("INSERT INTO session_tokens (token, user_id) value (?, ?)",[token, user_id]);
+        let agent_text:string = ""
+        if (user_agent !== null){agent_text=user_agent} 
+        await conn.query("INSERT INTO session_tokens (token, user_id,user-agent) value (?, ?, ?)",[token, user_id,agent_text]);
         return token;
     } catch{
         return null;
@@ -79,21 +88,16 @@ async function generateSession(user_id:string): Promise<string | null>{
     
 }
 
-interface LoginResponse {
-    token: string | null;
-    success: boolean;
-    message: string;
-}
 
-async function loginUser(username:string,password:string): Promise<LoginResponse> {
+async function loginUser(username:string,password:string,user_agent:string | null): Promise<LoginResponse> {
     let conn;
     try{
-        conn = pool.getConnection();
-        const user_result = conn.query("SELECT * FROM users WHERE username = ?",[username])
+        conn = await pool.getConnection();
+        const user_result = await conn.query("SELECT * FROM users WHERE username = ?",[username])
         if (user_result.length === 0){return {token:null,success:false,message:"User does not exist!"}}
         const isMatch = await bcrypt.compare(password, user_result[0].password_hash);
         if (isMatch){
-            let new_token: string | null = await generateSession(user_result[0].id)
+            let new_token: string | null = await generateSession(user_result[0].id,user_agent)
             if (new_token === null) {return {token:null,success:false,message:"Failed to generate token!"}}
             else {return {token:new_token, success:true,message:"Success"}}
         } else{
@@ -106,5 +110,36 @@ async function loginUser(username:string,password:string): Promise<LoginResponse
 }
 
 async function logoutUser(token:string){
-    
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query("DELETE FROM session_tokens WHERE token = ?",[token]);
+        return true;
+    } catch{
+        return false;
+    }finally{if (conn){conn.release()}}
+}
+
+async function checkUser(username:string) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        const result = await conn.query("SELECT * FROM users WHERE username = ?",[username]);
+        return result.length !== 0;
+    } finally {if (conn){conn.release()}}
+}
+
+async function registerUser(username:string,password:string,is_admin:boolean = false,quota:number=52428800){
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        let password_hash:string = await bcrypt.hash(password, 10);
+        let exists: boolean = await checkUser(username)
+        if (exists) {return false}
+        else {
+            await conn.query("INSERT INTO users (username, password_hash, is_admin, quota_in_bytes) VALUES (?, ?, ?, ?)",[username, password_hash, is_admin ? 1 : 0, quota],);
+        }
+    } catch{
+        return false;
+    }finally {if (conn) {conn.release()}}
 }
