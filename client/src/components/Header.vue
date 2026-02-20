@@ -10,6 +10,7 @@
     <div
       class="absolute top-5 mobile:top-3 right-5 mobile:right-3 flex justify-end items-end flex-row-reverse gap-2 mobile:gap-1">
       <button
+        v-if="isAuthenticated"
         class="h-[42px] mobile:h-[36px] bg-primary-button text-black border-none px-[10px] mobile:px-[8px] py-[10px] mobile:py-[8px] rounded-lg text-lg mobile:text-base cursor-pointer tracking-[1px] text-center m-[10px] mobile:m-[5px] menu-btn transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 animate-scale-in"
         @click="toggleHamburger">
         <span class="material-icons-outlined mobile:text-sm">menu</span>
