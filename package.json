@@ -12,7 +12,6 @@
     "express": "^5.2.1",
     "mariadb": "^3.4.5",
     "multer": "^2.0.2",
-    "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vue": "^3.5.28",
@@ -20,7 +19,8 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@vitejs/plugin-vue": "^5.2.4",
-    "vite": "^5.0.0"
+    "@vitejs/plugin-vue": "^6.0.4",
+    "prettier": "^3.8.1",
+    "vite": "^7.3.1"
   }
 }
