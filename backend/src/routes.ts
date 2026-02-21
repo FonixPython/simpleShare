@@ -4,6 +4,7 @@ const express = require('express');
 const path = require("path")
 const router = express.Router();
 import * as auth from "./auth";
+import * as userActions from "./userActions"
 
 
 
@@ -48,5 +49,19 @@ router.post("/verifySession",async (req:Request,res:Response)=>{
   else {return res.status(401).json({permission:user_permission.level})}
 })
 
+router.post("/quota",async (req:Request,res:Response)=>{
+  if (!req.body.token) return res.sendStatus(401);
+  let user_permission:auth.PermissionResponse=await auth.validateUserToken(req.body.token,null)
+  if (user_permission.level === "none"){return res.sendStatus(401)}
+  let total_quota:Number = await userActions.getTotalQuota(user_permission.user_id)
+  let used_quota:Number = await userActions.getUsedQuota(user_permission.level)
+  let used_quota_value =used_quota && used_quota ? used_quota : 0;
+  let total_quota_value = total_quota ? total_quota : 0;
+  return res.status(200).json({
+    total: Number(total_quota_value),
+    used: Number(used_quota_value),
+  });
+
+})
 
 export default router;
