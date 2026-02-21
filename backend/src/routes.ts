@@ -5,6 +5,7 @@ const path = require("path")
 const router = express.Router();
 import * as auth from "./auth";
 import * as userActions from "./userActions"
+import * as adminActions from "./adminActions"
 
 
 
@@ -21,12 +22,15 @@ router.post('/register', async (req:Request,res:Response)=>{
   if (!req.headers.authorization){return res.sendStatus(401)}
   let new_username = req.body.username;
   let new_password = req.body.password;
-  let auth_token = req.body.token;
   let is_admin = req.body.isAdmin || false;
   let quota = req.body.quota || 52428800;
-
-  let user_permission = auth.validateUserToken(req.headers.authorization,"admin")
-
+  if(!new_username || !new_password){return res.status(400).json({message:"Invalid request! Username and passowrd are required!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin")
+  if (user_permission.met === false){return res.sendStatus(401)}
+  let register_result = await adminActions.registerUser(new_username,new_password,is_admin,quota)
+  if (register_result === 0){return res.sendStatus(200)}
+  if (register_result === 1){return res.sendStatus(409)}
+  if (register_result === 2){return res.sendStatus(500)}
 })
 
 // User action API endpoints
