@@ -17,9 +17,20 @@ router.get("/", (req: Request,res:Response) => {
 
 // Admin action API endpoints
 
+router.post('/register', async (req:Request,res:Response)=>{
+  if (!req.headers.authorization){return res.sendStatus(401)}
+  let new_username = req.body.username;
+  let new_password = req.body.password;
+  let auth_token = req.body.token;
+  let is_admin = req.body.isAdmin || false;
+  let quota = req.body.quota || 52428800;
 
+  let user_permission = auth.validateUserToken(req.headers.authorization,"admin")
+
+})
 
 // User action API endpoints
+
 
 router.post("/login",async (req:Request,res:Response)=>{
   let username:string = req.body.username;
@@ -35,23 +46,23 @@ router.post("/login",async (req:Request,res:Response)=>{
   else{return res.status(400).json({ status: 400, error: login_result.message, token: null });}
 })
 
-router.post("/logout", async (req:Request,res:Response)=>{
-  if (!req.body.token) {return res.status(400)}
-  let logout_result = await auth.logoutUser(req.body.token);
+router.get("/logout", async (req:Request,res:Response)=>{
+  if (!req.headers.authorization) {return res.status(400)}
+  let logout_result = await auth.logoutUser(req.headers.authorization);
   if (logout_result){return res.sendStatus(200)}
   else {return res.sendStatus(500)}
 })
 
-router.post("/verifySession",async (req:Request,res:Response)=>{
-  if (!req.body.token){return res.status(401)}
-  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.body.token,null);
+router.get("/verifySession",async (req:Request,res:Response)=>{
+  if (!req.headers.authorization){return res.status(401)}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,null);
   if (user_permission.level !== "none"){return res.status(200).json({permission:user_permission.level})}
   else {return res.status(401).json({permission:user_permission.level})}
 })
 
-router.post("/quota",async (req:Request,res:Response)=>{
-  if (!req.body.token) return res.sendStatus(401);
-  let user_permission:auth.PermissionResponse=await auth.validateUserToken(req.body.token,null)
+router.get("/quota",async (req:Request,res:Response)=>{
+  if (!req.headers.authorization) return res.sendStatus(401);
+  let user_permission:auth.PermissionResponse=await auth.validateUserToken(req.headers.authorization,null)
   if (user_permission.level === "none"){return res.sendStatus(401)}
   let total_quota:Number = await userActions.getTotalQuota(user_permission.user_id)
   let used_quota:Number = await userActions.getUsedQuota(user_permission.user_id)
@@ -65,12 +76,13 @@ router.post("/quota",async (req:Request,res:Response)=>{
 })
 
 router.get("/getAllFiles",async (req:Request,res:Response)=>{
-  console.log(req)
   if (!req.headers.authorization){return res.sendStatus(401)}
   let user_permission:auth.PermissionResponse=await auth.validateUserToken(req.headers.authorization,null)
   if (user_permission.level === "none"){return res.sendStatus(401)}
   let files = await userActions.getAllFiles(user_permission.user_id)
   return res.status(200).json(files)
 })
+
+
 
 export default router;

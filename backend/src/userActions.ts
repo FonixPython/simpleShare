@@ -52,7 +52,6 @@ export async function getUsedQuota(user_id:string | null) {
   } finally {if (conn) {conn.release();}}
 }
 
-
 export async function getAllFiles(user_id:string | null){
   let conn;
   try {

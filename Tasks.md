@@ -1,4 +1,4 @@
-- /getAllFiles
+- /getAllFiles (Done)
 - /register
 - /changePassword
 - /upload
