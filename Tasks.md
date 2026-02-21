@@ -1,2 +1,1 @@
-- /changePassword 
 - /upload
