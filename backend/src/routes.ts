@@ -64,4 +64,13 @@ router.post("/quota",async (req:Request,res:Response)=>{
 
 })
 
+router.get("/getAllFiles",async (req:Request,res:Response)=>{
+  console.log(req)
+  if (!req.headers.authorization){return res.sendStatus(401)}
+  let user_permission:auth.PermissionResponse=await auth.validateUserToken(req.headers.authorization,null)
+  if (user_permission.level === "none"){return res.sendStatus(401)}
+  let files = await userActions.getAllFiles(user_permission.user_id)
+  return res.status(200).json(files)
+})
+
 export default router;
