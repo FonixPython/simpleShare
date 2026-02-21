@@ -9,11 +9,10 @@ export function useAuth() {
     if (sessionToken.value) {
       try {
         const response = await fetch("/verifySession", {
-          method: "POST",
+          method: "GET",
           headers: {
-            "Content-Type": "application/json; charset=UTF-8",
+            "Authorization": sessionToken.value,
           },
-          body: JSON.stringify({ token: sessionToken.value }),
         })
         
         if (!response.ok) {
@@ -43,16 +42,16 @@ export function useAuth() {
         body: JSON.stringify({ username, password }),
       })
 
-      if (response.ok) {
-        const result = await response.json()
+      const result = await response.json()
+      
+      if (response.ok && result.status === 200) {
         sessionToken.value = result.token
         localStorage.setItem("token", result.token)
         isAuthenticated.value = true
         await verifyAccessToken()
         return { success: true }
       } else {
-        const error = await response.json()
-        return { success: false, error: error.message || "Login failed" }
+        return { success: false, error: result.error || "Login failed" }
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -64,9 +63,10 @@ export function useAuth() {
     if (sessionToken.value) {
       try {
         await fetch("/logout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json; charset=UTF-8" },
-          body: JSON.stringify({ token: sessionToken.value }),
+          method: "GET",
+          headers: {
+            "Authorization": sessionToken.value,
+          },
         })
       } catch (error) {
         console.error("Logout error:", error)

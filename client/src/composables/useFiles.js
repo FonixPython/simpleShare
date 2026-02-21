@@ -29,11 +29,10 @@ export function useFiles() {
   const updateQuotaDisplay = async (token) => {
     try {
       const response = await fetch("/quota", {
-        method: "POST",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json; charset=UTF-8",
+          "Authorization": token,
         },
-        body: JSON.stringify({ token }),
       })
 
       if (!response.ok) {
@@ -68,9 +67,10 @@ export function useFiles() {
   const updateFilesDisplay = async (token) => {
     try {
       const response = await fetch("/getAllFiles", {
-        method: "POST",
-        body: JSON.stringify({ token }),
-        headers: { "Content-type": "application/json; charset=UTF-8" },
+        method: "GET",
+        headers: {
+          "Authorization": token,
+        },
       })
 
       const result = await response.json()

@@ -179,9 +179,9 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/json; charset=UTF-8",
+            "Authorization": sessionToken.value
           },
           body: JSON.stringify({
-            token: sessionToken.value,
             old_password: oldPassword,
             new_password: newPassword
           }),
@@ -208,11 +208,9 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/json; charset=UTF-8",
+            "Authorization": sessionToken.value
           },
-          body: JSON.stringify({
-            ...userData,
-            token: sessionToken.value
-          }),
+          body: JSON.stringify(userData),
         })
 
         if (response.ok) {

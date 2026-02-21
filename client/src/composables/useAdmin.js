@@ -33,11 +33,10 @@ export function useAdmin() {
   const verifyAdminAccess = async (token) => {
     try {
       const response = await fetch("/verifySession", {
-        method: "POST",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json; charset=UTF-8",
+          "Authorization": token,
         },
-        body: JSON.stringify({ token }),
       })
 
       if (!response.ok) {
