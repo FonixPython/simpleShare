@@ -75,24 +75,24 @@ export function useFiles() {
 
       const result = await response.json()
       files.value = result.map(file_data => {
-        let decodedName = file_data.name
+        let decodedName = file_data.original_name
         try {
-          decodedName = decodeURIComponent(escape(file_data.name))
+          decodedName = decodeURIComponent(escape(file_data.original_name))
         } catch (e) {
-          decodedName = file_data.name
+          decodedName = file_data.original_name
         }
 
         return {
           code: file_data.code,
           name: decodedName,
-          date: new Date(file_data.date),
+          date: new Date(file_data.upload_date),
           size: file_data.size,
           formattedSize: formatBytes(file_data.size),
-          formattedDate: new Date(file_data.date).toLocaleDateString("hu-HU", {
+          formattedDate: new Date(file_data.upload_date).toLocaleDateString("hu-HU", {
             year: "2-digit",
             month: "2-digit",
             day: "2-digit",
-          }) + " " + new Date(file_data.date).toLocaleTimeString("hu-HU", {
+          }) + " " + new Date(file_data.upload_date).toLocaleTimeString("hu-HU", {
             hour: "2-digit",
             minute: "2-digit",
           })
