@@ -355,7 +355,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
         groupName,
         JSON.stringify(fileIds),
         req.user.id,
-        new Date().toISOString(),
+        new Date().toISOString().slice(0, 19).replace('T', ' '),
       ],
     );
 
