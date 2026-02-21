@@ -2,7 +2,7 @@
   "name": "simpleshare",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "npm run build && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd client && vite",
     "dev:backend": "cd backend && tsc && cd .. && nodemon dist/server.js",
     "start": "node dist/server.js",
