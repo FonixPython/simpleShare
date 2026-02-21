@@ -133,6 +133,8 @@ export default {
       // Show notification on successful login
       if (result && result.success) {
         showNotification('Login successful!', 'ok')
+        await updateQuotaDisplay(token)
+        await updateFilesDisplay(token)
       }
       
       return result
@@ -191,6 +193,7 @@ export default {
         if (response.ok) {
           showNotification('Password changed successfully!', 'ok')
           result = { success: true }
+          window.location.reload()
         } else {
           const error = await response.json()
           showNotification(error.message || "Password change failed", 'error')
