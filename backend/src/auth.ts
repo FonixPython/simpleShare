@@ -1,5 +1,5 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
-
+import { Request, Response, NextFunction } from 'express';
 const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
@@ -144,4 +144,17 @@ export async function registerUser(username:string,password:string,is_admin:bool
     } catch{
         return false;
     }finally {if (conn) {conn.release()}}
+}
+
+interface extension {
+    [key: string]: any;
+}
+
+export async function authenticateUser(req:Request & Record<string, any> , res:Response, next:NextFunction) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.sendStatus(401);
+  let user_permission = await validateUserToken(auth,null);
+  if (user_permission.level === "none") {return res.sendStatus(401);}
+  req.user = { id: user_permission.user_id };
+  next();
 }

@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.6",
-    "@types/multer": "^1.4.12",
+    "@types/multer": "^1.4.13",
     "@types/node": "^22.10.5",
     "@vitejs/plugin-vue": "^6.0.4",
     "concurrently": "^8.2.2",

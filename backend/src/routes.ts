@@ -1,4 +1,3 @@
-import { response } from 'express';
 import { Request, Response } from 'express';
 const express = require('express');
 const path = require("path")
@@ -93,7 +92,7 @@ router.post("/changePassword", async (req:Request,res:Response)=>{
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,null);
   if (user_permission.level === "none") {return res.sendStatus(401)}
   let action_result:Number = await userActions.changePassword(user_permission.user_id,req.body.old_password,req.body.new_password)
-  
+
   switch (action_result){
     case(0):res.sendStatus(200);break;
     case(1):res.status(400).json({message:"New password cannot be the same as old password!"});break;
@@ -103,5 +102,16 @@ router.post("/changePassword", async (req:Request,res:Response)=>{
   }
 })
 
+router.post("/upload",auth.authenticateUser,userActions.prepareUploadContext,userActions.uploadMiddleware,async (req:Request & Record<string, any>,res:Response)=>{
+  if (!req.file){return res.status(400).json({error:"No file provided"})}
+  let result = await userActions.registerUploadInIndex(req);
+  if (result === true){
+    res.status(200).json({
+        error: null,
+        message: "Successfully uploaded file!",
+        code: req.fileCode,
+      });
+  } else {res.status(500).json({ error: "Database registration failed" });}
+})
 
 export default router;

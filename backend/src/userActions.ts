@@ -1,6 +1,10 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
+import { Request, Response, NextFunction } from 'express';
+import { FileFilterCallback } from "multer";
 const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path")
 require("dotenv").config();
 
 const pool = mariadb.createPool({
@@ -119,4 +123,134 @@ export async function changePassword(user_id:string | null,cur_password:string,n
     console.log(err);
     return 4 // Server faliure ???
   } finally{if(conn){conn.release()}}
+}
+
+// UPLOAD SECTION
+
+
+async function getTotalStorageUsed():Promise<number> {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",);
+    return Number(result[0].total_used || 0);
+  } finally {if (conn) conn.release();}
+}
+
+async function getGlobalStorageLimit():Promise<number> {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
+    return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
+  } finally {if (conn) conn.release();}
+}
+
+async function calculateRemainingGlobalStorage() {
+  const totalLimit:number = await getGlobalStorageLimit();
+  if (totalLimit === 0) return null; // Unlimited
+  const totalUsed:number = await getTotalStorageUsed();
+  return totalLimit - totalUsed;
+}
+
+async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let result = await conn.query("SELECT quota_in_bytes FROM users WHERE id = ?",[user_id]);
+    if (result.length === 0) return 0;
+    let quota:number = Number(result[0].quota_in_bytes);
+    if (quota == 0) return null;
+    let used_res = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
+    let used_up:number = Number(used_res[0].total_used || 0)
+    let remaining:number = quota - used_up
+    return remaining;
+  } finally {if (conn) conn.release();}
+}
+
+export async function registerUploadInIndex(req:Request& Record<string, any>) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    if (!req.file) throw new Error("No file uploaded");
+    let res = await conn.query(
+      "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
+      [
+        req.fileCode,
+        req.file.mimetype,
+        req.file.filename,
+        req.file.originalname,
+        req.file.size,
+        req.user.id,
+      ],
+    );
+    return !!res;
+  } finally {if (conn) conn.release();}
+}
+
+const storage = multer.diskStorage({
+  destination: process.env.UPLOAD_PATH || "./uploads",
+  filename: function (req:Request& Record<string, any>, file:Express.Multer.File, cb: (error: Error | null, filename: string)=>void){
+    const ext = path.extname(file.originalname);
+    const filename = `${req.fileCode}${ext}`;
+    cb(null, filename);
+  },
+});
+
+export const uploadMiddleware = (req:Request& Record<string, any>, res:Response, next:NextFunction) => {
+  const limits = {} as { [key: string]: any };
+  if (req.maxUploadSize) {limits.fileSize = req.maxUploadSize;}
+
+  const upload = multer({
+    storage: storage,
+    limits: limits,
+  }).single("file");
+
+  upload(req, res, (err:Error) => {
+    if (err) return next(err);
+    next();
+  });
+};
+
+async function generateUniqueFileID(code_length:number) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const chars:string = "abcdefghijklmnopqrstuvwxyz";
+    while (true) {
+      let result:string = "";
+      for (let i = 0; i < code_length; i++) {result += chars.charAt(Math.floor(Math.random() * chars.length));}
+      let res = await conn.query("SELECT * FROM file_index WHERE id = ?", [result]);
+      if (res.length == 0) {return result}
+    }
+  } finally {if (conn) {conn.release();}}
+}
+
+export async function prepareUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
+  const code = await generateUniqueFileID(6);
+  req.fileCode = code;
+
+  // Check global storage limit first
+  const globalRemaining = await calculateRemainingGlobalStorage();
+  if (globalRemaining !== null && globalRemaining <= 0) {return res.status(500).json({ error: "Global storage limit reached" });}
+
+  // Check user quota
+  let remaining = await calculateRemainFromQuota(req.user.id)
+  
+  if (remaining !== null) {
+    if (remaining < BigInt(0)) {return res.sendStatus(413);}
+    req.maxUploadSize = remaining;
+  } 
+  else if (globalRemaining !== null && remaining === null) {
+    if (globalRemaining <= 0) {res.sendStatus(500);} 
+    else {req.maxUploadSize = globalRemaining;}
+  }
+
+  // Apply global storage limit to max upload size if it's more restrictive
+  if (globalRemaining !== null && remaining !== null && remaining > globalRemaining) {
+    if (globalRemaining <= 0) {res.sendStatus(500);} 
+    else {req.maxUploadSize = globalRemaining;}
+  }
+
+  next();
 }
