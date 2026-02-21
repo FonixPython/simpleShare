@@ -162,6 +162,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin.js'
+import { useNotification } from '../composables/useNotification.js'
 
 export default {
   name: 'GlobalStorageView',
@@ -177,6 +178,8 @@ export default {
       loadGlobalStorage,
       formatBytes
     } = useAdmin()
+    
+    const { showNotification } = useNotification()
 
     const sizeDistribution = computed(() => {
       // This would ideally come from the API, but for now we'll calculate it
@@ -207,6 +210,7 @@ export default {
 
     const refreshData = () => {
       loadGlobalStorage(props.token)
+      showNotification('Storage data refreshed!', 'ok')
     }
 
     onMounted(() => {

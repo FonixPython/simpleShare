@@ -181,6 +181,7 @@
 <script>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useAdmin } from '../composables/useAdmin.js'
+import { useNotification } from '../composables/useNotification.js'
 
 export default {
   name: 'DatabaseView',
@@ -199,6 +200,8 @@ export default {
       saveTableData,
       deleteTableRow
     } = useAdmin()
+    
+    const { showNotification } = useNotification()
 
     const searchQuery = ref('')
     const sortColumn = ref('')
@@ -319,7 +322,7 @@ export default {
       
       tableData.value.unshift(newRow)
       hasChanges.value = true
-      showStatusMessage('New row added. Click Save to persist changes.', 'success')
+      showNotification('New row added. Click Save to persist changes.', 'info')
     }
 
     const deleteSelectedRow = () => {
@@ -331,7 +334,7 @@ export default {
           tableData.value.splice(index, 1)
           selectedRow.value = null
           hasChanges.value = true
-          showStatusMessage('Row marked for deletion. Click Save to persist changes.', 'success')
+          showNotification('Row marked for deletion. Click Save to persist changes.', 'info')
         }
       }
     }
@@ -344,7 +347,7 @@ export default {
       if (row) {
         row[column] = null
         hasChanges.value = true
-        showStatusMessage('Cell cleared. Click Save to persist changes.', 'success')
+        showNotification('Cell cleared. Click Save to persist changes.', 'info')
       }
     }
 
@@ -352,7 +355,7 @@ export default {
       if (currentTable.value) {
         loadTableData(props.token, currentTable.value)
         hasChanges.value = false
-        showStatusMessage('Data refreshed.', 'success')
+        showNotification('Data refreshed.', 'ok')
       }
     }
 
@@ -364,13 +367,13 @@ export default {
         const result = await saveTableData(props.token, currentTable.value, tableData.value)
         if (result.success) {
           hasChanges.value = false
-          showStatusMessage('Changes saved successfully!', 'success')
+          showNotification('Changes saved successfully!', 'ok')
           await loadTableData(props.token, currentTable.value)
         } else {
-          showStatusMessage('Failed to save changes: ' + result.error, 'error')
+          showNotification('Failed to save changes: ' + result.error, 'error')
         }
       } catch (error) {
-        showStatusMessage('Failed to save changes: ' + error.message, 'error')
+        showNotification('Failed to save changes: ' + error.message, 'error')
       } finally {
         loading.value = false
       }

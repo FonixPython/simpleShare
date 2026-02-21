@@ -33,6 +33,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 import { useAdmin } from '../composables/useAdmin.js'
+import { useNotification } from '../composables/useNotification.js'
 import AdminHeader from '../components/AdminHeader.vue'
 import UsersView from './UsersView.vue'
 import FilesView from './FilesView.vue'
@@ -51,6 +52,7 @@ export default {
   setup() {
     const { sessionToken } = useAuth()
     const { verifyAdminAccess } = useAdmin()
+    const { showNotification } = useNotification()
     
     const activeTab = ref('users')
 
@@ -67,6 +69,7 @@ export default {
       const token = tokenFromUrl || tokenFromStorage
       
       if (!token) {
+        showNotification('Access denied: No token provided', 'error')
         window.location.href = '/'
         return
       }
@@ -83,9 +86,12 @@ export default {
       // Verify admin access
       const isAdmin = await verifyAdminAccess(token)
       if (!isAdmin) {
+        showNotification('Access denied: Admin privileges required', 'error')
         window.location.href = '/'
         return
       }
+      
+      showNotification('Admin dashboard loaded successfully', 'ok')
     })
 
     return {

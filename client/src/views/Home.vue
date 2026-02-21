@@ -141,7 +141,7 @@ export default {
     const handleLogout = async () => {
       await logout()
       showHamburgerMenu.value = false
-      showNotification('Sikeres kijelentkezés!', 'ok')
+      showNotification('Logout successful!', 'ok')
     }
 
     const handleFileUpload = async (files, token, isGroupUpload = false, groupName = '', onProgress) => {
@@ -149,12 +149,16 @@ export default {
       if (result.success) {
         await updateQuotaDisplay(token)
         await updateFilesDisplay(token)
+        showNotification('File uploaded successfully!', 'ok')
+      } else {
+        showNotification('Upload failed!', 'error')
       }
       return result
     }
 
     const handleUploadSuccess = () => {
       showUploadModal.value = false
+      showNotification('Upload completed!', 'ok')
     }
 
     const handleDeleteFile = async (code) => {
@@ -162,6 +166,9 @@ export default {
       if (result.success) {
         await updateFilesDisplay(sessionToken.value)
         await updateQuotaDisplay(sessionToken.value)
+        showNotification('File deleted successfully!', 'ok')
+      } else {
+        showNotification('Delete failed!', 'error')
       }
       return result
     }
@@ -181,13 +188,16 @@ export default {
         })
 
         if (response.ok) {
+          showNotification('Password changed successfully!', 'ok')
           return { success: true }
         } else {
           const error = await response.json()
+          showNotification(error.message || "Password change failed", 'error')
           return { success: false, error: error.message || "Password change failed" }
         }
       } catch (error) {
         console.error("Password change error:", error)
+        showNotification("Network error", 'error')
         return { success: false, error: "Network error" }
       }
     }
@@ -206,13 +216,16 @@ export default {
         })
 
         if (response.ok) {
+          showNotification('User registered successfully!', 'ok')
           return { success: true }
         } else {
           const error = await response.json()
+          showNotification(error.error || "Registration failed", 'error')
           return { success: false, error: error.error || "Registration failed" }
         }
       } catch (error) {
         console.error("Registration error:", error)
+        showNotification("Network error", 'error')
         return { success: false, error: "Network error" }
       }
     }

@@ -116,6 +116,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin.js'
+import { useNotification } from '../composables/useNotification.js'
 
 export default {
   name: 'FilesView',
@@ -131,6 +132,8 @@ export default {
       deleteFile,
       formatBytes
     } = useAdmin()
+    
+    const { showNotification } = useNotification()
 
     const searchQuery = ref('')
     const sortBy = ref('date')
@@ -181,9 +184,10 @@ export default {
       if (confirm(`Are you sure you want to delete file "${file.name}"?`)) {
         const result = await deleteFile(props.token, file.code)
         if (result.success) {
+          showNotification('File deleted successfully!', 'ok')
           await loadAllFiles(props.token)
         } else {
-          alert('Failed to delete file: ' + result.error)
+          showNotification('Failed to delete file: ' + result.error, 'error')
         }
       }
     }
@@ -195,6 +199,7 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      showNotification('Download started!', 'info')
     }
 
     onMounted(() => {
