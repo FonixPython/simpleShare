@@ -48,19 +48,5 @@ router.post("/verifySession",async (req:Request,res:Response)=>{
   else {return res.status(401).json({permission:user_permission.level})}
 })
 
-// Serve Vue app for all non-API routes
-
-// router.get('*', (req:Request, res:Response) => {
-//   // Don't intercept API routes or static files
-//   if (req.path.startsWith('/api') || 
-//       req.path.startsWith('/files') || 
-//       req.path.startsWith('/admin') ||
-//       req.path.includes('.')) {
-//     return next();
-//   }
-  
-//   res.sendFile(path.join(__dirname, './public/index.html'));
-// });
-
 
 export default router;
