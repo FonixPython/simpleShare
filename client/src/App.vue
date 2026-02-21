@@ -1,12 +1,36 @@
 <template>
   <div id="app" class="m-0 p-0 bg-bg text-white font-inter flex justify-center items-center h-screen overflow-hidden select-none mobile:overflow-x-hidden">
     <router-view />
+    
+    <!-- Notification Container -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <Notification
+        v-for="notification in notifications"
+        :key="notification.id"
+        :notification="notification"
+        @remove="removeNotification(notification.id)"
+      />
+    </div>
   </div>
 </template>
 
 <script>
+import Notification from './components/Notification.vue'
+import { useNotification } from './composables/useNotification.js'
+
 export default {
-  name: 'App'
+  name: 'App',
+  components: {
+    Notification
+  },
+  setup() {
+    const { notifications, removeNotification } = useNotification()
+    
+    return {
+      notifications,
+      removeNotification
+    }
+  }
 }
 </script>
 
@@ -26,6 +50,7 @@ export default {
   --text: #ffffff;
   --input: #d9d9d9;
   --ok: #5ef78c;
+  --info: #6792ff;
   --danger: #f7e15e;
   --error: #f77b5e;
   --main: #1f1f1f;

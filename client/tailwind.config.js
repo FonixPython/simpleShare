@@ -18,6 +18,7 @@ export default {
         text: "#ffffff",
         input: "#d9d9d9",
         ok: "#5ef78c",
+        info: "#6792ff",
         danger: "#f7e15e",
         error: "#f77b5e",
         main: "#1f1f1f",

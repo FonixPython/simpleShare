@@ -61,6 +61,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 import { useFiles } from '../composables/useFiles.js'
+import { useNotification } from '../composables/useNotification.js'
 import Header from '../components/Header.vue'
 import DownloadForm from '../components/DownloadForm.vue'
 import LoginModal from '../components/LoginModal.vue'
@@ -102,6 +103,8 @@ export default {
       deleteFile: deleteFileFunc, 
       uploadFile: upload 
     } = useFiles()
+    
+    const { showNotification } = useNotification()
 
     // Modal states
     const showLoginModal = ref(false)
@@ -126,6 +129,12 @@ export default {
       if (callback) {
         callback(result)
       }
+      
+      // Show notification on successful login
+      if (result && result.success) {
+        showNotification('Login successful!', 'ok')
+      }
+      
       return result
     }
 
