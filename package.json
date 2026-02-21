@@ -2,12 +2,15 @@
   "name": "simpleshare",
   "version": "1.0.0",
   "scripts": {
-    "dev": "cd client && vite",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd client && vite",
+    "dev:backend": "cd backend && tsc && cd .. && nodemon dist/server.js",
     "start": "node dist/server.js",
-    "build": "cd client && vite build && cd ../backend && tsc",
-    "build_back":"cd backend && tsc",
-    "build_front":"cd client && vite build",
-    "preview": "vite preview"
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:backend": "cd backend && tsc",
+    "build:frontend": "cd client && vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -23,6 +26,8 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@vitejs/plugin-vue": "^6.0.4",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.7",
     "prettier": "^3.8.1",
     "vite": "^7.3.1"
   }
