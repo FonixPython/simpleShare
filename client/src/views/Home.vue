@@ -173,7 +173,7 @@ export default {
       return result
     }
 
-    const handleChangePassword = async (oldPassword, newPassword) => {
+    const handleChangePassword = async (oldPassword, newPassword, callback) => {
       try {
         const response = await fetch("/changePassword", {
           method: "POST",
@@ -187,18 +187,30 @@ export default {
           }),
         })
 
+        let result
         if (response.ok) {
           showNotification('Password changed successfully!', 'ok')
-          return { success: true }
+          result = { success: true }
         } else {
           const error = await response.json()
           showNotification(error.message || "Password change failed", 'error')
-          return { success: false, error: error.message || "Password change failed" }
+          result = { success: false, error: error.message || "Password change failed" }
         }
+
+        // Call the callback with the result
+        if (callback) {
+          callback(result)
+        }
+        
+        return result
       } catch (error) {
         console.error("Password change error:", error)
         showNotification("Network error", 'error')
-        return { success: false, error: "Network error" }
+        const result = { success: false, error: "Network error" }
+        if (callback) {
+          callback(result)
+        }
+        return result
       }
     }
 

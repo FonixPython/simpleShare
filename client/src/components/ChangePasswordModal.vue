@@ -101,10 +101,10 @@ export default {
       this.error = ''
       this.success = ''
 
-      try {
-        const result = await this.$emit('change-password', this.oldPassword, this.newPassword)
+      // Emit the event with a callback to receive the result
+      this.$emit('change-password', this.oldPassword, this.newPassword, (result) => {
+        this.loading = false
         if (result.success) {
-          this.success = 'Password changed successfully!'
           setTimeout(() => {
             this.$emit('close')
             this.resetForm()
@@ -112,11 +112,7 @@ export default {
         } else {
           this.error = result.error || 'Password change failed'
         }
-      } catch (error) {
-        this.error = 'Network error. Please try again.'
-      } finally {
-        this.loading = false
-      }
+      })
     },
 
     resetForm() {
