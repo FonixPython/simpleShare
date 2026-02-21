@@ -17,7 +17,7 @@
         v-if="!uploading && !uploadComplete"
         class="font-inter text-2xl mobile:text-xl relative h-[80%] mobile:h-[70%] w-[80%] mobile:w-[90%] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] rounded-[28px] mobile:rounded-[20px] border-0 transition-all duration-300 drop_zone cursor-pointer hover:scale-105"
         :class="{ 'dragover': isDragOver }"
-        @click="triggerFileInput"
+        @click.stop="triggerFileInput"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop">
@@ -118,7 +118,8 @@
       ref="fileInput"
       type="file"
       style="display: none"
-      @change="handleFileSelect">
+      @click.stop
+      @change.stop="handleFileSelect">
   </div>
 </template>
 
