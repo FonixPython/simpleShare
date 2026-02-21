@@ -128,17 +128,17 @@ export default {
       this.error = ''
       this.success = ''
 
-      try {
-        const userData = {
-          username: this.username,
-          password: this.password,
-          isAdmin: this.isAdmin,
-          quota: parseInt(this.quota)
-        }
+      const userData = {
+        username: this.username,
+        password: this.password,
+        isAdmin: this.isAdmin,
+        quota: parseInt(this.quota)
+      }
 
-        const result = await this.$emit('register', userData)
+      // Emit the event with a callback to receive the result
+      this.$emit('register', userData, (result) => {
+        this.loading = false
         if (result.success) {
-          this.success = 'User registered successfully!'
           this.resetForm()
           setTimeout(() => {
             this.$emit('close')
@@ -147,11 +147,7 @@ export default {
         } else {
           this.error = result.error || 'Registration failed'
         }
-      } catch (error) {
-        this.error = 'Network error. Please try again.'
-      } finally {
-        this.loading = false
-      }
+      })
     },
 
     resetForm() {

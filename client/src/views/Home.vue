@@ -202,7 +202,7 @@ export default {
       }
     }
 
-    const handleRegisterUser = async (userData) => {
+    const handleRegisterUser = async (userData, callback) => {
       try {
         const response = await fetch("/register", {
           method: "POST",
@@ -213,18 +213,30 @@ export default {
           body: JSON.stringify(userData),
         })
 
+        let result
         if (response.ok) {
           showNotification('User registered successfully!', 'ok')
-          return { success: true }
+          result = { success: true }
         } else {
           const error = await response.json()
           showNotification(error.error || "Registration failed", 'error')
-          return { success: false, error: error.error || "Registration failed" }
+          result = { success: false, error: error.error || "Registration failed" }
         }
+
+        // Call the callback with the result
+        if (callback) {
+          callback(result)
+        }
+        
+        return result
       } catch (error) {
         console.error("Registration error:", error)
         showNotification("Network error", 'error')
-        return { success: false, error: "Network error" }
+        const result = { success: false, error: "Network error" }
+        if (callback) {
+          callback(result)
+        }
+        return result
       }
     }
 
