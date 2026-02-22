@@ -283,8 +283,10 @@ export default {
       }
     }
 
-    const checkFileExists = async (code) => {
-      return await checkFile(code)
+    const checkFileExists = async (code, callback) => {
+      const result = await checkFile(code)
+      if (callback) callback(result)
+      return result
     }
 
     const downloadFile = (code) => {

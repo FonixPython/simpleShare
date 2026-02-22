@@ -124,9 +124,11 @@ export default {
         this.fileInfo.color = "#6792ff"
 
         try {
-          const result = await this.$emit('check-file', this.fullCode)
+          const result = await new Promise((resolve) => {
+            this.$emit('check-file', this.fullCode, resolve)
+          })
           if (result && result.exists) {
-            this.fileInfo.text = result.filename
+            this.fileInfo.text = result.original_name || result.filename || 'File found'
             this.fileInfo.color = "#5ef78c"
             this.fileInfo.exists = true
           } else {
