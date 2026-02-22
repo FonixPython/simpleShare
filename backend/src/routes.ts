@@ -164,4 +164,43 @@ router.get("/delete/:code",async(req:Request,res:Response)=>{
   }
 })
 
+router.get("/delete-groups/:code",async (req:Request,res:Response)=>{
+  if (!req.headers.authorization){return res.sendStatus(401)}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,null);
+  let code=req.params.code
+  if (user_permission.level === "none"){return res.sendStatus(401)}
+  let delete_result:Number=2;
+  if (user_permission.level === "admin"){
+    delete_result = await uploadActions.deleteItem(code,true)
+  }
+  if (user_permission.level === "user"){
+    delete_result = await uploadActions.deleteItem(code,true,req.headers.authorization)
+  }
+  switch(delete_result){
+    case(0):return res.sendStatus(200);break;
+    case(1):return res.sendStatus(404);break;
+    case(2):return res.sendStatus(500);break;
+    case(3):return res.sendStatus(401);break;
+  }
+})
+
+router.get("/files/:file_code", async (req:Request, res:Response) => {
+  let file_code:string = Array.isArray(req.params.file_code) ? req.params.file_code[0] : req.params.file_code;
+  if (file_code.length !== 6) {return res.sendStatus(400);}
+  let regex = /\d/;
+  if (regex.test(file_code)) {return res.sendStatus(400);}
+  let db_result = await uploadActions.retrieveObjectInfo(file_code);
+  if (db_result === null) {return res.sendStatus(404);}
+  if (db_result !== null) {
+    let stored_name = db_result.stored_filename;
+    let original_name = db_result.original_name;
+    // Fix encoding for special characters (handle double-encoding)
+    try {original_name = decodeURIComponent(escape(original_name));}
+    catch (e) {original_name = db_result.original_name;}
+    const filePath = path.join(process.env.UPLOAD_PATH || './uploads/', stored_name);
+    return res.download(filePath, original_name);
+  }
+});
+
+
 export default router;

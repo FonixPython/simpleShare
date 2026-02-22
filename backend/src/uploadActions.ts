@@ -1,5 +1,6 @@
 const multer = require("multer");
 const path = require("path")
+import { group } from 'console';
 import { Request, Response, NextFunction } from 'express';
 import { FileFilterCallback } from "multer";
 import { setSyntheticLeadingComments } from 'typescript';
@@ -314,7 +315,7 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
     if (files_result.length === 0){type="group"}
     if (type === "group"){
       let group_results = await pool.query("SELECT * FROM file_groups WHERE id=?",[code])
-      if (group_results.length === 0){console.log("a");return 1;} // An Item with such code does not exist!
+      if (group_results.length === 0){return 1;} // An Item with such code does not exist!
       if(validation!==null && group_results[0].user_id !== validation){return 3} // Unauthorized!
       if (deleteSubItems){
         for (let file_code of group_results[0].file_ids){
@@ -343,4 +344,21 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
     }
     return 2;
   } catch(err){console.log(err);return 2}
+}
+
+export async function retrieveObjectInfo(code:string):Promise<Record<string, any>|null> {
+  try {
+    let type:ItemType = "file"
+    let files_result = await pool.query("SELECT * FROM file_index WHERE id=?",[code])
+    if (files_result.length === 0){type="group"}
+    if (type === "group"){
+      let group_results = await pool.query("SELECT * FROM file_groups WHERE id=?",[code])
+      if (group_results.length === 0){return null} // An Item with such code does not exist!
+      return group_results[0]
+    }
+    if (type === "file"){
+      return files_result[0]
+    }
+    return null
+  } catch(err){console.log(err);return null}
 }
