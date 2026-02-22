@@ -202,5 +202,16 @@ router.get("/files/:file_code", async (req:Request, res:Response) => {
   }
 });
 
+router.post("/checkFile", async (req:Request,res:Response)=>{
+  let file_code:string = req.body.code;
+  if (!file_code || file_code.length !== 6) {return res.status(400).json({ exists: false});}
+  let regex = /\d/;
+  if (regex.test(file_code)) {return res.status(400).json({ exists: false });}
+  let db_result = await uploadActions.retrieveObjectInfo(file_code);
+  if (db_result === null) {return res.status(200).json({ exists: false });}
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  db_result.exists=true
+  return res.status(200).json(db_result);
+})
 
 export default router;

@@ -355,9 +355,16 @@ export async function retrieveObjectInfo(code:string):Promise<Record<string, any
     if (type === "group"){
       let group_results = await pool.query("SELECT * FROM file_groups WHERE id=?",[code])
       if (group_results.length === 0){return null} // An Item with such code does not exist!
+      group_results[0].type="group"
+      group_results[0].files = []
+      for (let id of group_results[0].file_ids){
+        let file_data = await retrieveObjectInfo(id)
+        group_results[0].files.push(file_data)
+      }
       return group_results[0]
     }
     if (type === "file"){
+      files_result[0].type = "file"
       return files_result[0]
     }
     return null
