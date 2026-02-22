@@ -204,11 +204,11 @@ export default {
 }
 
 .file-card, .group-card {
-  background: white;
+  background: theme('colors.main');
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -234,7 +234,7 @@ export default {
   align-items: center;
   gap: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .file-icon, .group-icon {
@@ -244,14 +244,14 @@ export default {
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
 
 .file-icon .material-icons-outlined,
 .group-icon .material-icons-outlined {
   font-size: 24px;
-  color: #6b7280;
+  color: theme('colors.text');
 }
 
 .file-info, .group-info {
@@ -262,7 +262,7 @@ export default {
 .file-name, .group-name {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: theme('colors.text');
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -271,22 +271,22 @@ export default {
 
 .file-details, .group-details {
   font-size: 14px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .separator {
-  color: #d1d5db;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .collective-download-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #3b82f6;
-  color: white;
+  background: theme('colors.primary-button');
+  color: theme('colors.text');
   border: none;
   padding: 10px 16px;
   border-radius: 8px;
@@ -298,7 +298,7 @@ export default {
 }
 
 .collective-download-btn:hover {
-  background: #2563eb;
+  background: #5a7fff;
   transform: scale(1.05);
 }
 
@@ -321,19 +321,19 @@ export default {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .file-item:hover {
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .file-item .file-icon {
   width: 40px;
   height: 40px;
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .file-item .file-icon .material-icons-outlined {
@@ -359,8 +359,8 @@ export default {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: #10b981;
-  color: white;
+  background: theme('colors.secondary-button');
+  color: theme('colors.bg');
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -369,7 +369,7 @@ export default {
 }
 
 .download-btn:hover {
-  background: #059669;
+  background: #4ee883;
   transform: scale(1.1);
 }
 
