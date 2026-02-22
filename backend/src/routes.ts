@@ -3,6 +3,7 @@ const express = require('express');
 const path = require("path")
 const router = express.Router();
 import * as auth from "./auth";
+const archiver = require("archiver");
 import * as userActions from "./userActions"
 import * as adminActions from "./adminActions"
 import * as uploadActions from "./uploadActions"
