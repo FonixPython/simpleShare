@@ -256,6 +256,56 @@ export async function prepareUploadContext(req:Request& Record<string, any>, res
   next();
 }
 
+export async function registerMultipleIndividualUploadsInIndex(req:Request& Record<string, any>) {
+  try {
+    if (!req.files || req.files.length === 0) throw new Error("No files uploaded");
+    
+    const uploadedFiles: any[] = [];
+
+    // Register all files in the file_index table individually (no grouping)
+    for (const file of req.files as Express.Multer.File[]) {
+      const fileCode:string | undefined = await generateUniqueCode(6);
+      if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
+      
+      // Update the filename to include the file code
+      const ext = path.extname(file.originalname);
+      const newFilename = `${fileCode}${ext}`;
+      
+      // Rename the file on disk
+      const fs = require('fs');
+      const oldPath = path.join(process.env.UPLOAD_PATH || './uploads', file.filename);
+      const newPath = path.join(process.env.UPLOAD_PATH || './uploads', newFilename);
+      
+      if (fs.existsSync(oldPath)) {
+        fs.renameSync(oldPath, newPath);
+      }
+      
+      // Register file in database
+      await pool.query(
+        "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
+        [
+          fileCode,
+          file.mimetype,
+          newFilename,
+          file.originalname,
+          file.size,
+          req.user.id,
+        ],
+      );
+
+      uploadedFiles.push({
+        code: fileCode,
+        originalname: file.originalname,
+        size: file.size
+      });
+    }
+
+    return {
+      files: uploadedFiles
+    };
+  } catch(err){console.log(err);return null}
+}
+
 export async function deleteItem(code:string|string[],deleteSubItems:boolean=false,validation:string | null=null):Promise<Number>{
   try{
     // Get item and type of it

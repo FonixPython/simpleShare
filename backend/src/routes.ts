@@ -129,6 +129,20 @@ router.post("/upload-group", auth.authenticateUser, uploadActions.prepareGroupUp
   }
 })
 
+router.post("/upload-multiple-individual", auth.authenticateUser, uploadActions.prepareGroupUploadContext, uploadActions.uploadGroupMiddleware, async (req: Request & Record<string, any>, res: Response) => {
+  if (!req.files || req.files.length === 0) {return res.status(400).json({error:"No files provided"})}
+  let result = await uploadActions.registerMultipleIndividualUploadsInIndex(req);
+  if (result) {
+    res.status(200).json({
+      error: null,
+      message: "Successfully uploaded files!",
+      files: result.files
+    });
+  } else {
+    res.status(500).json({ error: "Database registration failed" });
+  }
+})
+
 router.get("/delete/:code",async(req:Request,res:Response)=>{
   if (!req.headers.authorization){return res.sendStatus(401)}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,null);

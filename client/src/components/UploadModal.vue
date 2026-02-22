@@ -78,7 +78,7 @@
         class="space-y-6 mobile:space-y-4">
         <!-- Individual Success -->
         <div 
-          v-if="uploadResult.code"
+          v-if="uploadResult.code && !uploadResult.files"
           class="text-center p-6 mobile:p-4 bg-black/20 rounded-xl border border-[#444]">
           <p class="text-gray-400 text-3xl mobile:text-2xl font-inter">
             Your file code:
@@ -110,6 +110,25 @@
               @click="copyLink">
               <span class="material-icons-outlined text-xl mobile:text-lg text-gray-400 group-hover:text-white cursor-pointer">content_copy</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Multiple Individual Files Success -->
+        <div 
+          v-if="uploadResult.files && uploadResult.multipleIndividual"
+          class="text-center p-6 mobile:p-4 bg-black/20 rounded-xl border border-[#444]">
+          <p class="text-gray-400 text-3xl mobile:text-2xl font-inter mb-4">
+            Files uploaded successfully!
+          </p>
+          <div class="text-left max-h-40 overflow-y-auto mb-4 space-y-2">
+            <div 
+              v-for="file in uploadResult.files" 
+              :key="file.code"
+              class="text-sm mobile:text-xs text-gray-300 bg-black/10 p-2 rounded">
+              <span class="font-medium">{{ file.originalname }}</span>
+              <span class="text-gray-400 ml-2">({{ formatBytes(file.size) }})</span>
+              <span class="text-primary-button font-red-hat ml-2">{{ file.code }}</span>
+            </div>
           </div>
         </div>
         

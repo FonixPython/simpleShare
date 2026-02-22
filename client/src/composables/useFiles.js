@@ -194,6 +194,10 @@ export function useFiles() {
         console.log('First file size:', files[0].size)
       }
       
+      // Determine the upload type and endpoint
+      let endpoint = '/upload'
+      let isMultipleIndividualUpload = false
+      
       if (isGroupUpload && files.length > 0) {
         console.log('Group upload - files to upload:', files.length)
         for (let i = 0; i < files.length; i++) {
@@ -202,7 +206,18 @@ export function useFiles() {
         }
         formData.append("groupName", groupName)
         formData.append("createGroup", "true")
+        endpoint = '/upload-group'
+      } else if (files.length > 1) {
+        // Multiple files uploaded individually - use new endpoint
+        console.log('Multiple individual upload - files to upload:', files.length)
+        for (let i = 0; i < files.length; i++) {
+          console.log(`Appending file ${i}:`, files[i])
+          formData.append("files", files[i])
+        }
+        endpoint = '/upload-multiple-individual'
+        isMultipleIndividualUpload = true
       } else {
+        // Single file upload
         const file = files[0]
         console.log('Appending file to formData:', file)
         formData.append("file", file)
@@ -235,6 +250,12 @@ export function useFiles() {
               group: response.group,
               files: response.files 
             })
+          } else if (isMultipleIndividualUpload) {
+            resolve({ 
+              success: true, 
+              files: response.files,
+              multipleIndividual: true
+            })
           } else {
             resolve({ 
               success: true, 
@@ -261,7 +282,6 @@ export function useFiles() {
         reject({ success: false, error: "Network error" })
       })
       
-      const endpoint = isGroupUpload ? '/upload-group' : '/upload'
       xhr.open('POST', endpoint)
       xhr.setRequestHeader('Authorization', token)
       
@@ -269,6 +289,7 @@ export function useFiles() {
         endpoint,
         token: token ? 'present' : 'missing',
         isGroupUpload,
+        isMultipleIndividualUpload,
         filesCount: files.length,
         formDataEntries: Array.from(formData.entries())
       })
