@@ -44,47 +44,107 @@
                 </tr>
               </thead>
               <tbody>
-                <tr 
-                  v-for="item in files" 
-                  :key="item.code"
-                  class="border-b border-[#444] hover:bg-black/20 h-[50px]"
-                  :class="{ 'bg-blue-900/10': item.type === 'group' }">
-                  <td class="px-4 py-2 align-middle whitespace-nowrap">{{ item.code }}</td>
-                  <td class="px-4 py-2 align-middle min-w-[200px]">
-                    <div class="flex items-center gap-2">
-                      <span v-if="item.type === 'group'" class="material-icons-outlined text-blue-400">folder</span>
-                      <span v-else class="material-icons-outlined text-gray-400">insert_drive_file</span>
-                      <span>{{ item.name }}</span>
-                      <span v-if="item.type === 'group'" class="text-xs text-gray-400">({{ item.fileCount }} files)</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-2 align-middle text-center">
-                    <span 
-                      class="px-2 py-1 rounded text-xs"
-                      :class="item.type === 'group' ? 'bg-blue-500/20 text-blue-300' : 'bg-gray-500/20 text-gray-300'">
-                      {{ item.type === 'group' ? 'Group' : 'File' }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-2 align-middle whitespace-nowrap">{{ item.formattedDate }}</td>
-                  <td class="px-4 py-2 align-middle whitespace-nowrap">{{ item.formattedSize }}</td>
-                  <td class="px-2 py-2 text-center align-middle">
-                    <div class="flex justify-center gap-2">
-                      <button 
-                        v-if="item.type === 'file'"
-                        class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
-                        @click="$emit('download', item.code)" 
-                        title="Download">
-                        <span class="material-icons-outlined text-lg">download</span>
-                      </button>
-                      <button 
-                        class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
-                        @click="handleDelete(item.code)" 
-                        title="Delete">
-                        <span class="material-icons-outlined text-lg">delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <template v-for="item in files" :key="item.code">
+                  <tr 
+                    class="border-b border-[#444] hover:bg-black/20 h-[50px] cursor-pointer"
+                    :class="{ 'bg-blue-900/10': item.type === 'group' }"
+                    @click="item.type === 'group' ? toggleGroup(item.code) : null">
+                    <td class="px-4 py-2 align-middle whitespace-nowrap">
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.type === 'group'" class="material-icons-outlined text-blue-400 text-sm">
+                          {{ isGroupExpanded(item.code) ? 'expand_more' : 'chevron_right' }}
+                        </span>
+                        <span v-else></span>
+                        {{ item.code }}
+                      </div>
+                    </td>
+                    <td class="px-4 py-2 align-middle min-w-[200px]">
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.type === 'group'" class="material-icons-outlined text-blue-400">folder</span>
+                        <span v-else class="material-icons-outlined text-gray-400">insert_drive_file</span>
+                        <span>{{ item.name }}</span>
+                        <span v-if="item.type === 'group'" class="text-xs text-gray-400">({{ item.fileCount }} files)</span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-2 align-middle text-center">
+                      <span 
+                        class="px-2 py-1 rounded text-xs"
+                        :class="item.type === 'group' ? 'bg-blue-500/20 text-blue-300' : 'bg-gray-500/20 text-gray-300'">
+                        {{ item.type === 'group' ? 'Group' : 'File' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2 align-middle whitespace-nowrap">{{ item.formattedDate }}</td>
+                    <td class="px-4 py-2 align-middle whitespace-nowrap">{{ item.formattedSize }}</td>
+                    <td class="px-2 py-2 text-center align-middle">
+                      <div class="flex justify-center gap-2">
+                        <button 
+                          v-if="item.type === 'file'"
+                          class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
+                          @click.stop="$emit('download', item.code)" 
+                          title="Download">
+                          <span class="material-icons-outlined text-lg">download</span>
+                        </button>
+                        <button 
+                          class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
+                          @click.stop="handleDelete(item.code)" 
+                          title="Delete">
+                          <span class="material-icons-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <!-- Nested files for expanded groups -->
+                  <template v-if="item.type === 'group' && isGroupExpanded(item.code)">
+                    <tr 
+                      v-for="file in item.files" 
+                      :key="file.code"
+                      class="border-b border-[#444] hover:bg-black/10 h-[50px] bg-gray-900/20">
+                      <td class="px-4 py-2 align-middle whitespace-nowrap pl-12">
+                        {{ file.code }}
+                      </td>
+                      <td class="px-4 py-2 align-middle min-w-[200px] pl-12">
+                        <div class="flex items-center gap-2">
+                          <span class="material-icons-outlined text-gray-400 text-sm">insert_drive_file</span>
+                          <span>{{ file.original_name || file.name }}</span>
+                        </div>
+                      </td>
+                      <td class="px-4 py-2 align-middle text-center">
+                        <span class="px-2 py-1 rounded text-xs bg-gray-500/20 text-gray-300">
+                          File
+                        </span>
+                      </td>
+                      <td class="px-4 py-2 align-middle whitespace-nowrap">
+                        {{ new Date(file.upload_date).toLocaleDateString("hu-HU", {
+                          year: "2-digit",
+                          month: "2-digit",
+                          day: "2-digit",
+                        }) + " " + new Date(file.upload_date).toLocaleTimeString("hu-HU", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }) }}
+                      </td>
+                      <td class="px-4 py-2 align-middle whitespace-nowrap">
+                        {{ formatBytes(file.size) }}
+                      </td>
+                      <td class="px-2 py-2 text-center align-middle">
+                        <div class="flex justify-center gap-2">
+                          <button 
+                            class="download-button bg-secondary-button text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
+                            @click.stop="$emit('download', file.code)" 
+                            title="Download">
+                            <span class="material-icons-outlined text-lg">download</span>
+                          </button>
+                          <button 
+                            class="delete-button bg-error text-black p-2 rounded-lg hover:opacity-80 transition-opacity w-10 h-10 flex items-center justify-center" 
+                            @click.stop="handleDelete(file.code)" 
+                            title="Delete">
+                            <span class="material-icons-outlined text-lg">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                </template>
               </tbody>
             </table>
             <div v-if="files.length === 0" class="text-center py-8 text-gray-400">
@@ -106,7 +166,36 @@ export default {
     token: String
   },
   emits: ['close', 'download', 'delete'],
+  data() {
+    return {
+      expandedGroups: new Set()
+    }
+  },
   methods: {
+    toggleGroup(groupCode) {
+      if (this.expandedGroups.has(groupCode)) {
+        this.expandedGroups.delete(groupCode)
+      } else {
+        this.expandedGroups.add(groupCode)
+      }
+    },
+    isGroupExpanded(groupCode) {
+      return this.expandedGroups.has(groupCode)
+    },
+    formatBytes(bytes) {
+      if (bytes === 0) return "0 B"
+      const units = ["B", "kB", "MB", "GB", "TB"]
+      const threshold = 1024
+      let unitIndex = 0
+      let size = bytes
+
+      while (size >= threshold && unitIndex < units.length - 1) {
+        size /= threshold
+        unitIndex++
+      }
+
+      return `${size.toFixed(1)} ${units[unitIndex]}`
+    },
     async handleDelete(code) {
       if (confirm('Are you sure you want to delete this file?')) {
         const result = await this.$emit('delete', code)
