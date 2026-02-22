@@ -3,13 +3,15 @@
     <router-view />
     
     <!-- Notification Container -->
-    <div class="fixed top-4 right-4 z-50 space-y-2">
-      <Notification
-        v-for="notification in notifications"
-        :key="notification.id"
-        :notification="notification"
-        @remove="removeNotification(notification.id)"
-      />
+    <div class="fixed top-4 right-4 z-50 space-y-2 transition-all duration-300 ease-in-out">
+      <TransitionGroup name="notification-list" tag="div" class="flex flex-col space-y-2">
+        <Notification
+          v-for="notification in notifications"
+          :key="notification.id"
+          :notification="notification"
+          @remove="removeNotification(notification.id)"
+        />
+      </TransitionGroup>
     </div>
   </div>
 </template>
@@ -59,5 +61,28 @@ export default {
 body {
   background-color: var(--bg);
   color: var(--text);
+}
+
+/* Notification list transitions for smooth repositioning */
+.notification-list-move,
+.notification-list-enter-active,
+.notification-list-leave-active {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.notification-list-enter-from {
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+}
+
+.notification-list-leave-to {
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+}
+
+.notification-list-leave-active {
+  position: absolute;
+  right: 0;
+  width: 100%;
 }
 </style>

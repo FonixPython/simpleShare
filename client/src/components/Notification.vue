@@ -7,7 +7,7 @@
   >
     <div
       v-if="notification"
-      class="fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg backdrop-blur-md border transition-all duration-300"
+      class="max-w-sm p-4 rounded-lg shadow-lg backdrop-blur-md border transition-all duration-300"
       :class="notificationClasses"
       @mouseenter="pauseTimer"
       @mouseleave="resumeTimer"
@@ -189,19 +189,23 @@ export default {
     },
     onBeforeEnter(el) {
       el.style.opacity = '0'
-      el.style.transform = 'translateX(100%)'
+      el.style.transform = 'translateX(100%) scale(0.9)'
     },
     onEnter(el, done) {
       el.offsetHeight // Force reflow
-      el.style.transition = 'all 0.3s ease-out'
+      el.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
       el.style.opacity = '1'
-      el.style.transform = 'translateX(0)'
+      el.style.transform = 'translateX(0) scale(1)'
       setTimeout(done, 300)
     },
     onLeave(el, done) {
       el.style.transition = 'all 0.3s ease-in'
       el.style.opacity = '0'
-      el.style.transform = 'translateX(100%)'
+      el.style.transform = 'translateX(100%) scale(0.9)'
+      el.style.marginBottom = '0'
+      el.style.paddingTop = '0'
+      el.style.paddingBottom = '0'
+      el.style.height = '0'
       setTimeout(done, 300)
     }
   },
@@ -214,16 +218,20 @@ export default {
 <style scoped>
 .notification-enter-active,
 .notification-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .notification-enter-from {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateX(100%) scale(0.9);
 }
 
 .notification-leave-to {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateX(100%) scale(0.9);
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  height: 0;
 }
 </style>

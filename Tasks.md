@@ -8,5 +8,4 @@
 
 <br>
 
-- notification stacking
 - invidual uploads
