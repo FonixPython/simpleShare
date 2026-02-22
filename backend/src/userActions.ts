@@ -271,7 +271,7 @@ async function generateUniqueGroupID(code_length:number) {
 }
 
 export async function prepareGroupUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
-  const groupCode = await generateUniqueGroupID(6);
+  const groupCode:string = await generateUniqueGroupID(6);
   req.groupCode = groupCode;
 
   // Check global storage limit first
