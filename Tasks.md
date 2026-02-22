@@ -23,6 +23,8 @@
   - If single file: Icon, Filename, Size, Uploaded_on
   - If group: Group Icon, Group name, Collective download button
     - single file: Icon, Filename, Size, Uploaded_on, Download button
+- Copy code when clicked in my files
+- My files group download
 - Download progress indicator for individual files and groups
 - Responsive design for mobile devices
 - Search/filter functionality for files and groups
