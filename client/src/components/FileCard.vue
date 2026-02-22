@@ -3,7 +3,7 @@
     <!-- Single File Card -->
     <div v-if="fileData && fileData.type === 'file'" class="file-card animate-slide-up">
       <div class="file-icon">
-        <span class="material-icons-outlined">{{ getFileIcon(fileData.name) }}</span>
+        <span class="material-icons-outlined">{{ getFileIcon(fileData) }}</span>
       </div>
       <div class="file-info">
         <div class="file-name" :title="fileData.name">{{ fileData.name }}</div>
@@ -44,7 +44,7 @@
           class="file-item"
         >
           <div class="file-icon">
-            <span class="material-icons-outlined">{{ getFileIcon(file.original_name) }}</span>
+            <span class="material-icons-outlined">{{ getFileIcon(file) }}</span>
           </div>
           <div class="file-info">
             <div class="file-name" :title="file.original_name">{{ file.original_name }}</div>
@@ -74,83 +74,47 @@ export default {
   },
   emits: ['download-file', 'download-group'],
   methods: {
-    getFileIcon(filename) {
-      const extension = filename.split('.').pop().toLowerCase()
-      const iconMap = {
-        // Documents
-        'pdf': 'picture_as_pdf',
-        'doc': 'description',
-        'docx': 'description',
-        'txt': 'text_snippet',
-        'rtf': 'description',
-        'odt': 'description',
-        
-        // Spreadsheets
-        'xls': 'table_chart',
-        'xlsx': 'table_chart',
-        'csv': 'table_chart',
-        'ods': 'table_chart',
-        
-        // Presentations
-        'ppt': 'slideshow',
-        'pptx': 'slideshow',
-        'odp': 'slideshow',
-        
-        // Images
-        'jpg': 'image',
-        'jpeg': 'image',
-        'png': 'image',
-        'gif': 'image',
-        'bmp': 'image',
-        'svg': 'image',
-        'webp': 'image',
-        'ico': 'image',
-        
-        // Audio
-        'mp3': 'audio_file',
-        'wav': 'audio_file',
-        'flac': 'audio_file',
-        'aac': 'audio_file',
-        'ogg': 'audio_file',
-        'm4a': 'audio_file',
-        
-        // Video
-        'mp4': 'video_file',
-        'avi': 'video_file',
-        'mkv': 'video_file',
-        'mov': 'video_file',
-        'wmv': 'video_file',
-        'flv': 'video_file',
-        'webm': 'video_file',
-        
-        // Archives
-        'zip': 'folder_zip',
-        'rar': 'folder_zip',
-        '7z': 'folder_zip',
-        'tar': 'folder_zip',
-        'gz': 'folder_zip',
-        
-        // Code
-        'js': 'code',
-        'ts': 'code',
-        'html': 'code',
-        'css': 'code',
-        'json': 'code',
-        'xml': 'code',
-        'py': 'code',
-        'java': 'code',
-        'cpp': 'code',
-        'c': 'code',
-        'php': 'code',
-        'rb': 'code',
-        'go': 'code',
-        'rs': 'code',
-        
-        // Default
-        'default': 'insert_drive_file'
+    getFileIcon(fileData) {
+      // Use mimetype if available, otherwise fall back to filename extension
+      let mimeType = '';
+      if (fileData.mimetype) {
+        mimeType = fileData.mimetype.split('/')[0]; // Get the part before '/'
+      } else {
+        // Fallback to extension if mimetype is not available
+        const extension = fileData.name?.split('.').pop().toLowerCase() || 
+                         fileData.original_name?.split('.').pop().toLowerCase() || '';
+        const extensionToMime = {
+          'pdf': 'application/pdf',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'txt': 'text/plain',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'mp3': 'audio/mpeg',
+          'wav': 'audio/wav',
+          'mp4': 'video/mp4',
+          'avi': 'video/x-msvideo',
+          'zip': 'application/zip',
+          'js': 'application/javascript',
+          'css': 'text/css',
+          'html': 'text/html',
+          'json': 'application/json'
+        };
+        mimeType = extensionToMime[extension]?.split('/')[0] || 'application';
       }
+
+      const iconMap = {
+        'application': 'insert_drive_file',
+        'text': 'text_snippet',
+        'image': 'image',
+        'audio': 'audio_file',
+        'video': 'video_file',
+        'multipart': 'folder_zip'
+      };
       
-      return iconMap[extension] || iconMap['default']
+      return iconMap[mimeType] || iconMap['application'];
     },
     
     formatBytes(bytes) {
