@@ -5,17 +5,9 @@ const mariadb = require("mariadb");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path")
+const pool = require("./db");
 require("dotenv").config();
 
-const pool = mariadb.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: "simpleShare",
-  connectionLimit: 5,
-  charset: "utf8mb4",
-});
 export interface File {
   code:string;
   visibility:Number;
@@ -38,31 +30,25 @@ export interface FileGroup {
 }
 
 export async function getTotalQuota(user_id:string | null): Promise<Number> {
-  let conn;
   try {
     if (user_id === null) {return 1}
-    conn = await pool.getConnection();
-    let user_result = await conn.query("SELECT * FROM users WHERE id = ?", [user_id]);
+    let user_result = await pool.query("SELECT * FROM users WHERE id = ?", [user_id]);
     return user_result[0].quota_in_bytes;
-  } finally {if (conn) {conn.release();}}
+  } catch(err){console.log(err);return 1}
 }
 
 export async function getUsedQuota(user_id:string | null): Promise<Number> {
-  let conn;
   try {
     if (user_id === null) {return 1}
-    conn = await pool.getConnection();
-    let used_res = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
+    let used_res = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
     return used_res[0].total_used;
-  } finally {if (conn) {conn.release();}}
+  } catch(err){console.log(err); return 1}
 }
 
 export async function getAllFiles(user_id:string | null){
-  let conn;
   try {
-    conn = await pool.getConnection();
-    let file_results = await conn.query("SELECT * FROM file_index WHERE user_id=?",[user_id])
-    let group_results = await conn.query("SELECT * FROM file_groups WHERE user_id = ?",[user_id])
+    let file_results = await pool.query("SELECT * FROM file_index WHERE user_id=?",[user_id])
+    let group_results = await pool.query("SELECT * FROM file_groups WHERE user_id = ?",[user_id])
     // Create a hashmap based on file codes
     let file_hashmap:Record<string,File> = {}
     for (let file of file_results) {
@@ -102,76 +88,66 @@ export async function getAllFiles(user_id:string | null){
     }
     return_list.push()
     return return_list
-  } finally {if(conn){conn.release()}} 
+  } catch(err){console.log(err)}
 }
 
 export async function changePassword(user_id:string | null,cur_password:string,new_password:string):Promise<Number>{
-  let conn;
   try{
-    conn = await pool.getConnection();
-    let user_result = await conn.query("SELECT * FROM users WHERE id=?",[user_id])
+    let user_result = await pool.query("SELECT * FROM users WHERE id=?",[user_id])
     if (user_result.length === 0){return 3} // Invalid user_id
     const is_match_toold:boolean = await bcrypt.compare(cur_password,user_result[0].password_hash)
     const is_match_tonew:boolean = await bcrypt.compare(new_password,user_result[0].password_hash)
     if (!is_match_toold) {return 2} // Invalid current password
     if (is_match_tonew){return 1} // Error New password cannot be the same as the old
     let new_password_hash:string = await bcrypt.hash(new_password, 10);
-    await conn.query("UPDATE users SET password_hash =? WHERE id = ?",[new_password_hash, user_id]); // Update password hash in database
-    await conn.query("DELETE FROM session_tokens WHERE user_id = ?",[user_id]); // Delete all active sessions
+    await pool.query("UPDATE users SET password_hash =? WHERE id = ?",[new_password_hash, user_id]); // Update password hash in database
+    await pool.query("DELETE FROM session_tokens WHERE user_id = ?",[user_id]); // Delete all active sessions
     return 0 // Success
   } catch(err){
     console.log(err);
     return 4 // Server faliure ???
-  } finally{if(conn){conn.release()}}
+  }
 }
 
 // UPLOAD SECTION
 
 
-async function getTotalStorageUsed():Promise<number> {
-  let conn;
+async function getTotalStorageUsed():Promise<number | null> {
   try {
-    conn = await pool.getConnection();
-    const result = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",);
+    const result = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",);
     return Number(result[0].total_used || 0);
-  } finally {if (conn) conn.release();}
+  } catch(err){console.log(err);return null}
 }
 
-async function getGlobalStorageLimit():Promise<number> {
-  let conn;
+async function getGlobalStorageLimit():Promise<number | null> {
   try {
-    conn = await pool.getConnection();
-    const result = await conn.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
+    const result = await pool.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
     return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
-  } finally {if (conn) conn.release();}
+  } catch(err){console.log(err);return null}
 }
 
 async function calculateRemainingGlobalStorage() {
-  const totalLimit:number = await getGlobalStorageLimit();
+  const totalLimit:number = await getGlobalStorageLimit() || 1;
   if (totalLimit === 0) return null; // Unlimited
-  const totalUsed:number = await getTotalStorageUsed();
+  const totalUsed:number = await getTotalStorageUsed() || 1;
   return totalLimit - totalUsed;
 }
 
 async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
-  let conn;
   try {
-    conn = await pool.getConnection();
-    let result = await conn.query("SELECT quota_in_bytes FROM users WHERE id = ?",[user_id]);
+    let result = await pool.query("SELECT quota_in_bytes FROM users WHERE id = ?",[user_id]);
     if (result.length === 0) return 0;
     let quota:number = Number(result[0].quota_in_bytes);
     if (quota == 0) return null;
-    let used_res = await conn.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
+    let used_res = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
     let used_up:number = Number(used_res[0].total_used || 0)
     let remaining:number = quota - used_up
     return remaining;
-  } finally {if (conn) conn.release();}
+  } catch(err){console.log(err);return 1}
 }
 
 export async function registerUploadInIndex(req:Request& Record<string, any>) {
-  let conn;
   try {
-    conn = await pool.getConnection();
     if (!req.file) throw new Error("No file uploaded");
     
     // Rename the file to use the file code
@@ -187,7 +163,7 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
       fs.renameSync(oldPath, newPath);
     }
     
-    let res = await conn.query(
+    let res = await pool.query(
       "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
       [
         req.fileCode,
@@ -199,7 +175,7 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
       ],
     );
     return !!res;
-  } finally {if (conn) conn.release();}
+  } catch(err){console.log(err)}
 }
 
 const storage = multer.diskStorage({
@@ -228,17 +204,15 @@ export const uploadMiddleware = (req:Request& Record<string, any>, res:Response,
 };
 
 async function generateUniqueFileID(code_length:number) {
-  let conn;
   try {
-    conn = await pool.getConnection();
     const chars:string = "abcdefghijklmnopqrstuvwxyz";
     while (true) {
       let result:string = "";
       for (let i = 0; i < code_length; i++) {result += chars.charAt(Math.floor(Math.random() * chars.length));}
-      let res = await conn.query("SELECT * FROM file_index WHERE id = ?", [result]);
+      let res = await pool.query("SELECT * FROM file_index WHERE id = ?", [result]);
       if (res.length == 0) {return result}
     }
-  } finally {if (conn) {conn.release();}}
+  } catch(err){console.log(err)}
 }
 
 export const uploadGroupMiddleware = (req:Request& Record<string, any>, res:Response, next:NextFunction) => {
@@ -257,21 +231,20 @@ export const uploadGroupMiddleware = (req:Request& Record<string, any>, res:Resp
 };
 
 async function generateUniqueGroupID(code_length:number) {
-  let conn;
   try {
-    conn = await pool.getConnection();
     const chars:string = "abcdefghijklmnopqrstuvwxyz";
     while (true) {
       let result:string = "";
       for (let i = 0; i < code_length; i++) {result += chars.charAt(Math.floor(Math.random() * chars.length));}
-      let res = await conn.query("SELECT * FROM file_groups WHERE id = ?", [result]);
+      let res = await pool.query("SELECT * FROM file_groups WHERE id = ?", [result]);
       if (res.length == 0) {return result}
     }
-  } finally {if (conn) {conn.release();}}
+  } catch(err){console.log(err)}
 }
 
 export async function prepareGroupUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
-  const groupCode:string = await generateUniqueGroupID(6);
+  const groupCode:string | undefined = await generateUniqueGroupID(6);
+  if (groupCode === undefined){return res.sendStatus(500)}
   req.groupCode = groupCode;
 
   // Check global storage limit first
@@ -300,9 +273,7 @@ export async function prepareGroupUploadContext(req:Request& Record<string, any>
 }
 
 export async function registerGroupUploadInIndex(req:Request& Record<string, any>) {
-  let conn;
   try {
-    conn = await pool.getConnection();
     if (!req.files || req.files.length === 0) throw new Error("No files uploaded");
     
     const groupName = req.body.groupName || 'Untitled Group';
@@ -311,7 +282,8 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
 
     // First, register all files in the file_index table
     for (const file of req.files as Express.Multer.File[]) {
-      const fileCode = await generateUniqueFileID(6);
+      const fileCode:string | undefined = await generateUniqueFileID(6);
+      if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
       fileIds.push(fileCode);
       
       // Update the filename to include the file code
@@ -328,7 +300,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
       }
       
       // Register file in database
-      await conn.query(
+      await pool.query(
         "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
         [
           fileCode,
@@ -348,7 +320,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
     }
 
     // Then create the group entry
-    await conn.query(
+    await pool.query(
       "INSERT INTO file_groups(id, name, file_ids, user_id, created_at) VALUES (?,?,?,?,?)",
       [
         req.groupCode,
@@ -366,7 +338,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
       },
       files: uploadedFiles
     };
-  } finally {if (conn) conn.release();}
+  } catch(err){console.log(err);return null}
 }
 
 export async function prepareUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
