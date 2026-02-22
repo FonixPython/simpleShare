@@ -330,8 +330,9 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
       if(validation!==null && files_result[0].user_id !== validation){return 3} // Unauthorized!
       let groups_containing_file = await pool.query("SELECT * FROM file_groups WHERE file_ids LIKE ?",[`%${code}%`])
       for (let group of groups_containing_file){
-        if(group.file_ids.indexOf(code)>-1){group.file_ids.splice(group.file_ids.indexOf(code),1)}
-        await pool.query("UPDATE file_groups SET file_ids = ? WHERE id = ?",[group.file_ids, group.id]);
+        let file_ids = JSON.parse(group.file_ids)
+        if(file_ids.indexOf(code)>-1){file_ids.splice(file_ids.indexOf(code),1)}
+        await pool.query("UPDATE file_groups SET file_ids = ? WHERE id = ?",[JSON.stringify(group.file_ids), group.id]);
       }
       try {await fs.unlink(process.env.UPLOAD_PATH + files_result[0].stored_filename);} 
       catch (err) {

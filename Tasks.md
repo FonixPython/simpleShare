@@ -9,6 +9,7 @@
 
 # Frontend Tasks
 
+- Fix dyslexic frontend
 - Group management UI (view, delete groups)
 - Download progress indicator for individual files and groups
 - Responsive design for mobile devices
