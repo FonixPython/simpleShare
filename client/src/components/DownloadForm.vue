@@ -20,6 +20,7 @@
           ref="codeInputs" />
       </div>
       <button 
+        v-if="!fileData || fileData.type !== 'group'"
         id="download-btn" 
         type="submit"
         :disabled="!canDownload"
