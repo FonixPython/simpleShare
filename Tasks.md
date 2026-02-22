@@ -22,3 +22,5 @@
 - [ ] Search/filter functionality for files and groups
 - [ ] Download history
 - [ ] Batch operations (select multiple files for download/delete)
+- [ ] Lots of files displayed by the file check can overflow and are not scrollable like they should be
+- [ ] Add a blur effect to the background of the header so it doesn't look weird incase of an overflow
