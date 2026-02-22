@@ -1,10 +1,10 @@
 <template>
   <div 
     v-if="visible"
-    class="flex justify-center items-center w-full h-full absolute top-0 left-0 bg-transparent background"
+    class="flex justify-center items-center w-full h-full absolute top-0 left-0 bg-transparent background z-[50]"
     @click="$emit('close')">
     <div
-      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-20vh)] mobile:h-[calc(100vh-10vh)] w-[calc(100vw-30vw)] mobile:w-[calc(100vw-5vw)] flex items-center justify-center flex-col m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
+      class="z-[55] bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-20vh)] mobile:h-[calc(100vh-10vh)] w-[calc(100vw-30vw)] mobile:w-[calc(100vw-5vw)] flex items-center justify-center flex-col m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
       @click.stop>
       <button
         class="absolute top-5 mobile:top-3 h-[42px] mobile:h-[36px] right-5 mobile:right-3 bg-primary-button text-black border-none px-[10px] mobile:px-[8px] py-[10px] mobile:py-[8px] rounded-lg text-lg mobile:text-base cursor-pointer tracking-[1px] text-center z-10 close-btn transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-primary-button/50"
@@ -13,7 +13,7 @@
       </button>
       
       <div
-        v-if="!uploading && !uploadComplete"
+        v-if="!uploading && !uploadComplete && !uploadError"
         class="font-inter text-2xl mobile:text-xl relative h-[80%] mobile:h-[70%] w-[80%] mobile:w-[90%] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] rounded-[28px] mobile:rounded-[20px] border-0 transition-all duration-300 drop_zone cursor-pointer hover:scale-105"
         :class="{ 'dragover': isDragOver }"
         @click.stop="triggerFileInput"
@@ -55,19 +55,95 @@
       <!-- Upload Status/Error -->
       <div 
         v-if="uploadError"
-        class="w-full max-w-2xl mobile:max-w-full mobile:px-4 mx-auto p-8 mobile:p-4 flex flex-col items-center justify-center">
-        <div class="text-center mb-8 mobile:mb-4">
-          <span class="material-icons-outlined text-4xl mobile:text-3xl mb-4 mobile:mb-2" style="color: #f77b5e">error</span>
-          <p class="text-xl mobile:text-lg font-inter" style="color: #f77b5e">
+        class="w-full max-w-lg mobile:max-w-full mobile:px-6 mx-auto flex flex-col items-center justify-center px-8 py-6">
+        
+        <!-- Error Header -->
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-16 h-16 mobile:w-12 mobile:h-12 rounded-full bg-red-500/20 mb-4">
+            <span class="material-icons-outlined text-3xl mobile:text-2xl" style="color: #f77b5e">error</span>
+          </div>
+          <h2 class="text-2xl mobile:text-xl font-inter font-semibold text-white mb-2">
             Upload failed!
-          </p>
+          </h2>
         </div>
-        <div class="space-y-6 mobile:space-y-4">
-          <div class="text-center p-6 mobile:p-4 bg-black/20 rounded-xl border border-[#444]">
-            <p class="text-sm mobile:text-xs text-gray-400 mb-2 font-inter">
-              Failed to upload:
-            </p>
-            <p class="text-sm mobile:text-xs font-inter" style="color: #f77b5e">{{ uploadError }}</p>
+        
+        <!-- Error Content -->
+        <div class="w-full space-y-4">
+          <!-- Error Message Box -->
+          <div class="bg-black/30 border border-red-500/30 rounded-xl p-4 mobile:p-3">
+            <div class="flex items-start gap-3">
+              <span class="material-icons-outlined text-red-400 text-lg mobile:text-sm mt-0.5">info</span>
+              <div class="flex-1">
+                <p class="text-sm mobile:text-xs text-gray-300 font-medium mb-1">Error Details</p>
+                <p class="text-sm mobile:text-xs text-red-400 font-inter">{{ uploadError }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Suggestions Box -->
+          <div v-if="errorType" class="bg-black/20 border border-gray-600/30 rounded-xl p-4 mobile:p-3">
+            <div class="flex items-start gap-3">
+              <span class="material-icons-outlined text-blue-400 text-lg mobile:text-sm mt-0.5">lightbulb</span>
+              <div class="flex-1">
+                <p class="text-sm mobile:text-xs text-gray-300 font-medium mb-2">What you can try:</p>
+                <ul class="text-xs mobile:text-[11px] text-gray-400 space-y-1.5">
+                  <li v-if="errorType === 'quota_exceeded'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Delete old files to free up space or upload a smaller file</span>
+                  </li>
+                  <li v-if="errorType === 'auth_error'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Log out and log back in to refresh your session</span>
+                  </li>
+                  <li v-if="errorType === 'invalid_request'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Check if the file format is supported and not corrupted</span>
+                  </li>
+                  <li v-if="errorType === 'timeout' || errorType === 'network_error'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Check your internet connection and try uploading again</span>
+                  </li>
+                  <li v-if="errorType === 'rate_limit'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Wait a few moments before trying again</span>
+                  </li>
+                  <li v-if="errorType === 'server_error' || errorType === 'server_unavailable'" class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Try again in a few minutes or contact support if it persists</span>
+                  </li>
+                  <li v-else class="flex items-start gap-2">
+                    <span class="text-blue-400 mt-0.5">•</span>
+                    <span>Check your connection and try uploading again</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex gap-3 mobile:gap-2 justify-center pt-2">
+            <button
+              v-if="canRetry"
+              @click="retryUpload"
+              class="flex items-center gap-2 px-5 mobile:px-4 py-2.5 mobile:py-2 bg-primary-button text-black rounded-lg font-medium text-sm mobile:text-xs hover:scale-105 transition-all duration-200 hover:shadow-lg hover:shadow-primary-button/50">
+              <span class="material-icons-outlined text-lg mobile:text-sm">refresh</span>
+              Retry Upload
+            </button>
+            
+            <button
+              v-if="errorType === 'quota_exceeded'"
+              @click="$emit('show-my-files')"
+              class="flex items-center gap-2 px-5 mobile:px-4 py-2.5 mobile:py-2 bg-orange-600 text-white rounded-lg font-medium text-sm mobile:text-xs hover:bg-orange-700 transition-all duration-200">
+              <span class="material-icons-outlined text-lg mobile:text-sm">folder_open</span>
+              Manage Files
+            </button>
+            
+            <button
+              @click="resetUpload"
+              class="flex items-center gap-2 px-5 mobile:px-4 py-2.5 mobile:py-2 bg-gray-700 text-white rounded-lg font-medium text-sm mobile:text-xs hover:bg-gray-600 transition-all duration-200">
+              <span class="material-icons-outlined text-lg mobile:text-sm">close</span>
+              Start Over
+            </button>
           </div>
         </div>
       </div>
@@ -212,6 +288,8 @@ export default {
       uploading: false,
       uploadComplete: false,
       uploadError: null,
+      errorType: null,
+      canRetry: true,
       uploadResult: null,
       showGroupChoiceModal: false,
       pendingFiles: null,
@@ -223,7 +301,9 @@ export default {
         loaded: '0 MB',
         total: '0 MB'
       },
-      copyTooltip: 'Click to copy'
+      copyTooltip: 'Click to copy',
+      lastUploadedFiles: null,
+      lastUploadConfig: null
     }
   },
   computed: {
@@ -291,8 +371,18 @@ export default {
       // Determine upload type and proceed
       const isGroupUpload = this.uploadType === 'group' && files.length > 0
       console.log('Proceeding with upload, isGroupUpload:', isGroupUpload)
+      
+      // Store upload configuration for potential retry
+      this.lastUploadedFiles = files
+      this.lastUploadConfig = {
+        isGroupUpload,
+        groupName: this.groupName
+      }
+      
       this.uploading = true
       this.uploadError = null
+      this.errorType = null
+      this.canRetry = true
       this.uploadComplete = false
 
       // Calculate total size for all files
@@ -332,8 +422,13 @@ export default {
         // Reset upload type and group name after successful upload
         this.uploadType = 'individual'
         this.groupName = ''
+        this.lastUploadedFiles = null
+        this.lastUploadConfig = null
       } catch (error) {
         this.uploadError = error.error || 'Upload failed'
+        this.errorType = error.errorType || 'generic'
+        this.canRetry = error.canRetry !== false // Default to true unless explicitly false
+        console.error('Upload failed:', error)
       } finally {
         this.uploading = false
         this.pendingFiles = null
@@ -417,6 +512,39 @@ export default {
       if (this.pendingFiles) {
         this.handleFiles(this.pendingFiles)
       }
+    },
+
+    retryUpload() {
+      if (this.lastUploadedFiles && this.lastUploadConfig) {
+        // Restore the upload configuration
+        if (this.lastUploadConfig.isGroupUpload) {
+          this.uploadType = 'group'
+          this.groupName = this.lastUploadConfig.groupName
+        } else {
+          this.uploadType = 'individual'
+        }
+        
+        // Retry the upload with the same files
+        this.handleFiles(this.lastUploadedFiles)
+      }
+    },
+
+    resetUpload() {
+      this.uploadError = null
+      this.errorType = null
+      this.canRetry = true
+      this.uploadComplete = false
+      this.uploadResult = null
+      this.lastUploadedFiles = null
+      this.lastUploadConfig = null
+      this.uploadType = 'individual'
+      this.groupName = ''
+      this.uploadProgress = {
+        percentage: 0,
+        speed: '0',
+        loaded: '0 MB',
+        total: '0 MB'
+      }
     }
   },
   watch: {
@@ -426,11 +554,15 @@ export default {
         this.uploading = false
         this.uploadComplete = false
         this.uploadError = null
+        this.errorType = null
+        this.canRetry = true
         this.uploadResult = null
         this.showGroupChoiceModal = false
         this.pendingFiles = null
         this.uploadType = null // Reset to null to allow group choice
         this.groupName = ''
+        this.lastUploadedFiles = null
+        this.lastUploadConfig = null
         this.uploadProgress = {
           percentage: 0,
           speed: '0',

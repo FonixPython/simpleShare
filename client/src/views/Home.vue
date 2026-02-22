@@ -21,7 +21,8 @@
       :token="sessionToken"
       @close="showUploadModal = false"
       @upload-file="handleFileUpload"
-      @upload-success="handleUploadSuccess" />
+      @upload-success="handleUploadSuccess"
+      @show-my-files="handleShowMyFiles" />
 
     <HamburgerMenu 
       :visible="showHamburgerMenu"
@@ -145,18 +146,47 @@ export default {
         if (result.success) {
           await updateQuotaDisplay(token)
           await updateFilesDisplay(token)
-          showNotification('File uploaded successfully!', 'ok')
+          
+          // Show success notification with file count
+          const fileCount = files.length
+          let successMessage = 'File uploaded successfully!'
+          if (fileCount > 1) {
+            if (isGroupUpload) {
+              successMessage = `${fileCount} files uploaded as group successfully!`
+            } else {
+              successMessage = `${fileCount} files uploaded successfully!`
+            }
+          }
+          showNotification(successMessage, 'ok')
         } else {
-          showNotification('Upload failed!', 'error')
+          showNotification(result.error || 'Upload failed!', 'error')
         }
         resolve(result)
       } catch (error) {
-        showNotification('Upload failed!', 'error')
+        // Enhanced error notification with specific suggestions
+        let errorMessage = error.error || 'Upload failed!'
+        let notificationType = 'error'
+        
+        // Add specific guidance based on error type
+        if (error.errorType === 'quota_exceeded') {
+          errorMessage += ' Consider deleting old files to free up space.'
+        } else if (error.errorType === 'auth_error') {
+          errorMessage += ' Please log in again.'
+        } else if (error.errorType === 'network_error' || error.errorType === 'timeout') {
+          errorMessage += ' Check your internet connection and try again.'
+        }
+        
+        showNotification(errorMessage, notificationType)
         reject(error)
       }
     }
 
     const handleUploadSuccess = () => {
+    }
+
+    const handleShowMyFiles = () => {
+      showUploadModal.value = false
+      showMyFilesModal.value = true
     }
 
     const handleDeleteFile = async (code, action = null) => {
@@ -284,6 +314,7 @@ export default {
       handleLogout,
       handleFileUpload,
       handleUploadSuccess,
+      handleShowMyFiles,
       handleDeleteFile,
       handleChangePassword,
       handleRegisterUser,

@@ -2,8 +2,8 @@
   <div id="app" class="m-0 p-0 bg-bg text-white font-inter flex justify-center items-center h-screen overflow-hidden select-none mobile:overflow-x-hidden">
     <router-view />
     
-    <div class="fixed top-4 right-4 z-50 space-y-2 transition-all duration-300 ease-in-out">
-      <TransitionGroup name="notification-list" tag="div" class="flex flex-col space-y-2">
+    <div class="fixed top-6 right-6 z-[60] space-y-3 transition-all duration-300 ease-in-out">
+      <TransitionGroup name="notification-list" tag="div" class="flex flex-col space-y-3">
         <Notification
           v-for="notification in notifications"
           :key="notification.id"

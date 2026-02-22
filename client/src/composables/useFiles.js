@@ -265,22 +265,71 @@ export function useFiles() {
           }
         } else {
           let errorMessage = "Upload failed"
-          if (xhr.status === 413) {
-            errorMessage = "File too large! You ran out of quota!"
-          } else if (xhr.status === 401) {
-            errorMessage = "Unauthorized!"
-          } else if (xhr.status === 400) {
-            errorMessage = "Bad request!"
-          } else if (xhr.status === 500) {
-            errorMessage = "Internal Server Error!"
+          let errorType = "generic"
+          let canRetry = true
+          
+          try {
+            const errorResponse = JSON.parse(xhr.responseText)
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message
+            }
+          } catch (e) {
+            // Use default error messages if response is not valid JSON
           }
-          reject({ success: false, error: errorMessage })
+          
+          if (xhr.status === 413) {
+            errorMessage = "File too large! You've run out of storage quota."
+            errorType = "quota_exceeded"
+            canRetry = false
+          } else if (xhr.status === 401) {
+            errorMessage = "Authentication required. Please log in again."
+            errorType = "auth_error"
+            canRetry = false
+          } else if (xhr.status === 400) {
+            errorMessage = "Invalid file format or request. Please check your files and try again."
+            errorType = "invalid_request"
+            canRetry = true
+          } else if (xhr.status === 408) {
+            errorMessage = "Upload timed out. Please check your connection and try again."
+            errorType = "timeout"
+            canRetry = true
+          } else if (xhr.status === 429) {
+            errorMessage = "Too many upload attempts. Please wait a moment and try again."
+            errorType = "rate_limit"
+            canRetry = true
+          } else if (xhr.status === 500) {
+            errorMessage = "Server error. Please try again in a few minutes."
+            errorType = "server_error"
+            canRetry = true
+          } else if (xhr.status === 502 || xhr.status === 503 || xhr.status === 504) {
+            errorMessage = "Server temporarily unavailable. Please try again later."
+            errorType = "server_unavailable"
+            canRetry = true
+          } else if (xhr.status === 0) {
+            errorMessage = "Network connection lost. Please check your internet connection."
+            errorType = "network_error"
+            canRetry = true
+          }
+          
+          reject({ 
+            success: false, 
+            error: errorMessage,
+            errorType: errorType,
+            canRetry: canRetry,
+            statusCode: xhr.status
+          })
         }
       })
       
       xhr.addEventListener('error', function() {
         uploading.value = false
-        reject({ success: false, error: "Network error" })
+        reject({ 
+          success: false, 
+          error: "Network connection failed. Please check your internet connection and try again.",
+          errorType: "network_error",
+          canRetry: true,
+          statusCode: 0
+        })
       })
       
       xhr.open('POST', endpoint)
