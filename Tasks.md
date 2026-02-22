@@ -8,7 +8,6 @@
 # Frontend Tasks
 
 - "Ékezetes" letters
-- Fix dyslexic frontend
 - Download progress indicator for individual files and groups
 - Responsive design for mobile devices
 - Error handling and user feedback for failed uploads
