@@ -191,7 +191,7 @@ router.get("/files/:file_code", async (req:Request, res:Response) => {
   if (regex.test(file_code)) {return res.sendStatus(400);}
   let db_result = await uploadActions.retrieveObjectInfo(file_code);
   if (db_result === null) {return res.sendStatus(404);}
-  if (db_result !== null) {
+  if (db_result.type === "file"){
     let stored_name = db_result.stored_filename;
     let original_name = db_result.original_name;
     // Fix encoding for special characters (handle double-encoding)
@@ -199,6 +199,16 @@ router.get("/files/:file_code", async (req:Request, res:Response) => {
     catch (e) {original_name = db_result.original_name;}
     const filePath = path.join(process.env.UPLOAD_PATH || './uploads/', stored_name);
     return res.download(filePath, original_name);
+  }
+  if (db_result.type === "group"){
+    res.setHeader("Content-Type", "application/zip")
+    res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="download.zip"'
+    )
+    const archive = archiver("zip", {
+        zlib: { level: 9 }
+    })
   }
 });
 
