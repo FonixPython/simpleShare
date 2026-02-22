@@ -60,14 +60,14 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
     if (fs.existsSync(oldPath)) {
       fs.renameSync(oldPath, newPath);
     }
-    
+    let fixed_filename = Buffer.from(req.file.originalname, "latin1").toString("utf8").normalize("NFC");
     let res = await pool.query(
       "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
       [
         req.fileCode,
         req.file.mimetype,
         newFilename,
-        req.file.originalname,
+        fixed_filename,
         req.file.size,
         req.user.id,
       ],
@@ -267,9 +267,10 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
     for (const file of req.files as Express.Multer.File[]) {
       const fileCode:string | undefined = await generateUniqueCode(6);
       if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
+      let fixed_filename = Buffer.from(file.originalname, "latin1").toString("utf8").normalize("NFC");
       
       // Update the filename to include the file code
-      const ext = path.extname(file.originalname);
+      const ext = path.extname(fixed_filename);
       const newFilename = `${fileCode}${ext}`;
       
       // Rename the file on disk
@@ -288,7 +289,7 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
           fileCode,
           file.mimetype,
           newFilename,
-          file.originalname,
+          fixed_filename,
           file.size,
           req.user.id,
         ],
@@ -296,7 +297,7 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
 
       uploadedFiles.push({
         code: fileCode,
-        originalname: file.originalname,
+        originalname: fixed_filename,
         size: file.size
       });
     }
