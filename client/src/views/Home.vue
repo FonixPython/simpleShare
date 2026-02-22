@@ -165,7 +165,7 @@ export default {
 
     const handleUploadSuccess = () => {
       // Don't close modal automatically - let user see the code and copy it
-      showNotification('Upload completed!', 'ok')
+      // Success notification is already shown in handleFileUpload
     }
 
     const handleDeleteFile = async (code) => {
