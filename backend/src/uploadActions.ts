@@ -3,6 +3,7 @@ const path = require("path")
 import { Request, Response, NextFunction } from 'express';
 import { FileFilterCallback } from "multer";
 require("dotenv").config();
+const pool = require("./db");
 
 async function getTotalStorageUsed():Promise<number | null> {
   try {
