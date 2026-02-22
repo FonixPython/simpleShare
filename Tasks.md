@@ -14,5 +14,7 @@
 - Responsive design for mobile devices
 - Error handling and user feedback for failed uploads
 - Search/filter functionality for files and groups
+
+
 - Download history
 - Batch operations (select multiple files for download/delete)
