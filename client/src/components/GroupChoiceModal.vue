@@ -4,7 +4,7 @@
     class="flex justify-center items-center w-full h-full absolute top-0 left-0 bg-transparent background cursor-pointer"
     @click="$emit('close')">
     <div
-      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-30vh)] mobile:h-[calc(100vh-20vh)] w-[calc(100vw-40vw)] mobile:w-[calc(100vw-10vw)] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
+      class="z-[80] bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-30vh)] mobile:h-[calc(100vh-20vh)] w-[calc(100vw-40vw)] mobile:w-[calc(100vw-10vw)] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
       @click.stop>
       <div class="text-center p-8 mobile:p-6">
         <h3 class="text-2xl mobile:text-xl font-semibold mb-4">
