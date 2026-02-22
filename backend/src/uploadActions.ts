@@ -370,3 +370,12 @@ export async function retrieveObjectInfo(code:string):Promise<Record<string, any
     return null
   } catch(err){console.log(err);return null}
 }
+
+export async function sanitizeFilename(input:string) {
+  let name = input.replace(/[\/\\?%*:|"<>]/g, "_");
+  name = name.replace(/[\x00-\x1f\x80-\x9f]/g, "");
+  name = name.replace(/[. ]+$/, "");
+  const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+  if (reserved.test(name)) {name = "_" + name;}
+  return name.slice(0, 255);
+}

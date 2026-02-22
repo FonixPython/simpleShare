@@ -200,7 +200,8 @@ router.get("/files/:file_code", async (req:Request, res:Response) => {
   }
   if (db_result.type === "group"){
     res.setHeader("Content-Type", "application/zip")
-    res.setHeader("Content-Disposition",'attachment; filename="download.zip"')
+    let zip_name:string = await uploadActions.sanitizeFilename(db_result.name)
+    res.setHeader("Content-Disposition",`attachment; filename="${zip_name}.zip"`)
     const archive = archiver("zip", {zlib: { level: 9 }})
     archive.on("error", (err: Error) => {res.status(500).end();console.log(err)})
     archive.pipe(res)
