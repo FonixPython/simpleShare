@@ -5,7 +5,7 @@ const router = express.Router();
 import * as auth from "./auth";
 import * as userActions from "./userActions"
 import * as adminActions from "./adminActions"
-
+import * as uploadActions from "./uploadActions"
 
 
 // Base routes
@@ -102,9 +102,9 @@ router.post("/changePassword", async (req:Request,res:Response)=>{
   }
 })
 
-router.post("/upload",auth.authenticateUser,userActions.prepareUploadContext,userActions.uploadMiddleware,async (req:Request & Record<string, any>,res:Response)=>{
+router.post("/upload",auth.authenticateUser,uploadActions.prepareUploadContext,uploadActions.uploadMiddleware,async (req:Request & Record<string, any>,res:Response)=>{
   if (!req.file){return res.status(400).json({error:"No file provided"})}
-  let result = await userActions.registerUploadInIndex(req);
+  let result = await uploadActions.registerUploadInIndex(req);
   if (result === true){
     res.status(200).json({
         error: null,
@@ -114,9 +114,9 @@ router.post("/upload",auth.authenticateUser,userActions.prepareUploadContext,use
   } else {res.status(500).json({ error: "Database registration failed" });}
 })
 
-router.post("/upload-group", auth.authenticateUser, userActions.prepareGroupUploadContext, userActions.uploadGroupMiddleware, async (req: Request & Record<string, any>, res: Response) => {
+router.post("/upload-group", auth.authenticateUser, uploadActions.prepareGroupUploadContext, uploadActions.uploadGroupMiddleware, async (req: Request & Record<string, any>, res: Response) => {
   if (!req.files || req.files.length === 0) {return res.status(400).json({error:"No files provided"})}
-  let result = await userActions.registerGroupUploadInIndex(req);
+  let result = await uploadActions.registerGroupUploadInIndex(req);
   if (result) {
     res.status(200).json({
       error: null,
