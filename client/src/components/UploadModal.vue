@@ -282,6 +282,7 @@ export default {
     visible: Boolean,
     token: String
   },
+  emits: ['close', 'uploadFile', 'uploadSuccess', 'showMyFiles'],
   data() {
     return {
       isDragOver: false,

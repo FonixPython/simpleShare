@@ -129,8 +129,8 @@ export default {
       
       if (result && result.success) {
         showNotification('Login successful!', 'ok')
-        await updateQuotaDisplay(token)
-        await updateFilesDisplay(token)
+        await updateQuotaDisplay(sessionToken.value)
+        await updateFilesDisplay(sessionToken.value)
       }
       
       return result
