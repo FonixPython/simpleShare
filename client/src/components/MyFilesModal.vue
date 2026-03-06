@@ -4,7 +4,7 @@
     class="flex justify-center items-center w-full h-full absolute top-0 left-0 bg-transparent background"
     @click="$emit('close')">
     <div
-      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-20vh)] mobile:h-[calc(100vh-10vh)] w-[calc(100vw-30vw)] mobile:w-[calc(100vw-5vw)] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
+      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-120px)] mobile:h-[calc(100vh-80px)] w-[calc(100vw-30vw)] mobile:w-[calc(100vw-5vw)] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
       @click.stop>
       <button
         class="absolute top-2 mobile:top-2 right-2 mobile:right-2 bg-primary-button text-black border-none w-[42px] mobile:w-[36px] h-[42px] mobile:h-[36px] rounded-lg text-lg mobile:text-base cursor-pointer tracking-[1px] text-center z-20 close-btn flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg hover:shadow-primary-button/50"
@@ -14,10 +14,11 @@
       <div
         class="w-full h-full p-4 mobile:p-2 pt-12 mobile:pt-10 rounded-[28px] mobile:rounded-[20px] border border-[#444] bg-black/10 overflow-hidden">
         <div class="flex h-full relative">
-          <div class="flex-1 overflow-x-auto overflow-y-auto">
-            <table class="w-full border-collapse">
-              <thead class="sticky top-0 bg-black/20 z-10">
-                <tr>
+          <div class="flex-1 overflow-hidden">
+            <div class="h-full overflow-y-auto overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead class="sticky top-0 bg-black/40 z-10 backdrop-blur-md">
+                  <tr>
                   <th class="px-2 mobile:px-1 py-2 mobile:py-1 text-left border-b border-[#444] text-sm mobile:text-xs">
                     Code
                   </th>
@@ -42,8 +43,8 @@
                     Actions
                   </th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 <template v-for="item in files" :key="item.code">
                   <tr 
                     class="border-b border-[#444] hover:bg-black/20 h-[50px] cursor-pointer"
@@ -176,6 +177,7 @@
             </table>
             <div v-if="files.length === 0" class="text-center py-8 text-gray-400">
               No files found
+            </div>
             </div>
           </div>
         </div>
