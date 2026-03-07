@@ -1,8 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
-# yarn.lock
-# .pnp.js
 
 # Build outputs
 dist/
@@ -18,20 +15,6 @@ out/
 .env.production.local
 *.env.bak
 
-
-
-# Firebase
-.firebase/
-firebase-debug.log*
-firestore-debug.log*
-ui-debug.log*
-functions/node_modules/
-functions/lib/
-
-# Testing
-coverage/
-.nyc_output/
-*.lcov
 
 # IDE & Editors
 .vscode/
