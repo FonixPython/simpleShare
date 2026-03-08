@@ -47,7 +47,7 @@ export default {
       timer: null,
       progressTimer: null,
       isPaused: false,
-      remainingTime: 3000
+      remainingTime: 2500
     }
   },
   computed: {
@@ -105,7 +105,7 @@ export default {
     startTimer() {
       this.clearTimer()
       this.progressWidth = 100
-      this.remainingTime = 3000
+      this.remainingTime = 2500
       this.isPaused = false
       
       this.timer = setTimeout(() => {
@@ -132,7 +132,7 @@ export default {
         this.isPaused = true
         clearTimeout(this.timer)
         
-        this.remainingTime = Math.round((this.progressWidth / 100) * 3000)
+        this.remainingTime = Math.round((this.progressWidth / 100) * 2500)
         
         if (this.progressTimer) {
           clearInterval(this.progressTimer)
