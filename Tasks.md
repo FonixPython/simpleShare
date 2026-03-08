@@ -23,6 +23,3 @@
 - [ ] Search/filter functionality for files and groups
 - [ ] Download history
 - [ ] Batch operations (select multiple files for download/delete)
-- [x] Lots of files displayed by the file check can overflow and are not scrollable like they should be
-- [x] Add a blur effect to the background of the header so it doesn't look weird incase of an overflow
-- [x] If I upload multiple files in a group and i don't specify a group name, the warning goes behind the group modal
