@@ -173,8 +173,10 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
       if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
       fileIds.push(fileCode);
       
+      let fixed_filename = Buffer.from(file.originalname, "latin1").toString("utf8").normalize("NFC");
+      
       // Update the filename to include the file code
-      const ext = path.extname(file.originalname);
+      const ext = path.extname(fixed_filename);
       const newFilename = `${fileCode}${ext}`;
       
       // Rename the file on disk
@@ -193,7 +195,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
           fileCode,
           file.mimetype,
           newFilename,
-          file.originalname,
+          fixed_filename,
           file.size,
           req.user.id,
         ],
@@ -201,7 +203,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
 
       uploadedFiles.push({
         code: fileCode,
-        originalname: file.originalname,
+        originalname: fixed_filename,
         size: file.size
       });
     }

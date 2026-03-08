@@ -6,7 +6,7 @@
         <span class="material-icons-outlined">{{ getFileIcon(fileData) }}</span>
       </div>
       <div class="file-info">
-        <div class="file-name" :title="fileData.name">{{ fileData.name }}</div>
+        <div class="file-name" :title="fixFilename(fileData.name)">{{ fixFilename(fileData.name) }}</div>
         <div class="file-details">
           <span class="file-size">{{ formatBytes(fileData.size) }}</span>
           <span class="separator">•</span>
@@ -47,7 +47,7 @@
             <span class="material-icons-outlined">{{ getFileIcon(file) }}</span>
           </div>
           <div class="file-info">
-            <div class="file-name" :title="file.original_name">{{ file.original_name }}</div>
+            <div class="file-name" :title="fixFilename(file.original_name)">{{ fixFilename(file.original_name) }}</div>
             <div class="file-details">
               <span class="file-size">{{ formatBytes(file.size) }}</span>
               <span class="separator">•</span>
@@ -74,6 +74,27 @@ export default {
   },
   emits: ['download-file', 'download-group'],
   methods: {
+    fixFilename(filename) {
+      if (!filename) return filename;
+      
+      // Check if filename contains corrupted characters that need fixing
+      // Common corruption patterns from latin1->utf8 conversion
+      const hasCorruption = /[ÅÂÃÄ]/.test(filename);
+      
+      if (hasCorruption) {
+        try {
+          // Fix by treating the string as if it was corrupted by latin1->utf8 conversion
+          // Convert back to bytes as latin1, then decode as utf8
+          return Buffer.from(filename, 'latin1').toString('utf8').normalize("NFC");
+        } catch (error) {
+          // If conversion fails, return original
+          return filename;
+        }
+      }
+      
+      return filename;
+    },
+    
     getFileIcon(fileData) {
       // Use mimetype if available, otherwise fall back to filename extension
       let mimeType = '';

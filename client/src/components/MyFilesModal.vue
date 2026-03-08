@@ -73,7 +73,7 @@
                       <div class="flex items-center gap-2">
                         <span v-if="item.type === 'group'" class="material-icons-outlined text-blue-400">folder</span>
                         <span v-else class="material-icons-outlined text-gray-400">{{ getFileIcon(item) }}</span>
-                        <span>{{ item.name }}</span>
+                        <span>{{ fixFilename(item.name) }}</span>
                         <span v-if="item.type === 'group'" class="text-xs text-gray-400">({{ item.fileCount }} files)</span>
                       </div>
                     </td>
@@ -133,7 +133,7 @@
                       <td class="px-4 py-2 align-middle min-w-[200px] pl-12">
                         <div class="flex items-center gap-2">
                           <span class="material-icons-outlined text-gray-400 text-sm">{{ getFileIcon(file) }}</span>
-                          <span>{{ file.original_name || file.name }}</span>
+                          <span>{{ fixFilename(file.original_name || file.name) }}</span>
                         </div>
                       </td>
                       <td class="px-4 py-2 align-middle text-center">
@@ -213,6 +213,27 @@ export default {
     }
   },
   methods: {
+    fixFilename(filename) {
+      if (!filename) return filename;
+      
+      // Check if filename contains corrupted characters that need fixing
+      // Common corruption patterns from latin1->utf8 conversion
+      const hasCorruption = /[ÅÂÃÄ]/.test(filename);
+      
+      if (hasCorruption) {
+        try {
+          // Fix by treating the string as if it was corrupted by latin1->utf8 conversion
+          // Convert back to bytes as latin1, then decode as utf8
+          return Buffer.from(filename, 'latin1').toString('utf8').normalize("NFC");
+        } catch (error) {
+          // If conversion fails, return original
+          return filename;
+        }
+      }
+      
+      return filename;
+    },
+    
     getFileIcon(fileData) {
       // Use mimetype if available, otherwise fall back to filename extension
       let mimeType = '';
