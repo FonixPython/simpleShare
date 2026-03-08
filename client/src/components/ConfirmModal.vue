@@ -1,7 +1,7 @@
 <template>
   <div 
     v-if="visible"
-    class="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-black/50 backdrop-blur-sm z-50"
+    class="flex justify-center items-center w-full h-full fixed top-0 left-0 bg-black/50 backdrop-blur-sm z-[90]"
     @click="handleBackdropClick">
     <div
       class="bg-black/90 backdrop-blur-[20px] max-w-md w-full mx-4 rounded-[20px] border border-[#444] transition-all duration-300 animate-scale-in"
