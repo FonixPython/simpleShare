@@ -1,7 +1,7 @@
 # Backend Tasks
 
 - [ ] Fix group time zone
-- [ ] /admin
+- [X] /admin
 - [ ] /admin/getAllUsersWithFiles
 - [ ] /admin/getGlobalLimit
 - [ ] /admin/setGlobalLimit

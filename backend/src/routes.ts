@@ -19,7 +19,7 @@ router.get("/", (req: Request,res:Response) => {
 router.get("/admin",async (req:Request, res:Response)=>{
   if (!req.cookies.session_token) {return res.redirect("/")}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
-  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"}).redirect("/")}
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   return res.sendFile(path.join(__dirname, './public/index.html'));
 })
 
