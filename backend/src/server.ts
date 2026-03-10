@@ -1,4 +1,5 @@
 import express from "express";
+const cookieParser = require("cookie-parser");
 import router from "./routes";
 const pool = require("./db");
 const MigrationRunner = require("./migration-runner");
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const app = express()
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(cookieParser());
 app.use("/",router)
 
 async function startServer() {

@@ -8,8 +8,7 @@ import AdminDashboard from './views/AdminDashboard.vue'
 // Define application routes
 const routes = [
   { path: '/', component: Home },
-  { path: '/admin/dashboard', component: AdminDashboard },
-  { path: '/admin/dashboard/:token', component: AdminDashboard },
+  { path: '/admin', component: AdminDashboard },
 ]
 
 // Create router instance with history mode

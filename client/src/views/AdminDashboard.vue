@@ -78,7 +78,7 @@ export default {
       if (tokenFromUrl && !tokenFromStorage) {
         localStorage.setItem('token', token)
         // Clean URL
-        window.history.replaceState({}, document.title, '/admin/dashboard')
+        window.history.replaceState({}, document.title, '/admin')
       }
 
       sessionToken.value = token

@@ -16,6 +16,7 @@
     "@types/archiver": "^7.0.0",
     "archiver": "^7.0.1",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "mariadb": "^3.4.5",

@@ -7,12 +7,20 @@ const archiver = require("archiver");
 import * as userActions from "./userActions"
 import * as adminActions from "./adminActions"
 import * as uploadActions from "./uploadActions"
+import { request } from 'http';
 
 
 // Base routes
 
 router.get("/", (req: Request,res:Response) => {
-  res.sendFile(path.join(__dirname, './public/index.html'));
+  return res.sendFile(path.join(__dirname, './public/index.html'));
+})
+
+router.get("/admin",async (req:Request, res:Response)=>{
+  if (!req.cookies.session_token) {return res.redirect("/")}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"}).redirect("/")}
+  return res.sendFile(path.join(__dirname, './public/index.html'));
 })
 
 
@@ -46,7 +54,15 @@ router.post("/login",async (req:Request,res:Response)=>{
     });
   }
   let login_result = await auth.loginUser(username=username,password=password,req.headers['user-agent'] || null)
-  if (login_result.success){return res.status(200).json({ status: 200, error: login_result.message, token: login_result.token });}
+  if (login_result.success){
+    res.cookie("session_token", login_result.token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 24 // 1 day
+        });
+    return res.status(200).json({ status: 200, error: login_result.message, token: login_result.token });
+  }
   else{return res.status(400).json({ status: 400, error: login_result.message, token: null });}
 })
 

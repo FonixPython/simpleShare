@@ -56,7 +56,7 @@ export default {
         return
       }
       console.log("Redirecting to admin dashboard with token:", token)
-      window.location.href = "/admin/dashboard/" + token
+      window.location.href = "/admin/" + token
     },
 
     async handleLogout() {
