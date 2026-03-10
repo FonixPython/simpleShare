@@ -196,6 +196,7 @@ router.get("/files/:file_code", async (req:Request, res:Response) => {
     let stored_name = db_result.stored_filename;
     let original_name = db_result.original_name;
     const filePath = path.join(process.env.UPLOAD_PATH || './uploads/', stored_name);
+    res.setHeader("Content-Type", db_result.mime_type)
     return res.download(filePath, original_name);
   }
   if (db_result.type === "group"){
