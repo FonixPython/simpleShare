@@ -153,7 +153,7 @@ router.get("/admin/getGlobalLimit", async (req:Request, res:Response)=>{
     console.log(error);
     return res.status(500).json({ error: "Failed to retrieve storage statistics" })
   }
-
+});
 // User action API endpoints
 
 
