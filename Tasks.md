@@ -7,7 +7,6 @@
 - [ ] /admin/getAllUsersWithFiles
 - [ ] /admin/getGlobalLimit
 - [ ] /admin/setGlobalLimit
-- [X] /admin/user/delete
 - [ ] /admin/database/getTables
 - [ ] /admin/database/getTableData
 - [ ] /admin/database/getTableSchema
@@ -21,6 +20,7 @@
 - [X] /admin/user/changeUsername
 - [X] /admin/user/changeQuota
 - [X] /admin/user/changeAdminStatus
+- [X] /admin/user/delete
 
 - [] Custom id choosing for admins
 
