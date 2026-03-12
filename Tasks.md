@@ -1,4 +1,6 @@
-# Backend Tasks
+# Tasks
+
+## Backend Tasks
 
 - [ ] Fix group time zone
 - [X] /admin
@@ -6,10 +8,6 @@
 - [ ] /admin/getGlobalLimit
 - [ ] /admin/setGlobalLimit
 - [ ] /admin/user/delete
-- [ ] /admin/user/changePassword
-- [ ] /admin/user/changeUsername
-- [ ] /admin/user/changeQuota
-- [ ] /admin/user/changeAdminStatus
 - [ ] /admin/database/getTables
 - [ ] /admin/database/getTableData
 - [ ] /admin/database/getTableSchema
@@ -17,7 +15,14 @@
 - [ ] /admin/database/insertRow
 - [ ] /admin/database/deleteRow
 
-# Frontend Tasks
+### Zeteny
+
+- [ ] /admin/user/changePassword
+- [ ] /admin/user/changeUsername
+- [ ] /admin/user/changeQuota
+- [ ] /admin/user/changeAdminStatus
+
+## Frontend Tasks
 
 - [ ] Responsive design for mobile devices
 - [ ] Search/filter functionality for files and groups
