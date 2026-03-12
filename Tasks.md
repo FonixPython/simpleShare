@@ -7,7 +7,7 @@
 - [ ] /admin/getAllUsersWithFiles
 - [ ] /admin/getGlobalLimit
 - [ ] /admin/setGlobalLimit
-- [ ] /admin/user/delete
+- [X] /admin/user/delete
 - [ ] /admin/database/getTables
 - [ ] /admin/database/getTableData
 - [ ] /admin/database/getTableSchema
@@ -17,10 +17,12 @@
 
 ### Zeteny
 
-- [ ] /admin/user/changePassword
-- [ ] /admin/user/changeUsername
-- [ ] /admin/user/changeQuota
-- [ ] /admin/user/changeAdminStatus
+- [X] /admin/user/changePassword
+- [X] /admin/user/changeUsername
+- [X] /admin/user/changeQuota
+- [X] /admin/user/changeAdminStatus
+
+- [] Custom id choosing for admins
 
 ## Frontend Tasks
 

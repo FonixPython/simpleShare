@@ -41,6 +41,98 @@ router.post('/register', async (req:Request,res:Response)=>{
   if (register_result === 2){return res.sendStatus(500)}
 })
 
+// Admin user management endpoints
+
+router.post('/admin/user/changePassword', async (req:Request,res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let target_user_id = req.body.userId;
+  let new_password = req.body.newPassword;
+  
+  if (!target_user_id || !new_password){return res.status(400).json({error:"userId and newPassword are required!"})}
+  
+  let result = await adminActions.changeUserPassword(target_user_id, new_password);
+  switch(result){
+    case 0: return res.status(200).json({message:"Password changed successfully!"});
+    case 1: return res.status(404).json({error:"User not found!"});
+    case 2: return res.status(500).json({error:"Server error!"});
+  }
+})
+
+router.post('/admin/user/changeUsername', async (req:Request,res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let target_user_id = req.body.userId;
+  let new_username = req.body.newUsername;
+  
+  if (!target_user_id || !new_username){return res.status(400).json({error:"userId and newUsername are required!"})}
+  
+  let result = await adminActions.changeUsername(target_user_id, new_username);
+  switch(result){
+    case 0: return res.status(200).json({message:"Username changed successfully!"});
+    case 1: return res.status(404).json({error:"User not found!"});
+    case 2: return res.status(409).json({error:"Username already exists!"});
+    case 3: return res.status(500).json({error:"Server error!"});
+  }
+})
+
+router.post('/admin/user/changeQuota', async (req:Request,res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let target_user_id = req.body.userId;
+  let new_quota = req.body.newQuota;
+  
+  if (!target_user_id || new_quota === undefined){return res.status(400).json({error:"userId and newQuota are required!"})}
+  
+  let result = await adminActions.changeUserQuota(target_user_id, new_quota);
+  switch(result){
+    case 0: return res.status(200).json({message:"Quota changed successfully!"});
+    case 1: return res.status(404).json({error:"User not found!"});
+    case 2: return res.status(500).json({error:"Server error!"});
+  }
+})
+
+router.post('/admin/user/changeAdminStatus', async (req:Request,res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let target_user_id = req.body.userId;
+  let is_admin = req.body.isAdmin;
+  
+  if (!target_user_id || is_admin === undefined){return res.status(400).json({error:"userId and isAdmin are required!"})}
+  
+  let result = await adminActions.changeUserAdminStatus(target_user_id, is_admin);
+  switch(result){
+    case 0: return res.status(200).json({message:"Admin status changed successfully!"});
+    case 1: return res.status(404).json({error:"User not found!"});
+    case 2: return res.status(500).json({error:"Server error!"});
+  }
+})
+
+router.post('/admin/user/delete', async (req:Request,res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let target_user_id = req.body.userId;
+  
+  if (!target_user_id){return res.status(400).json({error:"userId is required!"})}
+  
+  let result = await adminActions.deleteUser(target_user_id);
+  switch(result){
+    case 0: return res.status(200).json({message:"User deleted successfully!"});
+    case 1: return res.status(404).json({error:"User not found!"});
+    case 2: return res.status(500).json({error:"Server error!"});
+  }
+})
+
 // User action API endpoints
 
 

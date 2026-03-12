@@ -17,3 +17,89 @@ export async function registerUser(new_username:string,new_password:string,is_ad
         return 2
     }
 }
+
+// Admin functions for user management
+
+// Returns 0:success, 1:user not found, 2:server error
+export async function changeUserPassword(user_id:string, new_password:string):Promise<Number>{
+    try {
+        let user_result = await pool.query("SELECT * FROM users WHERE id=?", [user_id]);
+        if (user_result.length === 0){return 1}
+        
+        let new_password_hash:string = await bcrypt.hash(new_password, 10);
+        await pool.query("UPDATE users SET password_hash =? WHERE id = ?",[new_password_hash, user_id]);
+        await pool.query("DELETE FROM session_tokens WHERE user_id = ?",[user_id]);
+        return 0
+    } catch(err){
+        console.log(err);
+        return 2
+    }
+}
+
+// Returns 0:success, 1:user not found, 2:username already exists, 3:server error
+export async function changeUsername(user_id:string, new_username:string):Promise<Number>{
+    try {
+        let user_result = await pool.query("SELECT * FROM users WHERE id=?", [user_id]);
+        if (user_result.length === 0){return 1}
+        
+        let username_check = await auth.checkUser(new_username);
+        if (username_check){return 2}
+        
+        await pool.query("UPDATE users SET username =? WHERE id = ?",[new_username, user_id]);
+        return 0
+    } catch(err){
+        console.log(err);
+        return 3
+    }
+}
+
+// Returns 0:success, 1:user not found, 2:server error
+export async function changeUserQuota(user_id:string, new_quota:Number):Promise<Number>{
+    try {
+        let user_result = await pool.query("SELECT * FROM users WHERE id=?", [user_id]);
+        if (user_result.length === 0){return 1}
+        
+        await pool.query("UPDATE users SET quota_in_bytes =? WHERE id = ?",[new_quota, user_id]);
+        return 0
+    } catch(err){
+        console.log(err);
+        return 2
+    }
+}
+
+// Returns 0:success, 1:user not found, 2:server error
+export async function changeUserAdminStatus(user_id:string, is_admin:boolean):Promise<Number>{
+    try {
+        let user_result = await pool.query("SELECT * FROM users WHERE id=?", [user_id]);
+        if (user_result.length === 0){return 1}
+        
+        await pool.query("UPDATE users SET is_admin =? WHERE id = ?",[is_admin ? 1 : 0, user_id]);
+        return 0
+    } catch(err){
+        console.log(err);
+        return 2
+    }
+}
+
+// Returns 0:success, 1:user not found, 2:server error
+export async function deleteUser(user_id:string):Promise<Number>{
+    try {
+        let user_result = await pool.query("SELECT * FROM users WHERE id=?", [user_id]);
+        if (user_result.length === 0){return 1}
+        
+        // Delete user's files from database
+        await pool.query("DELETE FROM file_index WHERE user_id = ?", [user_id]);
+        await pool.query("DELETE FROM file_groups WHERE user_id = ?", [user_id]);
+        
+        // Delete user's session tokens
+        await pool.query("DELETE FROM session_tokens WHERE user_id = ?", [user_id]);
+        
+        // Delete the user
+        await pool.query("DELETE FROM users WHERE id = ?", [user_id]);
+        
+        return 0
+    } catch(err){
+        console.log(err);
+        return 2
+    }
+}
