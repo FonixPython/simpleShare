@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `file_index` (
   `id` varchar(6) NOT NULL,
   `visibility` int(11) NOT NULL DEFAULT 1,
-  `date_added` timestamp NULL DEFAULT curtime(),
+  `date_added` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `file_size_in_bytes` int(11) DEFAULT NULL,
   `stored_filename` text NOT NULL,
   `original_name` text NOT NULL,

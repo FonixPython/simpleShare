@@ -9,6 +9,7 @@ const pool = mariadb.createPool({
     port: process.env.DB_PORT,
     connectionLimit: 12,
     charset: "utf8mb4",
+    timezone: "UTC",
 });
 
 module.exports = pool;
