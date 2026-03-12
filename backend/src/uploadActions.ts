@@ -10,28 +10,28 @@ const fs = require("fs").promises
 
 type ItemType = "file" | "group"
 
-async function getTotalStorageUsed():Promise<number | null> {
+export async function getTotalStorageUsed():Promise<number | null> {
   try {
     const result = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",);
     return Number(result[0].total_used || 0);
   } catch(err){console.log(err);return null}
 }
 
-async function getGlobalStorageLimit():Promise<number | null> {
+export async function getGlobalStorageLimit():Promise<number | null> {
   try {
     const result = await pool.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
     return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
   } catch(err){console.log(err);return null}
 }
 
-async function calculateRemainingGlobalStorage() {
+export async function calculateRemainingGlobalStorage() {
   const totalLimit:number = await getGlobalStorageLimit() || 1;
   if (totalLimit === 0) return null; // Unlimited
   const totalUsed:number = await getTotalStorageUsed() || 1;
   return totalLimit - totalUsed;
 }
 
-async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
+export async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
   try {
     let result = await pool.query("SELECT quota_in_bytes FROM users WHERE id = ?",[user_id]);
     if (result.length === 0) return 0;
