@@ -13,14 +13,24 @@ import { request } from 'http';
 // Base routes
 
 router.get("/", (req: Request,res:Response) => {
-  return res.sendFile(path.join(__dirname, './public/index.html'));
+  const devPath = path.join(__dirname, '../client/index.html');
+  const prodPath = path.join(__dirname, './public/index.html');
+  const fs = require('fs');
+  const useDev = fs.existsSync(devPath);
+  const indexPath = useDev ? devPath : prodPath;
+  return res.sendFile(indexPath);
 })
 
 router.get("/admin",async (req:Request, res:Response)=>{
   if (!req.cookies.session_token) {return res.redirect("/")}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
-  return res.sendFile(path.join(__dirname, './public/index.html'));
+  const devPath = path.join(__dirname, '../client/index.html');
+  const prodPath = path.join(__dirname, './public/index.html');
+  const fs = require('fs');
+  const useDev = fs.existsSync(devPath);
+  const indexPath = useDev ? devPath : prodPath;
+  return res.sendFile(indexPath);
 })
 
 

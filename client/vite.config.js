@@ -23,7 +23,7 @@ export default defineConfig({
       '/upload': 'http://localhost:3000',
       '/upload-group': 'http://localhost:3000',
       '/upload-multiple-individual': 'http://localhost:3000',
-      '/admin': {
+      '^/admin$': {
         target: 'http://localhost:3000',
         changeOrigin: true
       }
