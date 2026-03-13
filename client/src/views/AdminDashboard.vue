@@ -90,8 +90,6 @@ export default {
         window.location.href = '/'
         return
       }
-      
-      showNotification('Admin dashboard loaded successfully', 'ok')
     })
 
     return {
