@@ -14,12 +14,19 @@
       v-if="activeTab === 'files'"
       :token="sessionToken" />
 
+    <!-- Stats View -->
+    <StatsView 
+      v-if="activeTab === 'stats'"
+      :token="sessionToken"
+      @navigate-to-users="activeTab = 'users'"
+      @navigate-to-files="activeTab = 'files'"
+      @navigate-to-database="activeTab = 'database'" />
+
     <!-- Global Storage View -->
     <GlobalStorageView 
       v-if="activeTab === 'storage'"
       :token="sessionToken"
-      @navigate-to-users="activeTab = 'users'"
-      @navigate-to-files="activeTab = 'files'"
+      @navigate-to-stats="activeTab = 'stats'"
       @navigate-to-database="activeTab = 'database'" />
 
     <!-- Database View -->
@@ -37,6 +44,7 @@ import { useNotification } from '../composables/useNotification.js'
 import AdminHeader from '../components/AdminHeader.vue'
 import UsersView from './UsersView.vue'
 import FilesView from './FilesView.vue'
+import StatsView from './StatsView.vue'
 import GlobalStorageView from './GlobalStorageView.vue'
 import DatabaseView from './DatabaseView.vue'
 
@@ -46,6 +54,7 @@ export default {
     AdminHeader,
     UsersView,
     FilesView,
+    StatsView,
     GlobalStorageView,
     DatabaseView
   },
