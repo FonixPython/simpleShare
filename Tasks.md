@@ -13,6 +13,7 @@
 - [ ] /admin/database/updateCell
 - [ ] /admin/database/insertRow
 - [ ] /admin/database/deleteRow
+- [ ] Max file size check
 
 ### Zeteny
 
