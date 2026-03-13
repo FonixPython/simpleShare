@@ -16,11 +16,11 @@ export function useAdmin() {
   const error = ref('')
 
   const formatBytes = (bytes) => {
-    if (bytes === 0) return "0 B"
+    if (bytes === 0 || bytes === null || bytes === undefined) return "0 B"
     const units = ["B", "kB", "MB", "GB", "TB"]
     const threshold = 1024
     let unitIndex = 0
-    let size = bytes
+    let size = Number(bytes)
 
     while (size >= threshold && unitIndex < units.length - 1) {
       size /= threshold
@@ -152,10 +152,14 @@ export function useAdmin() {
 
       const data = await response.json()
       globalStorage.value = {
-        totalUsers: data.totalUsers || 0,
-        totalFiles: data.totalFiles || 0,
-        totalStorage: data.totalStorage || 0,
-        totalStorageFormatted: formatBytes(data.totalStorage || 0)
+        totalUsers: Number(data.totalUsers) || 0,
+        totalFiles: Number(data.totalFiles) || 0,
+        totalStorage: Number(data.totalStorage) || 0,
+        totalStorageFormatted: formatBytes(Number(data.totalStorage) || 0),
+        limit: Number(data.limit) || 0,
+        used: Number(data.used) || 0,
+        remaining: data.remaining,
+        percentage: Number(data.percentage) || 0
       }
     } catch (error) {
       error.value = error.message
@@ -322,6 +326,68 @@ export function useAdmin() {
     }
   }
 
+  const getStorageSettings = async (token) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch("/admin/getStorageSettings", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to load storage settings")
+      }
+
+      const data = await response.json()
+      return {
+        globalStorageLimit: data.globalStorageLimit || 0,
+        totalStorageUsed: data.totalStorageUsed || 0,
+        totalUsers: data.totalUsers || 0,
+        totalFiles: data.totalFiles || 0,
+        remainingStorage: data.remainingStorage,
+        usagePercentage: data.usagePercentage || 0
+      }
+    } catch (error) {
+      error.value = error.message
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateStorageLimit = async (token, newLimit) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch("/admin/updateStorageLimit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token
+        },
+        body: JSON.stringify({ limit: newLimit })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update storage limit")
+      }
+
+      const data = await response.json()
+      return { success: true, message: data.message }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     users,
     allFiles,
@@ -341,6 +407,8 @@ export function useAdmin() {
     saveTableData,
     deleteTableRow,
     deleteUser,
-    deleteFile
+    deleteFile,
+    getStorageSettings,
+    updateStorageLimit
   }
 }

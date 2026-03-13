@@ -154,7 +154,7 @@ router.get("/admin/getGlobalLimit", async (req:Request, res:Response)=>{
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     return res.status(200).json({
         limit: total_limit,
-        used: total_limit,
+        used: total_used,
         remaining: remaining,
         percentage:
           total_limit === 0 ? 0 : Math.round((total_used / total_limit) * 100),
@@ -164,6 +164,81 @@ router.get("/admin/getGlobalLimit", async (req:Request, res:Response)=>{
     return res.status(500).json({ error: "Failed to retrieve storage statistics" })
   }
 });
+
+router.get("/admin/getGlobalStorage", async (req:Request, res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401)}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
+  try{
+    const total_limit = await uploadActions.getGlobalStorageLimit();
+    const total_used = await uploadActions.getTotalStorageUsed();
+    const total_users = await adminActions.getTotalUsers();
+    const total_files = await uploadActions.getTotalFiles();
+    
+    if (total_limit === null || total_used === null) {return res.status(500).json({message:"Failed to retrieve storage statistics!"})}
+    
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).json({
+        totalUsers: total_users || 0,
+        totalFiles: total_files || 0,
+        totalStorage: total_used || 0,
+        limit: total_limit,
+        used: total_used,
+        remaining: total_limit === 0 ? null : total_limit - total_used,
+        percentage: total_limit === 0 ? 0 : Math.round((total_used / total_limit) * 100),
+      });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve storage statistics" })
+  }
+});
+
+router.get("/admin/getStorageSettings", async (req:Request, res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401)}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
+  try{
+    const global_limit = await uploadActions.getGlobalStorageLimit();
+    const total_used = await uploadActions.getTotalStorageUsed();
+    const total_users = await adminActions.getTotalUsers();
+    const total_files = await uploadActions.getTotalFiles();
+    
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).json({
+      globalStorageLimit: global_limit || 0,
+      totalStorageUsed: total_used || 0,
+      totalUsers: total_users || 0,
+      totalFiles: total_files || 0,
+      remainingStorage: (global_limit || 0) === 0 ? null : ((global_limit || 0) - (total_used || 0)),
+      usagePercentage: (global_limit || 0) === 0 ? 0 : Math.round(((total_used || 0) / (global_limit || 0)) * 100)
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve storage settings" })
+  }
+});
+
+router.post("/admin/updateStorageLimit", async (req:Request, res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401)}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
+  
+  const newLimit = req.body.limit;
+  if (newLimit === undefined || newLimit < 0) {return res.status(400).json({error:"Invalid storage limit provided!"})}
+  
+  try{
+    const result = await adminActions.updateGlobalStorageLimit(newLimit);
+    switch(result){
+      case 0: return res.status(200).json({message:"Global storage limit updated successfully!"});
+      case 1: return res.status(500).json({error:"Failed to update storage limit!"});
+      default: return res.status(500).json({error:"Unknown error occurred!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update storage limit" })
+  }
+});
+
 // User action API endpoints
 
 

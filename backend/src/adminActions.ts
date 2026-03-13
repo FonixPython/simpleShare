@@ -103,3 +103,21 @@ export async function deleteUser(user_id:string):Promise<Number>{
         return 2
     }
 }
+
+export async function getTotalUsers():Promise<number | null> {
+    try {
+        const result = await pool.query("SELECT COUNT(*) AS total_users FROM users");
+        return Number(result[0].total_users || 0);
+    } catch(err){console.log(err);return null}
+}
+
+export async function updateGlobalStorageLimit(newLimit:number):Promise<number> {
+    try {
+        await pool.query("INSERT INTO settings (name, num_value, comment) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE num_value = ?, comment = ?", 
+            ["global-storage-limit", newLimit, "Global storage limit in bytes", newLimit, "Global storage limit in bytes"]);
+        return 0;
+    } catch(err){
+        console.log(err);
+        return 1;
+    }
+}

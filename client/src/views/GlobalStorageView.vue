@@ -127,6 +127,43 @@
           </div>
         </div>
 
+        <!-- Storage Limit Management -->
+        <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-6">
+          <h3 class="text-xl font-bold text-white mb-4">Storage Limit Management</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                Global Storage Limit (0 = Unlimited)
+              </label>
+              <div class="flex gap-3">
+                <input 
+                  v-model.number="newStorageLimit"
+                  type="number"
+                  min="0"
+                  step="1048576"
+                  class="flex-1 bg-black/40 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-primary-button focus:outline-none"
+                  placeholder="Enter storage limit in bytes"
+                />
+                <button 
+                  @click="updateStorageLimit"
+                  :disabled="loading || newStorageLimit < 0"
+                  class="bg-primary-button text-black px-6 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+                  <span 
+                    :class="[
+                      'material-icons text-sm',
+                      loading ? 'animate-spin-slow' : ''
+                    ]">save</span>
+                  Update Limit
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-2">
+                Current limit: {{ formatBytes(currentLimit) }} | 
+                New limit: {{ formatBytes(newStorageLimit) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-6">
           <h3 class="text-xl font-bold text-white mb-4">Quick Actions</h3>
@@ -176,14 +213,17 @@ export default {
       loading, 
       error, 
       loadGlobalStorage,
-      formatBytes
+      formatBytes,
+      getStorageSettings,
+      updateStorageLimit: updateStorageLimitAPI
     } = useAdmin()
     
     const { showNotification } = useNotification()
 
+    const newStorageLimit = ref(0)
+    const currentLimit = ref(0)
+
     const sizeDistribution = computed(() => {
-      // This would ideally come from the API, but for now we'll calculate it
-      // In a real implementation, you'd have this data from the backend
       return {
         small: Math.floor(globalStorage.value.totalFiles * 0.6),
         medium: Math.floor(globalStorage.value.totalFiles * 0.3),
@@ -208,13 +248,39 @@ export default {
       return formatBytes(average)
     })
 
-    const refreshData = () => {
-      loadGlobalStorage(props.token)
+    const refreshData = async () => {
+      await loadGlobalStorage(props.token)
+      const settings = await getStorageSettings(props.token)
+      if (settings) {
+        currentLimit.value = settings.globalStorageLimit
+        newStorageLimit.value = settings.globalStorageLimit
+      }
       showNotification('Storage data refreshed!', 'ok')
     }
 
-    onMounted(() => {
-      loadGlobalStorage(props.token)
+    const updateStorageLimit = async () => {
+      if (newStorageLimit.value < 0) {
+        showNotification('Storage limit cannot be negative!', 'error')
+        return
+      }
+
+      const result = await updateStorageLimitAPI(props.token, newStorageLimit.value)
+      if (result.success) {
+        currentLimit.value = newStorageLimit.value
+        showNotification(result.message || 'Storage limit updated successfully!', 'ok')
+        await refreshData()
+      } else {
+        showNotification(result.error || 'Failed to update storage limit!', 'error')
+      }
+    }
+
+    onMounted(async () => {
+      await loadGlobalStorage(props.token)
+      const settings = await getStorageSettings(props.token)
+      if (settings) {
+        currentLimit.value = settings.globalStorageLimit
+        newStorageLimit.value = settings.globalStorageLimit
+      }
     })
 
     return {
@@ -225,7 +291,11 @@ export default {
       averageFileSize,
       filesPerUser,
       storagePerUser,
-      refreshData
+      newStorageLimit,
+      currentLimit,
+      refreshData,
+      updateStorageLimit,
+      formatBytes
     }
   }
 }

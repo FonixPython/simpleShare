@@ -17,6 +17,13 @@ export async function getTotalStorageUsed():Promise<number | null> {
   } catch(err){console.log(err);return null}
 }
 
+export async function getTotalFiles():Promise<number | null> {
+  try {
+    const result = await pool.query("SELECT COUNT(*) AS total_files FROM file_index");
+    return Number(result[0].total_files || 0);
+  } catch(err){console.log(err);return null}
+}
+
 export async function getGlobalStorageLimit():Promise<number | null> {
   try {
     const result = await pool.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
