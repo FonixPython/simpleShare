@@ -1,0 +1,372 @@
+<template>
+  <div class="w-full h-full pt-[120px] mobile:pt-[100px] overflow-y-auto p-6">
+    <div class="w-full max-w-7xl mx-auto">
+      <div class="w-full mb-6">
+        <div class="relative w-full">
+          <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Search files..." 
+            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-full">
+        </div>
+      </div>
+
+      <div v-if="loading || searchLoading" class="flex justify-center items-center py-12">
+        <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button">hourglass_empty</span>
+      </div>
+
+      <div v-else-if="error" class="bg-error/20 border border-error rounded-lg p-4 text-error text-center">
+        {{ error }}
+      </div>
+
+      <div v-else class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-black/30">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Code</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Filename</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Type</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Owner</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Size</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Date</th>
+                <th class="px-4 py-3 text-center text-sm font-medium text-gray-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="file in filteredFiles" :key="file.code">
+                <tr 
+                  class="border-b border-[#444] hover:bg-black/20 transition-colors"
+                  :class="{ 'bg-blue-900/10': file.type === 'group' }"
+                  @click="file.type === 'group' ? toggleGroup(file.code) : null">
+                  <td class="px-4 py-3 text-sm font-mono">
+                    <div class="flex items-center gap-2">
+                      <span v-if="file.type === 'group'" class="material-icons-outlined text-blue-400 text-sm">
+                        {{ isGroupExpanded(file.code) ? 'expand_more' : 'chevron_right' }}
+                      </span>
+                      <span v-else></span>
+                      {{ file.code }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons-outlined text-sm" :class="file.type === 'group' ? 'text-blue-400' : 'text-gray-400'">
+                        {{ file.type === 'group' ? 'folder' : getFileIcon(file) }}
+                      </span>
+                      {{ file.name }}
+                      <span v-if="file.type === 'group'" class="text-xs text-gray-400">({{ getFileCount(file) }} files)</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <span 
+                      class="px-2 py-1 rounded-full text-xs font-medium"
+                      :class="file.type === 'group' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'">
+                      {{ file.type === 'group' ? 'Group' : 'File' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm">{{ file.username }}</td>
+                  <td class="px-4 py-3 text-sm">{{ file.sizeFormatted }}</td>
+                  <td class="px-4 py-3 text-sm">{{ file.dateFormatted }}</td>
+                  <td class="px-4 py-3 text-sm text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button 
+                        v-if="file.type === 'group'"
+                        @click.stop="downloadFile(file.code)"
+                        class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Download Group">
+                        <span class="material-icons-outlined text-sm">download</span>
+                      </button>
+                      <button 
+                        v-else
+                        @click="downloadFile(file.code)"
+                        class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
+                        <span class="material-icons-outlined text-sm">download</span>
+                      </button>
+                      <button 
+                        @click.stop="handleDeleteFile(file)"
+                        class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
+                        <span class="material-icons-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <!-- Nested files for expanded groups -->
+                <tr 
+                  v-for="groupFile in getGroupFiles(file.code)" 
+                  :key="groupFile.code"
+                  v-show="file.type === 'group' && isGroupExpanded(file.code)"
+                  class="border-b border-[#444] hover:bg-black/10 bg-gray-900/20">
+                  <td class="px-4 py-3 text-sm font-mono pl-12">{{ groupFile.code }}</td>
+                  <td class="px-4 py-3 text-sm pl-12">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons-outlined text-gray-400 text-sm">{{ getFileIcon(groupFile) }}</span>
+                      {{ groupFile.name }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">File</span>
+                  </td>
+                  <td class="px-4 py-3 text-sm">{{ groupFile.username }}</td>
+                  <td class="px-4 py-3 text-sm">{{ groupFile.sizeFormatted }}</td>
+                  <td class="px-4 py-3 text-sm">{{ groupFile.dateFormatted }}</td>
+                  <td class="px-4 py-3 text-sm text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button 
+                        @click="downloadFile(groupFile.code)"
+                        class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
+                        <span class="material-icons-outlined text-sm">download</span>
+                      </button>
+                      <button 
+                        @click="handleDeleteFile(groupFile)"
+                        class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
+                        <span class="material-icons-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div v-if="filteredFiles.length === 0" class="text-center py-8 text-gray-400">
+            No files found
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted, watch } from 'vue'
+import { useAdmin } from '../composables/useAdmin.js'
+import { useNotification } from '../composables/useNotification.js'
+import { useConfirm } from '../composables/useConfirm.js'
+
+export default {
+  name: 'FilesView',
+  props: {
+    token: String
+  },
+  setup(props) {
+    const { 
+      allFiles, 
+      loading, 
+      error, 
+      loadAllFiles, 
+      deleteFile,
+      formatBytes,
+      getGroupDetails
+    } = useAdmin()
+    
+    const { showNotification } = useNotification()
+    const { confirmDelete } = useConfirm()
+
+    const searchQuery = ref('')
+    const expandedGroups = ref(new Set())
+    const groupFilesCache = ref(new Map())
+    const searchLoading = ref(false)
+    const matchingGroupCodes = ref(new Set())
+
+    // Function to search within all groups
+    const searchInGroups = async (query) => {
+      const results = new Set()
+      
+      if (!query) {
+        matchingGroupCodes.value = new Set()
+        return
+      }
+      
+      searchLoading.value = true
+      
+      try {
+        // Search in all groups
+        for (const item of allFiles.value) {
+          if (item.type === 'group') {
+            // Check if the group itself matches
+            if (item.name.toLowerCase().includes(query) ||
+                item.code.toLowerCase().includes(query) ||
+                item.username.toLowerCase().includes(query)) {
+              results.add(item.code)
+              continue
+            }
+            
+            // Load group files if not cached and search within them
+            if (!groupFilesCache.value.has(item.code)) {
+              const groupDetails = await getGroupDetails(props.token, item.code)
+              if (groupDetails) {
+                groupFilesCache.value.set(item.code, groupDetails.files)
+              }
+            }
+            
+            // Check files within the group
+            const groupFiles = getGroupFiles(item.code)
+            if (groupFiles.some(file => 
+              file.name.toLowerCase().includes(query) ||
+              file.code.toLowerCase().includes(query) ||
+              file.username.toLowerCase().includes(query)
+            )) {
+              results.add(item.code)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error searching in groups:', error)
+      } finally {
+        searchLoading.value = false
+        matchingGroupCodes.value = results
+      }
+    }
+
+    // Watch for search query changes
+    watch(searchQuery, (newQuery) => {
+      searchInGroups(newQuery)
+    })
+
+    const filteredFiles = computed(() => {
+      let filtered = allFiles.value
+
+      // Apply search filter
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase()
+        
+        // Filter the results
+        filtered = filtered.filter(file => {
+          if (file.type === 'group') {
+            // Include group if it matches or contains matching files
+            return matchingGroupCodes.value.has(file.code)
+          } else {
+            // For individual files, check if they match
+            return file.name.toLowerCase().includes(query) ||
+                   file.code.toLowerCase().includes(query) ||
+                   file.username.toLowerCase().includes(query)
+          }
+        })
+      }
+
+      // Default sort by date (newest first)
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+      return filtered
+    })
+
+    const handleDeleteFile = async (file) => {
+      try {
+        await confirmDelete(`file "${file.name}"`)
+        const result = await deleteFile(props.token, file.code)
+        if (result.success) {
+          showNotification('File deleted successfully!', 'ok')
+          await loadAllFiles(props.token)
+        } else {
+          showNotification('Failed to delete file: ' + result.error, 'error')
+        }
+      } catch {
+        // User cancelled the deletion
+      }
+    }
+
+    const downloadFile = (code) => {
+      const link = document.createElement("a")
+      link.href = "/files/" + code
+      link.style.display = "none"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      showNotification('Download started!', 'info')
+    }
+
+    const toggleGroup = async (groupCode) => {
+      if (expandedGroups.value.has(groupCode)) {
+        expandedGroups.value.delete(groupCode)
+      } else {
+        expandedGroups.value.add(groupCode)
+        // Load group files if not cached
+        if (!groupFilesCache.value.has(groupCode)) {
+          const groupDetails = await getGroupDetails(props.token, groupCode)
+          if (groupDetails) {
+            groupFilesCache.value.set(groupCode, groupDetails.files)
+          }
+        }
+      }
+    }
+
+    const isGroupExpanded = (groupCode) => {
+      return expandedGroups.value.has(groupCode)
+    }
+
+    const getGroupFiles = (groupCode) => {
+      return groupFilesCache.value.get(groupCode) || []
+    }
+
+    const getFileCount = (file) => {
+      if (file.type === 'group') {
+        return file.fileCount || 0
+      }
+      return 0
+    }
+
+    const getFileIcon = (fileData) => {
+      // Use mimetype if available, otherwise fall back to filename extension
+      let mimeType = '';
+      if (fileData.mimetype) {
+        mimeType = fileData.mimetype.split('/')[0]; // Get the part before '/'
+      } else {
+        // Fallback to extension if mimetype is not available
+        const extension = fileData.name?.split('.').pop().toLowerCase() || 
+                         fileData.original_name?.split('.').pop().toLowerCase() || '';
+        const extensionToMime = {
+          'pdf': 'application/pdf',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'txt': 'text/plain',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'mp3': 'audio/mpeg',
+          'wav': 'audio/wav',
+          'mp4': 'video/mp4',
+          'avi': 'video/x-msvideo',
+          'zip': 'application/zip',
+          'js': 'application/javascript',
+          'css': 'text/css',
+          'html': 'text/html',
+          'json': 'application/json'
+        };
+        mimeType = extensionToMime[extension]?.split('/')[0] || 'application';
+      }
+
+      const iconMap = {
+        'application': 'insert_drive_file',
+        'text': 'text_snippet',
+        'image': 'image',
+        'audio': 'audio_file',
+        'video': 'video_file',
+        'multipart': 'folder_zip'
+      };
+      
+      return iconMap[mimeType] || iconMap['application'];
+    }
+
+    onMounted(() => {
+      loadAllFiles(props.token)
+    })
+
+    return {
+      allFiles,
+      loading,
+      error,
+      searchQuery,
+      searchLoading,
+      filteredFiles,
+      handleDeleteFile,
+      downloadFile,
+      toggleGroup,
+      isGroupExpanded,
+      getGroupFiles,
+      getFileCount,
+      getFileIcon
+    }
+  }
+}
+</script>
