@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-y-auto p-6">
+  <div class="w-full h-full pt-[120px] mobile:pt-[100px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
       <div class="flex justify-end mb-6">
         <div class="relative">

@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-hidden p-6">
+  <div class="w-full h-full pt-[120px] mobile:pt-[100px] overflow-hidden p-6">
     <div class="w-full max-w-[90vw] mx-auto h-full">
       <div v-if="loading" class="flex justify-center items-center h-[60vh]">
         <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button">hourglass_empty</span>
