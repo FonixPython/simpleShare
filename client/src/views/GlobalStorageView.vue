@@ -9,8 +9,8 @@
         {{ error }}
       </div>
 
-      <div v-else class="h-[calc(100vh-140px)] overflow-hidden">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full">
+      <div v-else class="overflow-hidden">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <!-- Storage Overview -->
           <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-6">
             <h3 class="text-xl font-bold text-white mb-4">Storage Overview</h3>

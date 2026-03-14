@@ -1,14 +1,14 @@
 <template>
   <div class="w-full h-full pt-[120px] mobile:pt-[100px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
-      <div class="flex justify-end mb-6">
-        <div class="relative">
+      <div class="w-full mb-6">
+        <div class="relative w-full">
           <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
           <input 
             v-model="searchQuery"
             type="text" 
             placeholder="Search users..." 
-            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-64">
+            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-full">
         </div>
       </div>
 
