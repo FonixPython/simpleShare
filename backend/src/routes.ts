@@ -218,6 +218,23 @@ router.get("/admin/getStorageSettings", async (req:Request, res:Response)=>{
   }
 });
 
+router.get("/admin/getAllUsersWithFiles", async (req:Request, res:Response)=>{
+  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let users = await adminActions.getAllUsersWithFiles();
+  if (users === null){return res.status(500).json({error:"Server error!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(users, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
 router.post("/admin/updateStorageLimit", async (req:Request, res:Response)=>{
   if (!req.cookies.session_token) {return res.status(401)}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");

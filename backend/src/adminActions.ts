@@ -121,3 +121,47 @@ export async function updateGlobalStorageLimit(newLimit:number):Promise<number> 
         return 1;
     }
 }
+
+export async function getAllUsersWithFiles():Promise<any[] | null> {
+    try {
+        // First get all users
+        const usersQuery = await pool.query(`
+            SELECT id as user_id, username, is_admin, quota_in_bytes as quota, date_of_creation as creation_date
+            FROM users
+            ORDER BY username
+        `);
+        
+        // Then get files for each user
+        const usersWithFiles = await Promise.all(
+            usersQuery.map(async (user: any) => {
+                const filesQuery = await pool.query(`
+                    SELECT id as file_id, id as code, original_name as originalname, 
+                           file_size_in_bytes as size, date_added as file_date
+                    FROM file_index 
+                    WHERE user_id = ?
+                    ORDER BY date_added DESC
+                `, [user.user_id]);
+                
+                return {
+                    user_id: user.user_id,
+                    username: user.username,
+                    is_admin: Boolean(user.is_admin),
+                    quota: Number(user.quota),
+                    creation_date: user.creation_date,
+                    files: filesQuery.map((file: any) => ({
+                        id: file.file_id,
+                        code: file.code,
+                        originalname: file.originalname,
+                        size: Number(file.size),
+                        date: file.file_date
+                    }))
+                };
+            })
+        );
+        
+        return usersWithFiles;
+    } catch(err){
+        console.log(err);
+        return null;
+    }
+}

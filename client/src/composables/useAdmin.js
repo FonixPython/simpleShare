@@ -276,20 +276,23 @@ export function useAdmin() {
     }
   }
 
-  const deleteUser = async (token, userId) => {
+    const deleteUser = async (token, userId) => {
     loading.value = true
     error.value = ''
     
     try {
-      const response = await fetch(`/admin/deleteUser/${userId}`, {
-        method: "DELETE",
+      const response = await fetch('/admin/user/delete', {
+        method: 'POST',
         headers: {
-          Authorization: token
-        }
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ userId })
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete user")
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete user')
       }
 
       return { success: true }
@@ -307,14 +310,14 @@ export function useAdmin() {
     
     try {
       const response = await fetch(`/admin/deleteFile/${fileCode}`, {
-        method: "DELETE",
+        method: 'DELETE',
         headers: {
-          Authorization: token
+          'Authorization': token
         }
       })
 
       if (!response.ok) {
-        throw new Error("Failed to delete file")
+        throw new Error('Failed to delete file')
       }
 
       return { success: true }
@@ -365,21 +368,133 @@ export function useAdmin() {
     error.value = ''
     
     try {
-      const response = await fetch("/admin/updateStorageLimit", {
-        method: "POST",
+      const response = await fetch('/admin/updateStorageLimit', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: token
+          'Content-Type': 'application/json',
+          'Authorization': token
         },
         body: JSON.stringify({ limit: newLimit })
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update storage limit")
+        throw new Error('Failed to update storage limit')
       }
 
       const data = await response.json()
       return { success: true, message: data.message }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const changeUserPassword = async (token, userId, newPassword) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/user/changePassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ userId, newPassword })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to change password')
+      }
+
+      return { success: true }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const changeUsername = async (token, userId, newUsername) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/user/changeUsername', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ userId, newUsername })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to change username')
+      }
+
+      return { success: true }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const changeUserQuota = async (token, userId, newQuota) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/user/changeQuota', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ userId, newQuota })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to change quota')
+      }
+
+      return { success: true }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const changeUserAdminStatus = async (token, userId, isAdmin) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/user/changeAdminStatus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ userId, isAdmin })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to change admin status')
+      }
+
+      return { success: true }
     } catch (error) {
       error.value = error.message
       return { success: false, error: error.message }
@@ -409,6 +524,10 @@ export function useAdmin() {
     deleteUser,
     deleteFile,
     getStorageSettings,
-    updateStorageLimit
+    updateStorageLimit,
+    changeUserPassword,
+    changeUsername,
+    changeUserQuota,
+    changeUserAdminStatus
   }
 }

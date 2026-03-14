@@ -68,12 +68,20 @@
                     </div>
                   </td>
                   <td class="px-4 py-3 text-sm text-center">
-                    <button 
-                      @click="handleDeleteUser(user)"
-                      class="bg-error text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1 mx-auto">
-                      <span class="material-icons-outlined text-sm">delete</span>
-                      Delete
-                    </button>
+                    <div class="flex items-center justify-center gap-2">
+                      <button 
+                        @click="openEditDialog(user)"
+                        class="bg-primary-button text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
+                        <span class="material-icons-outlined text-sm">edit</span>
+                        Edit
+                      </button>
+                      <button 
+                        @click="handleDeleteUser(user)"
+                        class="bg-error text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
+                        <span class="material-icons-outlined text-sm">delete</span>
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 <!-- User files expansion -->
@@ -121,6 +129,65 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit User Dialog -->
+    <div v-if="editDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Edit User: {{ editDialog.user?.username }}</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+            <input 
+              v-model="editDialog.newUsername"
+              type="text" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new username">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">New Password</label>
+            <input 
+              v-model="editDialog.newPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new password (leave empty to keep current)">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Quota (bytes)</label>
+            <input 
+              v-model.number="editDialog.newQuota"
+              type="number" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter quota in bytes">
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2 text-gray-300">
+              <input 
+                v-model="editDialog.isAdmin"
+                type="checkbox" 
+                class="w-4 h-4 text-primary-button bg-black/30 border-[#444] rounded focus:ring-primary-button">
+              <span class="text-sm font-medium">Admin User</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeEditDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleSaveUser"
+            class="px-4 py-2 bg-primary-button text-white rounded-lg hover:opacity-90 transition-opacity">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -141,13 +208,25 @@ export default {
       error, 
       loadUsers, 
       deleteUser, 
-      deleteFile 
+      deleteFile,
+      changeUserPassword,
+      changeUsername,
+      changeUserQuota,
+      changeUserAdminStatus
     } = useAdmin()
     
     const { showNotification } = useNotification()
 
     const searchQuery = ref('')
     const expandedUsers = ref([])
+    const editDialog = ref({
+      isOpen: false,
+      user: null,
+      newUsername: '',
+      newPassword: '',
+      newQuota: '',
+      isAdmin: false
+    })
 
     const filteredUsers = computed(() => {
       if (!searchQuery.value) return users.value
@@ -202,6 +281,73 @@ export default {
       showNotification('Download started!', 'info')
     }
 
+    const openEditDialog = (user) => {
+      editDialog.value = {
+        isOpen: true,
+        user: user,
+        newUsername: user.username,
+        newPassword: '',
+        newQuota: user.quota,
+        isAdmin: user.is_admin
+      }
+    }
+
+    const closeEditDialog = () => {
+      editDialog.value.isOpen = false
+    }
+
+    const handleSaveUser = async () => {
+      const { user, newUsername, newPassword, newQuota, isAdmin } = editDialog.value
+      
+      let hasChanges = false
+      const promises = []
+      
+      // Check for username change
+      if (newUsername !== user.username) {
+        hasChanges = true
+        promises.push(changeUsername(props.token, user.user_id, newUsername))
+      }
+      
+      // Check for password change
+      if (newPassword) {
+        hasChanges = true
+        promises.push(changeUserPassword(props.token, user.user_id, newPassword))
+      }
+      
+      // Check for quota change
+      if (newQuota !== user.quota) {
+        hasChanges = true
+        promises.push(changeUserQuota(props.token, user.user_id, newQuota))
+      }
+      
+      // Check for admin status change
+      if (isAdmin !== user.is_admin) {
+        hasChanges = true
+        promises.push(changeUserAdminStatus(props.token, user.user_id, isAdmin))
+      }
+      
+      if (!hasChanges) {
+        showNotification('No changes to save', 'info')
+        closeEditDialog()
+        return
+      }
+      
+      try {
+        const results = await Promise.all(promises)
+        const failed = results.filter(result => !result.success)
+        
+        if (failed.length === 0) {
+          showNotification('User updated successfully!', 'ok')
+          closeEditDialog()
+          await loadUsers(props.token)
+        } else {
+          showNotification('Some changes failed: ' + failed.map(f => f.error).join(', '), 'error')
+        }
+      } catch (error) {
+        showNotification('Failed to update user: ' + error.message, 'error')
+      }
+    }
+
     onMounted(() => {
       loadUsers(props.token)
     })
@@ -212,11 +358,15 @@ export default {
       error,
       searchQuery,
       expandedUsers,
+      editDialog,
       filteredUsers,
       toggleUserFiles,
       handleDeleteUser,
       handleDeleteFile,
-      downloadFile
+      downloadFile,
+      openEditDialog,
+      closeEditDialog,
+      handleSaveUser
     }
   }
 }
