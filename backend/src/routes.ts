@@ -235,6 +235,48 @@ router.get("/admin/getAllUsersWithFiles", async (req:Request, res:Response)=>{
   return res.send(json);
 })
 
+router.get("/admin/getAllFiles", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let files = await adminActions.getAllFiles();
+  if (files === null){return res.status(500).json({error:"Server error!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(files, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
+router.delete("/admin/deleteFile/:fileCode", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const fileCode = req.params.fileCode;
+  if (!fileCode) {return res.status(400).json({error:"File code is required!"})}
+  
+  try {
+    const uploadActions = require('./uploadActions');
+    const delete_result = await uploadActions.deleteItem(fileCode, true);
+    
+    switch(delete_result){
+      case(0): return res.status(200).json({success: true});
+      case(1): return res.status(404).json({error: "File not found!"});
+      case(2): return res.status(500).json({error: "Server error!"});
+      case(3): return res.status(401).json({error: "Unauthorized!"});
+      default: return res.status(500).json({error: "Unknown error occurred!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to delete file" })
+  }
+})
+
 router.post("/admin/updateStorageLimit", async (req:Request, res:Response)=>{
   if (!req.cookies.session_token) {return res.status(401)}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.cookies.session_token,"admin");

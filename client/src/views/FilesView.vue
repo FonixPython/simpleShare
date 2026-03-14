@@ -1,23 +1,15 @@
 <template>
   <div class="w-full h-full pt-[120px] mobile:pt-[100px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
-      <div class="flex justify-end items-center mb-6 gap-4">
-        <div class="relative">
+      <div class="w-full mb-6">
+        <div class="relative w-full">
           <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
           <input 
             v-model="searchQuery"
             type="text" 
             placeholder="Search files..." 
-            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-64">
+            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-full">
         </div>
-        <select 
-          v-model="sortBy"
-          class="bg-black/30 border border-[#444] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-primary-button">
-          <option value="date">Sort by Date</option>
-          <option value="size">Sort by Size</option>
-          <option value="name">Sort by Name</option>
-          <option value="code">Sort by Code</option>
-        </select>
       </div>
 
       <div v-if="loading" class="flex justify-center items-center py-12">
@@ -55,15 +47,13 @@
                   <div class="flex items-center justify-center gap-2">
                     <button 
                       @click="downloadFile(file.code)"
-                      class="bg-secondary-button text-black px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
+                      class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
                       <span class="material-icons-outlined text-sm">download</span>
-                      Download
                     </button>
                     <button 
                       @click="handleDeleteFile(file)"
-                      class="bg-error text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
+                      class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform">
                       <span class="material-icons-outlined text-sm">delete</span>
-                      Delete
                     </button>
                   </div>
                 </td>
@@ -72,37 +62,6 @@
           </table>
           <div v-if="filteredFiles.length === 0" class="text-center py-8 text-gray-400">
             No files found
-          </div>
-        </div>
-      </div>
-
-      <!-- Statistics -->
-      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-4">
-          <div class="flex items-center gap-3">
-            <span class="material-icons-outlined text-2xl text-primary-button">insert_drive_file</span>
-            <div>
-              <p class="text-sm text-gray-400">Total Files</p>
-              <p class="text-xl font-bold text-white">{{ allFiles.length }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-4">
-          <div class="flex items-center gap-3">
-            <span class="material-icons-outlined text-2xl text-secondary-button">storage</span>
-            <div>
-              <p class="text-sm text-gray-400">Total Size</p>
-              <p class="text-xl font-bold text-white">{{ totalSize }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-4">
-          <div class="flex items-center gap-3">
-            <span class="material-icons-outlined text-2xl text-ok">people</span>
-            <div>
-              <p class="text-sm text-gray-400">Unique Uploaders</p>
-              <p class="text-xl font-bold text-white">{{ uniqueUploaders }}</p>
-            </div>
           </div>
         </div>
       </div>
@@ -133,7 +92,6 @@ export default {
     const { showNotification } = useNotification()
 
     const searchQuery = ref('')
-    const sortBy = ref('date')
 
     const filteredFiles = computed(() => {
       let filtered = allFiles.value
@@ -148,33 +106,10 @@ export default {
         )
       }
 
-      // Apply sorting
-      filtered.sort((a, b) => {
-        switch (sortBy.value) {
-          case 'date':
-            return new Date(b.date) - new Date(a.date)
-          case 'size':
-            return b.size - a.size
-          case 'name':
-            return a.name.localeCompare(b.name)
-          case 'code':
-            return a.code.localeCompare(b.code)
-          default:
-            return 0
-        }
-      })
+      // Default sort by date (newest first)
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
 
       return filtered
-    })
-
-    const totalSize = computed(() => {
-      const total = allFiles.value.reduce((sum, file) => sum + file.size, 0)
-      return formatBytes(total)
-    })
-
-    const uniqueUploaders = computed(() => {
-      const uploaders = new Set(allFiles.value.map(file => file.username))
-      return uploaders.size
     })
 
     const handleDeleteFile = async (file) => {
@@ -208,10 +143,7 @@ export default {
       loading,
       error,
       searchQuery,
-      sortBy,
       filteredFiles,
-      totalSize,
-      uniqueUploaders,
       handleDeleteFile,
       downloadFile
     }

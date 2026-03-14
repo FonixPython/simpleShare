@@ -176,3 +176,26 @@ export async function getAllUsersWithFiles():Promise<any[] | null> {
         return null;
     }
 }
+
+export async function getAllFiles():Promise<any[] | null> {
+    try {
+        const filesQuery = await pool.query(`
+            SELECT f.id as code, f.original_name as name, f.file_size_in_bytes as size, 
+                   f.date_added as date, u.username
+            FROM file_index f
+            JOIN users u ON f.user_id = u.id
+            ORDER BY f.date_added DESC
+        `);
+        
+        return filesQuery.map((file: any) => ({
+            code: file.code,
+            name: file.name,
+            size: Number(file.size),
+            date: file.date,
+            username: file.username
+        }));
+    } catch(err){
+        console.log(err);
+        return null;
+    }
+}
