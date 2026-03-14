@@ -27,8 +27,6 @@
 
 ## Frontend Tasks
 
-- [x] Fix UsersView.vue
-
 - [ ] Responsive design for mobile devices
 - [ ] Search/filter functionality for files and groups
 - [ ] Download history

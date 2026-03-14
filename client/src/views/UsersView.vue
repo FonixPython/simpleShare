@@ -203,53 +203,56 @@
     </div>
 
     <!-- Change Role Dialog -->
-    <div v-if="changeRoleDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">
-          {{ changeRoleDialog.user?.is_admin ? 'Demote to User Confirmation' : 'Promote to Admin Confirmation' }}
-        </h3>
+    <div v-if="changeRoleDialog.isOpen" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            {{ changeRoleDialog.user?.is_admin ? 'Demote to User' : 'Promote to Admin' }}
+          </h3>
+          <div :class="[
+            'w-12 h-12 rounded-full flex items-center justify-center',
+            changeRoleDialog.user?.is_admin ? 'bg-orange-500/20 text-orange-400' : 'bg-purple-500/20 text-purple-400'
+          ]">
+            <span class="material-icons text-xl">{{ changeRoleDialog.user?.is_admin ? 'person_remove' : 'admin_panel_settings' }}</span>
+          </div>
+        </div>
         
-        <div class="mb-4">
-          <p class="text-gray-300 mb-2">
-            Are you sure you want to {{ changeRoleDialog.user?.is_admin ? 'demote' : 'promote' }} <span class="text-primary-button font-medium">{{ changeRoleDialog.user?.username }}</span> {{ changeRoleDialog.user?.is_admin ? 'from admin to user' : 'to admin' }}?
+        <div class="mb-6">
+          <p class="text-gray-300 mb-3 text-lg">
+            Are you sure you want to {{ changeRoleDialog.user?.is_admin ? 'demote' : 'promote' }} <span class="text-primary-button font-semibold">{{ changeRoleDialog.user?.username }}</span> {{ changeRoleDialog.user?.is_admin ? 'from admin to user' : 'to admin' }}?
           </p>
-          <p class="text-gray-400 text-sm">
+          <p class="text-gray-400 text-sm leading-relaxed">
             {{ changeRoleDialog.user?.is_admin ? 'This will remove the user\'s administrative privileges and they will no longer be able to manage users, files, or system settings.' : 'This will grant the user full administrative privileges to manage all users, files, and system settings.' }}
           </p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
-            <input 
-              v-model="changeRoleDialog.adminPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter admin password">
-          </div>
-
-          <div>
-            <label class="flex items-center gap-2 text-gray-300">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">Admin Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
               <input 
-                v-model="changeRoleDialog.isAdmin"
-                type="checkbox" 
-                class="w-4 h-4 text-primary-button bg-black/30 border-[#444] rounded focus:ring-primary-button">
-              <span class="text-sm font-medium">Admin User</span>
-            </label>
+                v-model="changeRoleDialog.adminPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter admin password">
+            </div>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-3 mt-8">
           <button 
             @click="closeChangeRoleDialog"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            class="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium">
             Cancel
           </button>
           <button 
             @click="handleChangeRole"
             :class="[
-              'px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity',
-              changeRoleDialog.user?.is_admin ? 'bg-orange-600' : 'bg-purple-600'
+              'px-6 py-3 rounded-xl transition-all font-medium shadow-lg',
+              changeRoleDialog.user?.is_admin 
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700' 
+                : 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700'
             ]">
             {{ changeRoleDialog.user?.is_admin ? 'Demote to User' : 'Promote to Admin' }}
           </button>
@@ -258,45 +261,56 @@
     </div>
 
     <!-- Change Password Dialog -->
-    <div v-if="changePasswordDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">Change Password</h3>
+    <div v-if="changePasswordDialog.isOpen" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">Change Password</h3>
+          <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+            <span class="material-icons text-xl text-blue-400">lock</span>
+          </div>
+        </div>
         
-        <div class="mb-4">
-          <p class="text-gray-300">
-            Change password for <span class="text-primary-button font-medium">{{ changePasswordDialog.user?.username }}</span>
+        <div class="mb-6">
+          <p class="text-gray-300 text-lg">
+            Change password for <span class="text-primary-button font-semibold">{{ changePasswordDialog.user?.username }}</span>
           </p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
-            <input 
-              v-model="changePasswordDialog.adminPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter admin password">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">Admin Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
+              <input 
+                v-model="changePasswordDialog.adminPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter admin password">
+            </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">New Password</label>
-            <input 
-              v-model="changePasswordDialog.newPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter new password">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">New Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">password</span>
+              <input 
+                v-model="changePasswordDialog.newPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter new password">
+            </div>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-3 mt-8">
           <button 
             @click="closeChangePasswordDialog"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            class="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium">
             Cancel
           </button>
           <button 
             @click="handleChangePassword"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:opacity-90 transition-opacity">
+            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-medium shadow-lg">
             Change Password
           </button>
         </div>
@@ -304,45 +318,56 @@
     </div>
 
     <!-- Change Username Dialog -->
-    <div v-if="changeUsernameDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">Change Username</h3>
+    <div v-if="changeUsernameDialog.isOpen" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">Change Username</h3>
+          <div class="w-12 h-12 rounded-full bg-secondary-button/20 flex items-center justify-center">
+            <span class="material-icons text-xl text-secondary-button">edit</span>
+          </div>
+        </div>
         
-        <div class="mb-4">
-          <p class="text-gray-300">
-            Change username for <span class="text-primary-button font-medium">{{ changeUsernameDialog.user?.username }}</span>
+        <div class="mb-6">
+          <p class="text-gray-300 text-lg">
+            Change username for <span class="text-primary-button font-semibold">{{ changeUsernameDialog.user?.username }}</span>
           </p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
-            <input 
-              v-model="changeUsernameDialog.adminPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter admin password">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">Admin Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
+              <input 
+                v-model="changeUsernameDialog.adminPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter admin password">
+            </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">New Username</label>
-            <input 
-              v-model="changeUsernameDialog.newUsername"
-              type="text" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter new username">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">New Username</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">person</span>
+              <input 
+                v-model="changeUsernameDialog.newUsername"
+                type="text" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter new username">
+            </div>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-3 mt-8">
           <button 
             @click="closeChangeUsernameDialog"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            class="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium">
             Cancel
           </button>
           <button 
             @click="handleChangeUsername"
-            class="px-4 py-2 bg-secondary-button text-black rounded-lg hover:opacity-90 transition-opacity">
+            class="px-6 py-3 bg-gradient-to-r from-secondary-button to-secondary-button/80 text-black rounded-xl hover:from-secondary-button/90 hover:to-secondary-button transition-all font-medium shadow-lg">
             Change Username
           </button>
         </div>
@@ -350,44 +375,56 @@
     </div>
 
     <!-- Change Quota Dialog -->
-    <div v-if="changeQuotaDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">Change Quota Confirmation</h3>
+    <div v-if="changeQuotaDialog.isOpen" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">Change Quota</h3>
+          <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+            <span class="material-icons text-xl text-yellow-400">storage</span>
+          </div>
+        </div>
         
-        <div class="mb-4">
-          <p class="text-gray-300 mb-2">
-            Are you sure you want to change quota for <span class="text-primary-button font-medium">{{ changeQuotaDialog.user?.username }}</span>?
+        <div class="mb-6">
+          <p class="text-gray-300 mb-2 text-lg">
+            Change quota for <span class="text-primary-button font-semibold">{{ changeQuotaDialog.user?.username }}</span>
           </p>
-          <p class="text-gray-400 text-sm">
-            Current quota: {{ changeQuotaDialog.user?.quotaFormatted }}
-          </p>
-          <p class="text-gray-400 text-sm">
+          <div class="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+            <p class="text-gray-400 text-sm">Current quota:</p>
+            <p class="text-white font-semibold">{{ changeQuotaDialog.user?.quotaFormatted }}</p>
+          </div>
+          <p class="text-gray-400 text-sm mt-3 leading-relaxed">
             This will affect the user's upload limits. If quota is exceeded, the user cannot upload new files. Please verify the new quota carefully!
           </p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
-            <input 
-              v-model="changeQuotaDialog.adminPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter admin password">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">Admin Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
+              <input 
+                v-model="changeQuotaDialog.adminPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter admin password">
+            </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">New quota</label>
-            <div class="flex gap-2">
-              <input 
-                v-model="changeQuotaDialog.newQuotaValue"
-                type="number" 
-                class="flex-1 px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-                placeholder="Enter quota value"
-                :disabled="changeQuotaDialog.newQuotaUnit === 'Unlimited'">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">New Quota</label>
+            <div class="flex gap-3">
+              <div class="flex-1 relative">
+                <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">sd_storage</span>
+                <input 
+                  v-model="changeQuotaDialog.newQuotaValue"
+                  type="number" 
+                  class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                  placeholder="Enter quota value"
+                  :disabled="changeQuotaDialog.newQuotaUnit === 'Unlimited'">
+              </div>
               <select 
                 v-model="changeQuotaDialog.newQuotaUnit"
-                class="px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none">
+                class="px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all">
                 <option value="Unlimited">Unlimited</option>
                 <option value="B">B</option>
                 <option value="kB">kB</option>
@@ -399,15 +436,15 @@
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-3 mt-8">
           <button 
             @click="closeChangeQuotaDialog"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            class="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium">
             Cancel
           </button>
           <button 
             @click="handleChangeQuota"
-            class="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:opacity-90 transition-opacity">
+            class="px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all font-medium shadow-lg">
             Change Quota
           </button>
         </div>
@@ -415,39 +452,50 @@
     </div>
 
     <!-- Delete User Dialog -->
-    <div v-if="deleteUserDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">Delete User Confirmation</h3>
-        
-        <div class="mb-4">
-          <p class="text-gray-300 mb-2">
-            Are you sure you want to delete user <span class="text-red-400 font-medium">{{ deleteUserDialog.user?.username }}</span>?
-          </p>
-          <p class="text-gray-400 text-sm">
-            This action cannot be undone. The user will be permanently deleted and all their files will be removed.
-          </p>
+    <div v-if="deleteUserDialog.isOpen" class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">Delete User</h3>
+          <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+            <span class="material-icons text-xl text-red-400">delete</span>
+          </div>
         </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
-            <input 
-              v-model="deleteUserDialog.adminPassword"
-              type="password" 
-              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter admin password to confirm">
+        
+        <div class="mb-6">
+          <p class="text-gray-300 mb-3 text-lg">
+            Are you sure you want to delete user <span class="text-red-400 font-semibold">{{ deleteUserDialog.user?.username }}</span>?
+          </p>
+          <div class="bg-red-500/10 rounded-xl p-4 border border-red-500/20">
+            <p class="text-red-400 text-sm font-medium mb-1">⚠️ Warning</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              This action cannot be undone. The user will be permanently deleted and all their files will be removed.
+            </p>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-2">Admin Password</label>
+            <div class="relative">
+              <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">lock</span>
+              <input 
+                v-model="deleteUserDialog.adminPassword"
+                type="password" 
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20 transition-all"
+                placeholder="Enter admin password to confirm">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-8">
           <button 
             @click="closeDeleteUserDialog"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            class="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-xl hover:bg-gray-700 transition-all font-medium">
             Cancel
           </button>
           <button 
             @click="handleConfirmDeleteUser"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:opacity-90 transition-opacity">
+            class="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-lg">
             Delete User
           </button>
         </div>
@@ -678,25 +726,23 @@ export default {
     }
 
     const handleChangeRole = async () => {
-      const { user, isAdmin, adminPassword } = changeRoleDialog.value
+      const { user, adminPassword } = changeRoleDialog.value
       
       if (!adminPassword) {
         showNotification('Admin password is required', 'error')
         return
       }
       
-      if (isAdmin !== user.is_admin) {
-        const result = await changeUserAdminStatus(props.token, user.user_id, isAdmin)
-        if (result.success) {
-          showNotification(`User ${isAdmin ? 'promoted to' : 'demoted from'} admin successfully!`, 'ok')
-          closeChangeRoleDialog()
-          await loadUsers(props.token)
-        } else {
-          showNotification('Failed to change role: ' + result.error, 'error')
-        }
-      } else {
-        showNotification('No role change detected', 'info')
+      // Automatically toggle to the opposite of current status
+      const newAdminStatus = !user.is_admin
+      
+      const result = await changeUserAdminStatus(props.token, user.user_id, newAdminStatus)
+      if (result.success) {
+        showNotification(`User ${newAdminStatus ? 'promoted to' : 'demoted from'} admin successfully!`, 'ok')
         closeChangeRoleDialog()
+        await loadUsers(props.token)
+      } else {
+        showNotification('Failed to change role: ' + result.error, 'error')
       }
     }
 
