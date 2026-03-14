@@ -113,8 +113,19 @@ export async function getTotalUsers():Promise<number | null> {
 
 export async function updateGlobalStorageLimit(newLimit:number):Promise<number> {
     try {
-        await pool.query("INSERT INTO settings (name, num_value, comment) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE num_value = ?, comment = ?", 
-            ["global-storage-limit", newLimit, "Global storage limit in bytes", newLimit, "Global storage limit in bytes"]);
+        // First check if the setting already exists
+        const existing = await pool.query("SELECT * FROM settings WHERE name = ?", ["global-storage-limit"]);
+        
+        if (existing.length > 0) {
+            // Update existing setting
+            await pool.query("UPDATE settings SET num_value = ?, comment = ? WHERE name = ?", 
+                [newLimit, "Global storage limit in bytes", "global-storage-limit"]);
+        } else {
+            // Insert new setting
+            await pool.query("INSERT INTO settings (name, num_value, comment) VALUES (?, ?, ?)", 
+                ["global-storage-limit", newLimit, "Global storage limit in bytes"]);
+        }
+        
         return 0;
     } catch(err){
         console.log(err);
