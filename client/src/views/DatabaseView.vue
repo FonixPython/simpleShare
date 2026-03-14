@@ -1,49 +1,46 @@
 <template>
   <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white">Database Management</h2>
-        <div class="flex gap-2">
-          <button 
-            @click="insertRow"
-            :disabled="!currentTable || loading"
-            class="bg-secondary-button text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-            <span class="material-icons text-sm">add</span>
-            Insert Row
-          </button>
-          <button 
-            @click="deleteSelectedRow"
-            :disabled="!selectedRow || loading"
-            class="bg-error text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-            <span class="material-icons text-sm">delete</span>
-            Delete Row
-          </button>
-          <button 
-            @click="clearSelectedCell"
-            :disabled="!selectedCell || loading"
-            class="bg-yellow-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-            <span class="material-icons text-sm">clear</span>
-            Clear Cell
-          </button>
-          <button 
-            @click="refreshData"
-            :disabled="!currentTable || loading"
-            class="bg-primary-button text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-            <span 
-              :class="[
-                'material-icons text-sm',
-                loading ? 'animate-spin-slow' : ''
-              ]">refresh</span>
-            Refresh
-          </button>
-          <button 
-            @click="saveAllChanges"
-            :disabled="!currentTable || loading || !hasChanges"
-            class="bg-green-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-            <span class="material-icons text-sm">save</span>
-            Save
-          </button>
-        </div>
+      <div class="flex justify-end mb-6 gap-2">
+        <button 
+          @click="insertRow"
+          :disabled="!currentTable || loading"
+          class="bg-secondary-button text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span class="material-icons text-sm">add</span>
+          Insert Row
+        </button>
+        <button 
+          @click="deleteSelectedRow"
+          :disabled="!selectedRow || loading"
+          class="bg-error text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span class="material-icons text-sm">delete</span>
+          Delete Row
+        </button>
+        <button 
+          @click="clearSelectedCell"
+          :disabled="!selectedCell || loading"
+          class="bg-yellow-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span class="material-icons text-sm">clear</span>
+          Clear Cell
+        </button>
+        <button 
+          @click="refreshData"
+          :disabled="!currentTable || loading"
+          class="bg-primary-button text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span 
+            :class="[
+              'material-icons text-sm',
+              loading ? 'animate-spin-slow' : ''
+            ]">refresh</span>
+          Refresh
+        </button>
+        <button 
+          @click="saveAllChanges"
+          :disabled="!currentTable || loading || !hasChanges"
+          class="bg-green-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span class="material-icons text-sm">save</span>
+          Save
+        </button>
       </div>
 
       <!-- Table selector and search controls -->

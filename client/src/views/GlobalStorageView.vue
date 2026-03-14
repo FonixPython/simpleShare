@@ -1,10 +1,6 @@
 <template>
   <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-hidden p-6">
     <div class="w-full max-w-[90vw] mx-auto h-full">
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold text-white">Global Storage Management</h2>
-      </div>
-
       <div v-if="loading" class="flex justify-center items-center h-[60vh]">
         <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button">hourglass_empty</span>
       </div>
@@ -13,7 +9,7 @@
         {{ error }}
       </div>
 
-      <div v-else class="h-[calc(100vh-180px)] overflow-hidden">
+      <div v-else class="h-[calc(100vh-140px)] overflow-hidden">
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full">
           <!-- Storage Overview -->
           <div class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] p-6">

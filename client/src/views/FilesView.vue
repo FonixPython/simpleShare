@@ -1,26 +1,23 @@
 <template>
   <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white">All Files Management</h2>
-        <div class="flex items-center gap-4">
-          <div class="relative">
-            <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Search files..." 
-              class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-64">
-          </div>
-          <select 
-            v-model="sortBy"
-            class="bg-black/30 border border-[#444] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-primary-button">
-            <option value="date">Sort by Date</option>
-            <option value="size">Sort by Size</option>
-            <option value="name">Sort by Name</option>
-            <option value="code">Sort by Code</option>
-          </select>
+      <div class="flex justify-end items-center mb-6 gap-4">
+        <div class="relative">
+          <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Search files..." 
+            class="pl-10 pr-4 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none w-64">
         </div>
+        <select 
+          v-model="sortBy"
+          class="bg-black/30 border border-[#444] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-primary-button">
+          <option value="date">Sort by Date</option>
+          <option value="size">Sort by Size</option>
+          <option value="name">Sort by Name</option>
+          <option value="code">Sort by Code</option>
+        </select>
       </div>
 
       <div v-if="loading" class="flex justify-center items-center py-12">

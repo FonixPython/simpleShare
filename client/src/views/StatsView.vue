@@ -1,20 +1,6 @@
 <template>
   <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white">System Statistics</h2>
-        <button 
-          @click="refreshData"
-          :disabled="loading"
-          class="bg-primary-button text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-          <span 
-            :class="[
-              'material-icons text-sm',
-              loading ? 'animate-spin-slow' : ''
-            ]">refresh</span>
-          Refresh
-        </button>
-      </div>
 
       <div v-if="loading" class="flex justify-center items-center py-12">
         <span class="material-icons-outlined animate-spin-slow text-4xl text-primary-button">hourglass_empty</span>
