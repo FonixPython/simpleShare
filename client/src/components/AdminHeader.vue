@@ -9,12 +9,7 @@
     </router-link>
     <div
       class="button-container absolute top-5 mobile:top-3 right-5 mobile:right-3 flex gap-2 mobile:gap-1 flex-wrap mobile:flex-col mobile:items-end">
-      <router-link 
-        to="/"
-        class="bg-secondary-button text-black border-none px-[25px] mobile:px-[15px] py-[10px] mobile:py-[8px] rounded-lg text-lg mobile:text-base cursor-pointer tracking-[1px] m-[10px] mobile:m-[5px] transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-secondary-button/50 animate-fade-in no-underline inline-block">
-        Back to App
-      </router-link>
-      <button
+            <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="$emit('tab-change', tab.id)"
