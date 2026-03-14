@@ -2,11 +2,6 @@
 
 ## Backend Tasks
 
-- [ ] Fix group time zone
-- [X] /admin
-- [ ] /admin/getAllUsersWithFiles
-- [ ] /admin/getGlobalLimit
-- [ ] /admin/setGlobalLimit
 - [ ] /admin/database/getTables
 - [ ] /admin/database/getTableData
 - [ ] /admin/database/getTableSchema
@@ -16,12 +11,6 @@
 - [ ] Max file size check
 
 ### Zeteny
-
-- [X] /admin/user/changePassword
-- [X] /admin/user/changeUsername
-- [X] /admin/user/changeQuota
-- [X] /admin/user/changeAdminStatus
-- [X] /admin/user/delete
 
 - [] Custom id choosing for admins
 
