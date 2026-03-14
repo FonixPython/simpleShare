@@ -560,6 +560,98 @@ export function useAdmin() {
     }
   }
 
+  const getUserStatistics = async (token) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/getUserStatistics', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load user statistics')
+      }
+
+      const data = await response.json()
+      return {
+        userTrends: data.userTrends || [],
+        adminDistribution: data.adminDistribution || { admin_count: 0, regular_count: 0 },
+        topUsersByQuota: data.topUsersByQuota || []
+      }
+    } catch (error) {
+      error.value = error.message
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getFileTypeStatistics = async (token) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/getFileTypeStatistics', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load file type statistics')
+      }
+
+      const data = await response.json()
+      return {
+        fileTypeDistribution: data.fileTypeDistribution || [],
+        uploadTrends: data.uploadTrends || []
+      }
+    } catch (error) {
+      error.value = error.message
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getSystemHealthMetrics = async (token) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch('/admin/getSystemHealthMetrics', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load system health metrics')
+      }
+
+      const data = await response.json()
+      return {
+        quotaUsage: data.quotaUsage || { total_users: 0, total_allocated_quota: 0, total_used_storage: 0, total_files: 0, total_groups: 0 },
+        usersOverQuota: data.usersOverQuota || [],
+        largestFiles: data.largestFiles || []
+      }
+    } catch (error) {
+      error.value = error.message
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     users,
     allFiles,
@@ -586,6 +678,9 @@ export function useAdmin() {
     changeUsername,
     changeUserQuota,
     changeUserAdminStatus,
-    getGroupDetails
+    getGroupDetails,
+    getUserStatistics,
+    getFileTypeStatistics,
+    getSystemHealthMetrics
   }
 }

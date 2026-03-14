@@ -344,3 +344,145 @@ export async function getGroupDetails(groupCode: string):Promise<any | null> {
         return null;
     }
 }
+
+export async function getUserStatistics():Promise<any | null> {
+    try {
+        // Get user registration trends (last 12 months)
+        const userTrendsQuery = await pool.query(`
+            SELECT 
+                DATE_FORMAT(date_of_creation, '%Y-%m') as month,
+                COUNT(*) as new_users
+            FROM users 
+            WHERE date_of_creation >= DATE_SUB(CURRENT_DATE, INTERVAL 12 MONTH)
+            GROUP BY DATE_FORMAT(date_of_creation, '%Y-%m')
+            ORDER BY month
+        `);
+        
+        // Get admin vs regular user distribution
+        const adminDistributionQuery = await pool.query(`
+            SELECT 
+                SUM(CASE WHEN is_admin = 1 THEN 1 ELSE 0 END) as admin_count,
+                SUM(CASE WHEN is_admin = 0 THEN 1 ELSE 0 END) as regular_count
+            FROM users
+        `);
+        
+        // Get user quota distribution
+        const quotaDistributionQuery = await pool.query(`
+            SELECT 
+                username,
+                quota_in_bytes,
+                (SELECT COALESCE(SUM(file_size_in_bytes), 0) 
+                 FROM file_index WHERE user_id = users.id) as used_storage
+            FROM users 
+            ORDER BY quota_in_bytes DESC
+            LIMIT 10
+        `);
+        
+        return {
+            userTrends: userTrendsQuery,
+            adminDistribution: adminDistributionQuery[0],
+            topUsersByQuota: quotaDistributionQuery
+        };
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export async function getFileTypeStatistics():Promise<any | null> {
+    try {
+        // Get file type distribution
+        const fileTypeQuery = await pool.query(`
+            SELECT 
+                CASE 
+                    WHEN mime_type LIKE 'image/%' THEN 'Images'
+                    WHEN mime_type LIKE 'video/%' THEN 'Videos'
+                    WHEN mime_type LIKE 'audio/%' THEN 'Audio'
+                    WHEN mime_type LIKE 'text/%' THEN 'Text'
+                    WHEN mime_type = 'application/pdf' THEN 'PDF'
+                    WHEN mime_type LIKE 'application/msword%' OR mime_type LIKE 'application/vnd.openxmlformats-officedocument.wordprocessingml%' THEN 'Documents'
+                    WHEN mime_type LIKE 'application/vnd.ms-excel%' OR mime_type LIKE 'application/vnd.openxmlformats-officedocument.spreadsheetml%' THEN 'Spreadsheets'
+                    WHEN mime_type LIKE 'application/vnd.ms-powerpoint%' OR mime_type LIKE 'application/vnd.openxmlformats-officedocument.presentationml%' THEN 'Presentations'
+                    WHEN mime_type LIKE 'application/zip%' OR mime_type LIKE 'application/x-rar%' OR mime_type LIKE 'application/x-7z%' THEN 'Archives'
+                    ELSE 'Other'
+                END as file_category,
+                COUNT(*) as file_count,
+                COALESCE(SUM(file_size_in_bytes), 0) as total_size
+            FROM file_index 
+            GROUP BY file_category
+            ORDER BY file_count DESC
+        `);
+        
+        // Get upload trends (last 30 days)
+        const uploadTrendsQuery = await pool.query(`
+            SELECT 
+                DATE(date_added) as upload_date,
+                COUNT(*) as files_uploaded,
+                COALESCE(SUM(file_size_in_bytes), 0) as total_size_uploaded
+            FROM file_index 
+            WHERE date_added >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+            GROUP BY DATE(date_added)
+            ORDER BY upload_date
+        `);
+        
+        return {
+            fileTypeDistribution: fileTypeQuery,
+            uploadTrends: uploadTrendsQuery
+        };
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export async function getSystemHealthMetrics():Promise<any | null> {
+    try {
+        // Get storage quota usage
+        const quotaUsageQuery = await pool.query(`
+            SELECT 
+                COUNT(*) as total_users,
+                SUM(quota_in_bytes) as total_allocated_quota,
+                (SELECT COALESCE(SUM(file_size_in_bytes), 0) FROM file_index) as total_used_storage,
+                (SELECT COUNT(*) FROM file_index) as total_files,
+                (SELECT COUNT(*) FROM file_groups) as total_groups
+            FROM users
+        `);
+        
+        // Get users over quota
+        const overQuotaQuery = await pool.query(`
+            SELECT 
+                u.username,
+                u.quota_in_bytes,
+                COALESCE(SUM(f.file_size_in_bytes), 0) as used_storage,
+                (COALESCE(SUM(f.file_size_in_bytes), 0) / u.quota_in_bytes) * 100 as usage_percentage
+            FROM users u
+            LEFT JOIN file_index f ON u.id = f.user_id
+            GROUP BY u.id, u.username, u.quota_in_bytes
+            HAVING usage_percentage > 90
+            ORDER BY usage_percentage DESC
+        `);
+        
+        // Get largest files
+        const largestFilesQuery = await pool.query(`
+            SELECT 
+                f.id as code,
+                f.original_name as name,
+                f.file_size_in_bytes as size,
+                f.date_added as date,
+                u.username
+            FROM file_index f
+            JOIN users u ON f.user_id = u.id
+            ORDER BY f.file_size_in_bytes DESC
+            LIMIT 10
+        `);
+        
+        return {
+            quotaUsage: quotaUsageQuery[0],
+            usersOverQuota: overQuotaQuery,
+            largestFiles: largestFilesQuery
+        };
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}

@@ -272,6 +272,57 @@ router.get("/admin/getGroupDetails/:groupCode", async (req:Request, res:Response
   return res.send(json);
 })
 
+router.get("/admin/getUserStatistics", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let stats = await adminActions.getUserStatistics();
+  if (stats === null){return res.status(500).json({error:"Server error!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(stats, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
+router.get("/admin/getFileTypeStatistics", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let stats = await adminActions.getFileTypeStatistics();
+  if (stats === null){return res.status(500).json({error:"Server error!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(stats, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
+router.get("/admin/getSystemHealthMetrics", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  let metrics = await adminActions.getSystemHealthMetrics();
+  if (metrics === null){return res.status(500).json({error:"Server error!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(metrics, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
 router.delete("/admin/deleteFile/:fileCode", async (req:Request, res:Response)=>{
   if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
