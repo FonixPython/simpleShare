@@ -6,3 +6,4 @@
 - [ ] Download history
 - [ ] Batch operations (select multiple files for download/delete)
 - [ ] Custom id choosing for admins
+- [ ] Improve Database view on admin page
