@@ -77,7 +77,7 @@ class MigrationRunner {
           [migration.id, migration.filename]
         );
         
-        console.log(`✓ Applied migration: ${migration.filename}`);
+        console.log(`Applied migration: ${migration.filename}`);
       }
       
       await connection.commit();
