@@ -60,7 +60,7 @@
                       <button 
                         @click="toggleUserFiles(user.user_id)"
                         class="text-primary-button hover:text-primary-button/80 transition-colors">
-                        <span class="material-icons-outlined text-sm">folder_open</span>
+                        <span class="material-icons-outlined text-sm">insert_drive_file</span>
                       </button>
                     </div>
                   </td>
