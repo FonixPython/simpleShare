@@ -205,14 +205,16 @@
     <!-- Change Role Dialog -->
     <div v-if="changeRoleDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
-        <h3 class="text-xl font-bold text-white mb-4">Promote to Admin Confirmation</h3>
+        <h3 class="text-xl font-bold text-white mb-4">
+          {{ changeRoleDialog.user?.is_admin ? 'Demote to User Confirmation' : 'Promote to Admin Confirmation' }}
+        </h3>
         
         <div class="mb-4">
           <p class="text-gray-300 mb-2">
-            Are you sure you want to promote <span class="text-primary-button font-medium">{{ changeRoleDialog.user?.username }}</span> to admin?
+            Are you sure you want to {{ changeRoleDialog.user?.is_admin ? 'demote' : 'promote' }} <span class="text-primary-button font-medium">{{ changeRoleDialog.user?.username }}</span> {{ changeRoleDialog.user?.is_admin ? 'from admin to user' : 'to admin' }}?
           </p>
           <p class="text-gray-400 text-sm">
-            This will grant the user full administrative privileges to manage all users, files, and system settings.
+            {{ changeRoleDialog.user?.is_admin ? 'This will remove the user\'s administrative privileges and they will no longer be able to manage users, files, or system settings.' : 'This will grant the user full administrative privileges to manage all users, files, and system settings.' }}
           </p>
         </div>
 
@@ -245,8 +247,11 @@
           </button>
           <button 
             @click="handleChangeRole"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity">
-            Promote to Admin
+            :class="[
+              'px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity',
+              changeRoleDialog.user?.is_admin ? 'bg-orange-600' : 'bg-purple-600'
+            ]">
+            {{ changeRoleDialog.user?.is_admin ? 'Demote to User' : 'Promote to Admin' }}
           </button>
         </div>
       </div>
