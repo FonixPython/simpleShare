@@ -486,3 +486,151 @@ export async function getSystemHealthMetrics():Promise<any | null> {
         return null;
     }
 }
+
+// Database management functions
+
+export async function getDatabaseTables():Promise<string[] | null> {
+    try {
+        const result = await pool.query("SHOW TABLES");
+        const tables = result.map((row: any) => {
+            // MySQL returns table names in a property named 'Tables_in_[database_name]'
+            const tableName = Object.values(row)[0] as string;
+            return tableName;
+        });
+        return tables;
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export async function getTableData(tableName: string):Promise<any[] | null> {
+    try {
+        // Validate table name to prevent SQL injection
+        if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+            throw new Error('Invalid table name');
+        }
+        
+        const result = await pool.query(`SELECT * FROM \`${tableName}\``);
+        return result;
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export async function getTableSchema(tableName: string):Promise<any[] | null> {
+    try {
+        // Validate table name to prevent SQL injection
+        if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+            throw new Error('Invalid table name');
+        }
+        
+        const result = await pool.query(`DESCRIBE \`${tableName}\``);
+        return result;
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export async function updateTableCell(tableName: string, rowId: string, columnName: string, newValue: any):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs to prevent SQL injection
+        if (!/^[a-zA-Z0-9_]+$/.test(tableName) || !/^[a-zA-Z0-9_]+$/.test(columnName)) {
+            throw new Error('Invalid table or column name');
+        }
+        
+        // Get table schema to find primary key
+        const schema = await getTableSchema(tableName);
+        if (!schema) {
+            throw new Error('Failed to get table schema');
+        }
+        
+        const primaryKey = schema.find((col: any) => col.Key === 'PRI');
+        if (!primaryKey) {
+            throw new Error('Table has no primary key');
+        }
+        
+        // Update the cell
+        await pool.query(
+            `UPDATE \`${tableName}\` SET \`${columnName}\` = ? WHERE \`${primaryKey.Field}\` = ?`,
+            [newValue, rowId]
+        );
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+export async function insertTableRow(tableName: string, rowData: any):Promise<{success: boolean, error?: string, insertedId?: any}> {
+    try {
+        // Validate table name to prevent SQL injection
+        if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+            throw new Error('Invalid table name');
+        }
+        
+        // Get table schema
+        const schema = await getTableSchema(tableName);
+        if (!schema) {
+            throw new Error('Failed to get table schema');
+        }
+        
+        // Filter valid columns and prepare values
+        const columns = schema.filter((col: any) => rowData.hasOwnProperty(col.Field));
+        if (columns.length === 0) {
+            throw new Error('No valid columns provided');
+        }
+        
+        const columnNames = columns.map(col => col.Field);
+        const values = columnNames.map(col => rowData[col]);
+        const placeholders = columnNames.map(() => '?');
+        
+        // Insert the row
+        const result = await pool.query(
+            `INSERT INTO \`${tableName}\` (\`${columnNames.join('`, `')}\`) VALUES (${placeholders.join(', ')})`,
+            values
+        );
+        
+        return { 
+            success: true, 
+            insertedId: result.insertId 
+        };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+export async function deleteTableRow(tableName: string, rowId: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate table name to prevent SQL injection
+        if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+            throw new Error('Invalid table name');
+        }
+        
+        // Get table schema to find primary key
+        const schema = await getTableSchema(tableName);
+        if (!schema) {
+            throw new Error('Failed to get table schema');
+        }
+        
+        const primaryKey = schema.find((col: any) => col.Key === 'PRI');
+        if (!primaryKey) {
+            throw new Error('Table has no primary key');
+        }
+        
+        // Delete the row
+        await pool.query(
+            `DELETE FROM \`${tableName}\` WHERE \`${primaryKey.Field}\` = ?`,
+            [rowId]
+        );
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}

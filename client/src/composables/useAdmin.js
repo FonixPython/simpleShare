@@ -195,7 +195,7 @@ export function useAdmin() {
     error.value = ''
     
     try {
-      const response = await fetch("/admin/getTables", {
+      const response = await fetch("/admin/database/getTables", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -223,7 +223,7 @@ export function useAdmin() {
     error.value = ''
     
     try {
-      const response = await fetch(`/admin/getTableData/${tableName}`, {
+      const response = await fetch(`/admin/database/getTableData/${tableName}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -236,9 +236,117 @@ export function useAdmin() {
       }
 
       const data = await response.json()
-      tableData.value = data.data || []
+      tableData.value = Array.isArray(data) ? data : []
     } catch (error) {
       error.value = error.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getTableSchema = async (token, tableName) => {
+    if (!tableName) return null
+    
+    try {
+      const response = await fetch(`/admin/database/getTableSchema/${tableName}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to load table schema")
+      }
+
+      const data = await response.json()
+      return data.schema || []
+    } catch (error) {
+      error.value = error.message
+      return null
+    }
+  }
+
+  const updateDatabaseCell = async (token, tableName, rowId, columnName, newValue) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch("/admin/database/updateCell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          Authorization: token
+        },
+        body: JSON.stringify({ tableName, rowId, columnName, newValue })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update cell")
+      }
+
+      const data = await response.json()
+      return { success: data.success, message: data.message }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const insertDatabaseRow = async (token, tableName, rowData) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch("/admin/database/insertRow", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          Authorization: token
+        },
+        body: JSON.stringify({ tableName, rowData })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to insert row")
+      }
+
+      const data = await response.json()
+      return { success: data.success, message: data.message, insertedId: data.insertedId }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteDatabaseRow = async (token, tableName, rowId) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch("/admin/database/deleteRow", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          Authorization: token
+        },
+        body: JSON.stringify({ tableName, rowId })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete row")
+      }
+
+      const data = await response.json()
+      return { success: data.success, message: data.message }
+    } catch (error) {
+      error.value = error.message
+      return { success: false, error: error.message }
     } finally {
       loading.value = false
     }
@@ -683,6 +791,10 @@ export function useAdmin() {
     loadGlobalStorage,
     loadTables,
     loadTableData,
+    getTableSchema,
+    updateDatabaseCell,
+    insertDatabaseRow,
+    deleteDatabaseRow,
     saveTableData,
     deleteTableRow,
     deleteUser,

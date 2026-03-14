@@ -34,13 +34,6 @@
             ]">refresh</span>
           Refresh
         </button>
-        <button 
-          @click="saveAllChanges"
-          :disabled="!currentTable || loading || !hasChanges"
-          class="bg-green-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
-          <span class="material-icons text-sm">save</span>
-          Save
-        </button>
       </div>
 
       <!-- Table selector and search controls -->
@@ -75,19 +68,7 @@
           </div>
         </div>
         <div class="flex items-end">
-          <select 
-            v-model="sortColumn"
-            @change="sortTableData"
-            :disabled="!currentTable || loading"
-            class="bg-black/30 border border-[#444] text-white px-4 py-2 rounded-lg focus:outline-none focus:border-primary-button disabled:opacity-50">
-            <option value="">No sorting</option>
-            <option 
-              v-for="column in tableColumns" 
-              :key="column" 
-              :value="column">
-              {{ column }}
-            </option>
-          </select>
+          <!-- Sort dropdown removed -->
         </div>
       </div>
 
@@ -114,14 +95,8 @@
                 <th 
                   v-for="column in tableColumns" 
                   :key="column"
-                  class="px-4 py-3 text-left text-sm font-medium text-gray-300 cursor-pointer hover:text-primary-button"
-                  @click="sortBy = sortBy === column ? (sortOrder === 'asc' ? 'desc' : 'asc') : 'asc'; sortColumn = column; sortTableData()">
+                  class="px-4 py-3 text-left text-sm font-medium text-gray-300">
                   {{ column }}
-                  <span 
-                    v-if="sortColumn === column"
-                    class="material-icons-outlined text-xs ml-1">
-                    {{ sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </span>
                 </th>
               </tr>
             </thead>
@@ -139,7 +114,7 @@
                   v-for="column in tableColumns" 
                   :key="column"
                   :class="[
-                    'px-4 py-3 text-sm',
+                    'px-4 py-3 text-sm cursor-pointer',
                     selectedCell === `${getRowId(row)}-${column}` ? 'bg-yellow-500/20' : ''
                   ]"
                   @click.stop="selectCell(getRowId(row), column, $event)">
@@ -151,7 +126,7 @@
                     @keydown.esc="cancelEditCell"
                     class="w-full bg-black/50 border border-primary-button rounded px-2 py-1 text-white focus:outline-none"
                     ref="editInput">
-                  <span v-else>{{ formatCellValue(row[column]) }}</span>
+                  <span v-else @dblclick="startEditingCell(getRowId(row), column)">{{ formatCellValue(row[column]) }}</span>
                 </td>
               </tr>
             </tbody>
@@ -194,22 +169,20 @@ export default {
       error,
       loadTables,
       loadTableData,
-      saveTableData,
-      deleteTableRow
+      getTableSchema,
+      updateDatabaseCell,
+      insertDatabaseRow,
+      deleteDatabaseRow
     } = useAdmin()
     
     const { showNotification } = useNotification()
 
     const searchQuery = ref('')
-    const sortColumn = ref('')
-    const sortBy = ref('')
-    const sortOrder = ref('asc')
     const selectedRow = ref(null)
     const selectedCell = ref(null)
     const editingCell = ref(null)
     const originalValue = ref(null)
     const statusMessage = ref('')
-    const hasChanges = ref(false)
 
     const tableColumns = computed(() => {
       if (tableData.value.length === 0) return []
@@ -227,26 +200,6 @@ export default {
             String(value).toLowerCase().includes(query)
           )
         )
-      }
-
-      // Apply sorting
-      if (sortBy.value) {
-        filtered.sort((a, b) => {
-          const aVal = a[sortBy.value]
-          const bVal = b[sortBy.value]
-          
-          if (aVal === null || aVal === undefined) return 1
-          if (bVal === null || bVal === undefined) return -1
-          
-          let comparison = 0
-          if (typeof aVal === 'number' && typeof bVal === 'number') {
-            comparison = aVal - bVal
-          } else {
-            comparison = String(aVal).localeCompare(String(bVal))
-          }
-          
-          return sortOrder.value === 'asc' ? comparison : -comparison
-        })
       }
 
       return filtered
@@ -289,9 +242,29 @@ export default {
       })
     }
 
-    const stopEditingCell = () => {
+    const stopEditingCell = async () => {
       if (editingCell.value) {
-        hasChanges.value = true
+        const [rowId, column] = editingCell.value.split('-')
+        const row = tableData.value.find(r => getRowId(r) === rowId)
+        
+        if (row) {
+          const newValue = row[column]
+          try {
+            const result = await updateDatabaseCell(props.token, currentTable.value, rowId, column, newValue)
+            if (result.success) {
+              showNotification('Cell updated successfully!', 'ok')
+              await loadTableData(props.token, currentTable.value)
+            } else {
+              showNotification('Failed to update cell: ' + result.error, 'error')
+              // Revert the change
+              row[column] = originalValue.value
+            }
+          } catch (error) {
+            showNotification('Failed to update cell: ' + error.message, 'error')
+            // Revert the change
+            row[column] = originalValue.value
+          }
+        }
       }
       editingCell.value = null
       originalValue.value = null
@@ -309,7 +282,7 @@ export default {
       originalValue.value = null
     }
 
-    const insertRow = () => {
+    const insertRow = async () => {
       if (!currentTable.value || tableColumns.value.length === 0) return
       
       const newRow = {}
@@ -317,62 +290,62 @@ export default {
         newRow[column] = null
       })
       
-      tableData.value.unshift(newRow)
-      hasChanges.value = true
-      showNotification('New row added. Click Save to persist changes.', 'info')
+      try {
+        const result = await insertDatabaseRow(props.token, currentTable.value, newRow)
+        if (result.success) {
+          showNotification('Row inserted successfully!', 'ok')
+          await loadTableData(props.token, currentTable.value)
+        } else {
+          showNotification('Failed to insert row: ' + result.error, 'error')
+        }
+      } catch (error) {
+        showNotification('Failed to insert row: ' + error.message, 'error')
+      }
     }
 
-    const deleteSelectedRow = () => {
+    const deleteSelectedRow = async () => {
       if (!selectedRow.value) return
       
       if (confirm('Are you sure you want to delete this row?')) {
-        const index = tableData.value.findIndex(row => getRowId(row) === selectedRow.value)
-        if (index > -1) {
-          tableData.value.splice(index, 1)
-          selectedRow.value = null
-          hasChanges.value = true
-          showNotification('Row marked for deletion. Click Save to persist changes.', 'info')
+        try {
+          const result = await deleteDatabaseRow(props.token, currentTable.value, selectedRow.value)
+          if (result.success) {
+            showNotification('Row deleted successfully!', 'ok')
+            selectedRow.value = null
+            await loadTableData(props.token, currentTable.value)
+          } else {
+            showNotification('Failed to delete row: ' + result.error, 'error')
+          }
+        } catch (error) {
+          showNotification('Failed to delete row: ' + error.message, 'error')
         }
       }
     }
 
-    const clearSelectedCell = () => {
+    const clearSelectedCell = async () => {
       if (!selectedCell.value) return
       
       const [rowId, column] = selectedCell.value.split('-')
       const row = tableData.value.find(r => getRowId(r) === rowId)
       if (row) {
-        row[column] = null
-        hasChanges.value = true
-        showNotification('Cell cleared. Click Save to persist changes.', 'info')
-      }
-    }
-
-    const refreshData = () => {
-      if (currentTable.value) {
-        loadTableData(props.token, currentTable.value)
-        hasChanges.value = false
-        showNotification('Data refreshed.', 'ok')
-      }
-    }
-
-    const saveAllChanges = async () => {
-      if (!currentTable.value) return
-      
-      loading.value = true
-      try {
-        const result = await saveTableData(props.token, currentTable.value, tableData.value)
-        if (result.success) {
-          hasChanges.value = false
-          showNotification('Changes saved successfully!', 'ok')
-          await loadTableData(props.token, currentTable.value)
-        } else {
-          showNotification('Failed to save changes: ' + result.error, 'error')
+        try {
+          const result = await updateDatabaseCell(props.token, currentTable.value, rowId, column, null)
+          if (result.success) {
+            showNotification('Cell cleared successfully!', 'ok')
+            await loadTableData(props.token, currentTable.value)
+          } else {
+            showNotification('Failed to clear cell: ' + result.error, 'error')
+          }
+        } catch (error) {
+          showNotification('Failed to clear cell: ' + error.message, 'error')
         }
-      } catch (error) {
-        showNotification('Failed to save changes: ' + error.message, 'error')
-      } finally {
-        loading.value = false
+      }
+    }
+
+    const refreshData = async () => {
+      if (currentTable.value) {
+        await loadTableData(props.token, currentTable.value)
+        showNotification('Data refreshed.', 'ok')
       }
     }
 
@@ -391,8 +364,13 @@ export default {
       }, 3000)
     }
 
-    onMounted(() => {
-      loadTables(props.token)
+    onMounted(async () => {
+      await loadTables(props.token)
+      // Automatically select the first table if available
+      if (databaseTables.value.length > 0) {
+        currentTable.value = databaseTables.value[0]
+        await loadTableData(props.token, currentTable.value)
+      }
     })
 
     return {
@@ -402,13 +380,9 @@ export default {
       loading,
       error,
       searchQuery,
-      sortColumn,
-      sortBy,
-      sortOrder,
       selectedRow,
       selectedCell,
       editingCell,
-      hasChanges,
       statusMessage,
       tableColumns,
       filteredTableData,
@@ -423,9 +397,7 @@ export default {
       deleteSelectedRow,
       clearSelectedCell,
       refreshData,
-      saveAllChanges,
       filterTableData,
-      sortTableData,
       loadTableData: () => loadTableData(props.token, currentTable.value)
     }
   }

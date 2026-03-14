@@ -369,6 +369,155 @@ router.post("/admin/updateStorageLimit", async (req:Request, res:Response)=>{
   }
 });
 
+// Database management endpoints
+
+router.get("/admin/database/getTables", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  try {
+    const tables = await adminActions.getDatabaseTables();
+    if (tables === null) {
+      return res.status(500).json({error:"Failed to retrieve database tables!"});
+    }
+    
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).json({ tables });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve database tables" });
+  }
+});
+
+router.get("/admin/database/getTableData/:tableName", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const tableName = Array.isArray(req.params.tableName) ? req.params.tableName[0] : req.params.tableName;
+  if (!tableName) {return res.status(400).json({error:"Table name is required!"})}
+  
+  try {
+    const data = await adminActions.getTableData(tableName);
+    if (data === null) {
+      return res.status(500).json({error:"Failed to retrieve table data!"});
+    }
+    
+    // Fix BigInt serialization issue
+    const json = JSON.stringify(data, (key, value) =>
+      typeof value === 'bigint' ? Number(value) : value
+    );
+    
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.send(json);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve table data" });
+  }
+});
+
+router.get("/admin/database/getTableSchema/:tableName", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const tableName = Array.isArray(req.params.tableName) ? req.params.tableName[0] : req.params.tableName;
+  if (!tableName) {return res.status(400).json({error:"Table name is required!"})}
+  
+  try {
+    const schema = await adminActions.getTableSchema(tableName);
+    if (schema === null) {
+      return res.status(500).json({error:"Failed to retrieve table schema!"});
+    }
+    
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).json({ schema });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to retrieve table schema" });
+  }
+});
+
+router.post("/admin/database/updateCell", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { tableName, rowId, columnName, newValue } = req.body;
+  
+  if (!tableName || !rowId || !columnName) {
+    return res.status(400).json({error:"tableName, rowId, and columnName are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateTableCell(tableName, rowId, columnName, newValue);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Cell updated successfully!"});
+    } else {
+      return res.status(500).json({error: result.error || "Failed to update cell!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update cell" });
+  }
+});
+
+router.post("/admin/database/insertRow", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { tableName, rowData } = req.body;
+  
+  if (!tableName || !rowData) {
+    return res.status(400).json({error:"tableName and rowData are required!"});
+  }
+  
+  try {
+    const result = await adminActions.insertTableRow(tableName, rowData);
+    
+    if (result.success) {
+      return res.status(200).json({
+        success: true, 
+        message: "Row inserted successfully!",
+        insertedId: result.insertedId
+      });
+    } else {
+      return res.status(500).json({error: result.error || "Failed to insert row!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to insert row" });
+  }
+});
+
+router.post("/admin/database/deleteRow", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { tableName, rowId } = req.body;
+  
+  if (!tableName || !rowId) {
+    return res.status(400).json({error:"tableName and rowId are required!"});
+  }
+  
+  try {
+    const result = await adminActions.deleteTableRow(tableName, rowId);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Row deleted successfully!"});
+    } else {
+      return res.status(500).json({error: result.error || "Failed to delete row!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to delete row" });
+  }
+});
+
 // User action API endpoints
 
 
