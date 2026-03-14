@@ -252,6 +252,26 @@ router.get("/admin/getAllFiles", async (req:Request, res:Response)=>{
   return res.send(json);
 })
 
+router.get("/admin/getGroupDetails/:groupCode", async (req:Request, res:Response)=>{
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const groupCode = Array.isArray(req.params.groupCode) ? req.params.groupCode[0] : req.params.groupCode;
+  if (!groupCode) {return res.status(400).json({error:"Group code is required!"})}
+  
+  let groupDetails = await adminActions.getGroupDetails(groupCode);
+  if (groupDetails === null){return res.status(404).json({error:"Group not found!"})}
+  
+  // Fix BigInt serialization issue
+  const json = JSON.stringify(groupDetails, (key, value) =>
+    typeof value === 'bigint' ? Number(value) : value
+  );
+  
+  res.setHeader('Content-Type', 'application/json');
+  return res.send(json);
+})
+
 router.delete("/admin/deleteFile/:fileCode", async (req:Request, res:Response)=>{
   if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
   let user_permission:auth.PermissionResponse = await auth.validateUserToken(req.headers.authorization,"admin");

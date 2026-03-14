@@ -130,7 +130,8 @@ export function useAdmin() {
         }) + " " + new Date(file.date).toLocaleTimeString("hu-HU", {
           hour: "2-digit",
           minute: "2-digit",
-        })
+        }),
+        type: file.type || 'file' // Default to 'file' if not specified
       }))
     } catch (error) {
       error.value = error.message
@@ -509,6 +510,56 @@ export function useAdmin() {
     }
   }
 
+  const getGroupDetails = async (token, groupCode) => {
+    loading.value = true
+    error.value = ''
+    
+    try {
+      const response = await fetch(`/admin/getGroupDetails/${groupCode}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: token
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load group details')
+      }
+
+      const data = await response.json()
+      return {
+        ...data,
+        files: data.files ? data.files.map(file => ({
+          ...file,
+          sizeFormatted: formatBytes(file.size),
+          dateFormatted: new Date(file.date).toLocaleDateString('hu-HU', {
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit',
+          }) + ' ' + new Date(file.date).toLocaleTimeString('hu-HU', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        })) : [],
+        sizeFormatted: formatBytes(data.files ? data.files.reduce((total, file) => total + (file.size || 0), 0) : 0),
+        dateFormatted: new Date(data.date).toLocaleDateString('hu-HU', {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+        }) + ' ' + new Date(data.date).toLocaleTimeString('hu-HU', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      }
+    } catch (error) {
+      error.value = error.message
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     users,
     allFiles,
@@ -534,6 +585,7 @@ export function useAdmin() {
     changeUserPassword,
     changeUsername,
     changeUserQuota,
-    changeUserAdminStatus
+    changeUserAdminStatus,
+    getGroupDetails
   }
 }

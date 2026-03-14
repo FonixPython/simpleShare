@@ -7,4 +7,4 @@
 - [ ] /admin/database/insertRow
 - [ ] /admin/database/deleteRow
 - [ ] Max file size check
-- [ ] Show groups on All Files View
+- [x] Show groups on All Files View
