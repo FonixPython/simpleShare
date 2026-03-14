@@ -68,18 +68,30 @@
                     </div>
                   </td>
                   <td class="px-4 py-3 text-sm text-center">
-                    <div class="flex items-center justify-center gap-2">
+                    <div class="flex items-center justify-center gap-1">
                       <button 
-                        @click="openEditDialog(user)"
-                        class="bg-primary-button text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
-                        <span class="material-icons-outlined text-sm">edit</span>
-                        Edit
+                        @click="openChangeRoleDialog(user)"
+                        class="bg-purple-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+                        title="Change Role">
+                        <span class="material-icons-outlined text-sm">people</span>
                       </button>
                       <button 
-                        @click="handleDeleteUser(user)"
-                        class="bg-error text-white px-3 py-1 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1">
+                        @click="openChangePasswordDialog(user)"
+                        class="bg-blue-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+                        title="Change Password">
+                        <span class="material-icons-outlined text-sm">lock</span>
+                      </button>
+                      <button 
+                        @click="openEditDialog(user)"
+                        class="bg-yellow-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+                        title="Change Quota">
+                        <span class="material-icons-outlined text-sm">list</span>
+                      </button>
+                      <button 
+                        @click="openDeleteUserDialog(user)"
+                        class="bg-red-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+                        title="Delete User">
                         <span class="material-icons-outlined text-sm">delete</span>
-                        Delete
                       </button>
                     </div>
                   </td>
@@ -188,6 +200,142 @@
         </div>
       </div>
     </div>
+
+    <!-- Change Role Dialog -->
+    <div v-if="changeRoleDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Promote to Admin Confirmation</h3>
+        
+        <div class="mb-4">
+          <p class="text-gray-300 mb-2">
+            Are you sure you want to promote <span class="text-primary-button font-medium">{{ changeRoleDialog.user?.username }}</span> to admin?
+          </p>
+          <p class="text-gray-400 text-sm">
+            This will grant the user full administrative privileges to manage all users, files, and system settings.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
+            <input 
+              v-model="changeRoleDialog.adminPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter admin password">
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2 text-gray-300">
+              <input 
+                v-model="changeRoleDialog.isAdmin"
+                type="checkbox" 
+                class="w-4 h-4 text-primary-button bg-black/30 border-[#444] rounded focus:ring-primary-button">
+              <span class="text-sm font-medium">Admin User</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeChangeRoleDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleChangeRole"
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity">
+            Promote to Admin
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password Dialog -->
+    <div v-if="changePasswordDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Change Password</h3>
+        
+        <div class="mb-4">
+          <p class="text-gray-300">
+            Change password for <span class="text-primary-button font-medium">{{ changePasswordDialog.user?.username }}</span>
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
+            <input 
+              v-model="changePasswordDialog.adminPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter admin password">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">New Password</label>
+            <input 
+              v-model="changePasswordDialog.newPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new password">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeChangePasswordDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleChangePassword"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:opacity-90 transition-opacity">
+            Change Password
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete User Dialog -->
+    <div v-if="deleteUserDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Delete User Confirmation</h3>
+        
+        <div class="mb-4">
+          <p class="text-gray-300 mb-2">
+            Are you sure you want to delete user <span class="text-red-400 font-medium">{{ deleteUserDialog.user?.username }}</span>?
+          </p>
+          <p class="text-gray-400 text-sm">
+            This action cannot be undone. The user will be permanently deleted and all their files will be removed.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
+            <input 
+              v-model="deleteUserDialog.adminPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter admin password to confirm">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeDeleteUserDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleConfirmDeleteUser"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:opacity-90 transition-opacity">
+            Delete User
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -226,6 +374,23 @@ export default {
       newPassword: '',
       newQuota: '',
       isAdmin: false
+    })
+    const changeRoleDialog = ref({
+      isOpen: false,
+      user: null,
+      isAdmin: false,
+      adminPassword: ''
+    })
+    const changePasswordDialog = ref({
+      isOpen: false,
+      user: null,
+      adminPassword: '',
+      newPassword: ''
+    })
+    const deleteUserDialog = ref({
+      isOpen: false,
+      user: null,
+      adminPassword: ''
     })
 
     const filteredUsers = computed(() => {
@@ -348,6 +513,103 @@ export default {
       }
     }
 
+    const openChangeRoleDialog = (user) => {
+      changeRoleDialog.value = {
+        isOpen: true,
+        user: user,
+        isAdmin: user.is_admin,
+        adminPassword: ''
+      }
+    }
+
+    const closeChangeRoleDialog = () => {
+      changeRoleDialog.value.isOpen = false
+    }
+
+    const handleChangeRole = async () => {
+      const { user, isAdmin, adminPassword } = changeRoleDialog.value
+      
+      if (!adminPassword) {
+        showNotification('Admin password is required', 'error')
+        return
+      }
+      
+      if (isAdmin !== user.is_admin) {
+        const result = await changeUserAdminStatus(props.token, user.user_id, isAdmin)
+        if (result.success) {
+          showNotification(`User ${isAdmin ? 'promoted to' : 'demoted from'} admin successfully!`, 'ok')
+          closeChangeRoleDialog()
+          await loadUsers(props.token)
+        } else {
+          showNotification('Failed to change role: ' + result.error, 'error')
+        }
+      } else {
+        showNotification('No role change detected', 'info')
+        closeChangeRoleDialog()
+      }
+    }
+
+    const openChangePasswordDialog = (user) => {
+      changePasswordDialog.value = {
+        isOpen: true,
+        user: user,
+        adminPassword: '',
+        newPassword: ''
+      }
+    }
+
+    const closeChangePasswordDialog = () => {
+      changePasswordDialog.value.isOpen = false
+    }
+
+    const handleChangePassword = async () => {
+      const { user, adminPassword, newPassword } = changePasswordDialog.value
+      
+      if (!adminPassword || !newPassword) {
+        showNotification('Both passwords are required', 'error')
+        return
+      }
+      
+      const result = await changeUserPassword(props.token, user.user_id, newPassword)
+      if (result.success) {
+        showNotification('Password changed successfully!', 'ok')
+        closeChangePasswordDialog()
+        await loadUsers(props.token)
+      } else {
+        showNotification('Failed to change password: ' + result.error, 'error')
+      }
+    }
+
+    const openDeleteUserDialog = (user) => {
+      deleteUserDialog.value = {
+        isOpen: true,
+        user: user,
+        adminPassword: ''
+      }
+    }
+
+    const closeDeleteUserDialog = () => {
+      deleteUserDialog.value.isOpen = false
+    }
+
+    const handleConfirmDeleteUser = async () => {
+      const { user, adminPassword } = deleteUserDialog.value
+      
+      if (!adminPassword) {
+        showNotification('Admin password is required', 'error')
+        return
+      }
+      
+      const result = await deleteUser(props.token, user.user_id)
+      if (result.success) {
+        showNotification('User deleted successfully!', 'ok')
+        closeDeleteUserDialog()
+        await loadUsers(props.token)
+      } else {
+        showNotification('Failed to delete user: ' + result.error, 'error')
+      }
+    }
+
     onMounted(() => {
       loadUsers(props.token)
     })
@@ -359,6 +621,9 @@ export default {
       searchQuery,
       expandedUsers,
       editDialog,
+      changeRoleDialog,
+      changePasswordDialog,
+      deleteUserDialog,
       filteredUsers,
       toggleUserFiles,
       handleDeleteUser,
@@ -366,7 +631,16 @@ export default {
       downloadFile,
       openEditDialog,
       closeEditDialog,
-      handleSaveUser
+      handleSaveUser,
+      openChangeRoleDialog,
+      closeChangeRoleDialog,
+      handleChangeRole,
+      openChangePasswordDialog,
+      closeChangePasswordDialog,
+      handleChangePassword,
+      openDeleteUserDialog,
+      closeDeleteUserDialog,
+      handleConfirmDeleteUser
     }
   }
 }
