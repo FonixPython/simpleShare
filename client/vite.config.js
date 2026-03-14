@@ -1,32 +1,38 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-const path = require("path")
+import path from 'path'
 
-export default defineConfig({
-  root: path.resolve(__dirname, './'),
-  plugins: [vue()],
-  build: {
-    outDir: '../dist/public',
-    emptyOutDir: true,
-  },
-  server: {
-    proxy: {
-      '/login': 'http://localhost:3000',
-      '/verifySession': 'http://localhost:3000',
-      '/logout': 'http://localhost:3000',
-      '/register': 'http://localhost:3000',
-      '/quota': 'http://localhost:3000',
-      '/getAllFiles': 'http://localhost:3000',
-      '/checkFile': 'http://localhost:3000',
-      '/files': 'http://localhost:3000',
-      '/delete': 'http://localhost:3000',
-      '/upload': 'http://localhost:3000',
-      '/upload-group': 'http://localhost:3000',
-      '/upload-multiple-individual': 'http://localhost:3000',
-      '/admin': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/admin/, '/admin')
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+
+  const backend = `http://localhost:${env.PORT}`
+
+  return {
+    root: path.resolve(__dirname, './'),
+    plugins: [vue()],
+    build: {
+      outDir: '../dist/public',
+      emptyOutDir: true,
+    },
+    server: {
+      proxy: {
+        '/login': backend,
+        '/verifySession': backend,
+        '/logout': backend,
+        '/register': backend,
+        '/quota': backend,
+        '/getAllFiles': backend,
+        '/checkFile': backend,
+        '/files': backend,
+        '/delete': backend,
+        '/upload': backend,
+        '/upload-group': backend,
+        '/upload-multiple-individual': backend,
+        '/admin': {
+          target: backend,
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/admin/, '/admin')
+        }
       }
     }
   }
