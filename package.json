@@ -4,8 +4,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd client && vite",
-    "dev:backend": "cd backend && tsc && cd .. && nodemon dist/server.js",
-    "start": "node dist/server.js",
+    "dev:backend": "cd backend && NODE_ENV=development tsc && cd .. && NODE_ENV=development nodemon dist/server.js",
+    "start": "NODE_ENV=production node dist/server.js",
     "build": "npm run build:frontend && npm run build:backend",
     "build:backend": "cd backend && tsc",
     "build:frontend": "cd client && vite build",

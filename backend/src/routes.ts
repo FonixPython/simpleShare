@@ -16,7 +16,7 @@ router.get("/", (req: Request,res:Response) => {
   const devPath = path.join(__dirname, '../client/index.html');
   const prodPath = path.join(__dirname, './public/index.html');
   const fs = require('fs');
-  const useDev = fs.existsSync(devPath);
+  const useDev = process.env.NODE_ENV === 'development' && fs.existsSync(devPath);
   const indexPath = useDev ? devPath : prodPath;
   return res.sendFile(indexPath);
 })
@@ -28,7 +28,7 @@ router.get("/admin",async (req:Request, res:Response)=>{
   const devPath = path.join(__dirname, '../client/index.html');
   const prodPath = path.join(__dirname, './public/index.html');
   const fs = require('fs');
-  const useDev = fs.existsSync(devPath);
+  const useDev = process.env.NODE_ENV === 'development' && fs.existsSync(devPath);
   const indexPath = useDev ? devPath : prodPath;
   return res.sendFile(indexPath);
 })
