@@ -61,15 +61,15 @@
               <h4 class="text-sm font-medium text-gray-300 mb-3">File Size Distribution</h4>
               <div class="space-y-2">
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-400">Small files (&lt; 1MB)</span>
+                  <span class="text-sm text-gray-400">Small files (&lt; 10MB)</span>
                   <span class="text-sm font-medium">{{ sizeDistribution.small }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-400">Medium files (1MB - 10MB)</span>
+                  <span class="text-sm text-gray-400">Medium files (10MB - 100MB)</span>
                   <span class="text-sm font-medium">{{ sizeDistribution.medium }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-400">Large files (&gt; 10MB)</span>
+                  <span class="text-sm text-gray-400">Large files (&gt; 100MB)</span>
                   <span class="text-sm font-medium">{{ sizeDistribution.large }}</span>
                 </div>
               </div>
@@ -112,9 +112,11 @@ export default {
   setup(props) {
     const { 
       globalStorage, 
+      allFiles,
       loading, 
       error, 
       loadGlobalStorage,
+      loadAllFiles,
       formatBytes,
       getStorageSettings,
       updateStorageLimit: updateStorageLimitAPI
@@ -126,10 +128,14 @@ export default {
     const currentLimit = ref(0)
 
     const sizeDistribution = computed(() => {
+      const small = allFiles.value.filter(file => file.size < 10 * 1024 * 1024).length
+      const medium = allFiles.value.filter(file => file.size >= 10 * 1024 * 1024 && file.size <= 100 * 1024 * 1024).length
+      const large = allFiles.value.filter(file => file.size > 100 * 1024 * 1024).length
+      
       return {
-        small: Math.floor(globalStorage.value.totalFiles * 0.6),
-        medium: Math.floor(globalStorage.value.totalFiles * 0.3),
-        large: Math.floor(globalStorage.value.totalFiles * 0.1)
+        small,
+        medium,
+        large
       }
     })
 
@@ -151,7 +157,10 @@ export default {
     })
 
     const refreshData = async () => {
-      await loadGlobalStorage(props.token)
+      await Promise.all([
+        loadGlobalStorage(props.token),
+        loadAllFiles(props.token)
+      ])
       const settings = await getStorageSettings(props.token)
       if (settings) {
         currentLimit.value = settings.globalStorageLimit
@@ -177,7 +186,10 @@ export default {
     }
 
     onMounted(async () => {
-      await loadGlobalStorage(props.token)
+      await Promise.all([
+        loadGlobalStorage(props.token),
+        loadAllFiles(props.token)
+      ])
       const settings = await getStorageSettings(props.token)
       if (settings) {
         currentLimit.value = settings.globalStorageLimit
@@ -187,6 +199,7 @@ export default {
 
     return {
       globalStorage,
+      allFiles,
       loading,
       error,
       sizeDistribution,

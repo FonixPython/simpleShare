@@ -73,6 +73,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAdmin } from '../composables/useAdmin.js'
 import { useNotification } from '../composables/useNotification.js'
+import { useConfirm } from '../composables/useConfirm.js'
 
 export default {
   name: 'FilesView',
@@ -90,6 +91,7 @@ export default {
     } = useAdmin()
     
     const { showNotification } = useNotification()
+    const { confirmDelete } = useConfirm()
 
     const searchQuery = ref('')
 
@@ -113,7 +115,8 @@ export default {
     })
 
     const handleDeleteFile = async (file) => {
-      if (confirm(`Are you sure you want to delete file "${file.name}"?`)) {
+      try {
+        await confirmDelete(`file "${file.name}"`)
         const result = await deleteFile(props.token, file.code)
         if (result.success) {
           showNotification('File deleted successfully!', 'ok')
@@ -121,6 +124,8 @@ export default {
         } else {
           showNotification('Failed to delete file: ' + result.error, 'error')
         }
+      } catch {
+        // User cancelled the deletion
       }
     }
 

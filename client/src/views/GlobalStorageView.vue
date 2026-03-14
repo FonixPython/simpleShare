@@ -90,7 +90,7 @@
                 <button 
                   @click="updateStorageLimit"
                   :disabled="loading"
-                  class="mt-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all font-medium shadow-lg flex items-center gap-2 disabled:opacity-50">
+                  class="mt-4 bg-secondary-button text-gray-900 px-6 py-3 rounded-xl hover:bg-secondary-button/90 transition-all font-medium shadow-lg flex items-center gap-2 disabled:opacity-50">
                   <span 
                     :class="[
                       'material-icons text-sm',
