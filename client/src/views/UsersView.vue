@@ -702,7 +702,9 @@ export default {
     }
 
     const handleQuotaChange = (userId, username, currentQuota) => {
-      openChangeQuotaDialog({ user_id: userId, username, quota: currentQuota })
+      // Find the full user object from the users array which includes formatted properties
+      const fullUser = users.value.find(u => u.user_id === userId)
+      openChangeQuotaDialog(fullUser || { user_id: userId, username, quota: currentQuota })
     }
 
     const handleDeleteUserClick = (userId, username) => {

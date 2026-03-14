@@ -15,8 +15,23 @@ export function useAdmin() {
   const loading = ref(false)
   const error = ref('')
 
-  const formatBytes = (bytes) => {
+  const formatUsedStorage = (bytes) => {
     if (bytes === 0 || bytes === null || bytes === undefined) return "0 B"
+    const units = ["B", "kB", "MB", "GB", "TB"]
+    const threshold = 1024
+    let unitIndex = 0
+    let size = Number(bytes)
+
+    while (size >= threshold && unitIndex < units.length - 1) {
+      size /= threshold
+      unitIndex++
+    }
+
+    return `${size.toFixed(1)} ${units[unitIndex]}`
+  }
+
+  const formatBytes = (bytes) => {
+    if (bytes === 0 || bytes === null || bytes === undefined) return "Unlimited"
     const units = ["B", "kB", "MB", "GB", "TB"]
     const threshold = 1024
     let unitIndex = 0
@@ -80,7 +95,7 @@ export function useAdmin() {
         return {
           ...user,
           quotaFormatted: formatBytes(user.quota),
-          usedFormatted: formatBytes(usedStorage),
+          usedFormatted: formatUsedStorage(usedStorage),
           files: user.files.map(file => ({
             ...file,
             sizeFormatted: formatBytes(file.size),
