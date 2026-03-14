@@ -303,6 +303,52 @@
       </div>
     </div>
 
+    <!-- Change Username Dialog -->
+    <div v-if="changeUsernameDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Change Username</h3>
+        
+        <div class="mb-4">
+          <p class="text-gray-300">
+            Change username for <span class="text-primary-button font-medium">{{ changeUsernameDialog.user?.username }}</span>
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
+            <input 
+              v-model="changeUsernameDialog.adminPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter admin password">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">New Username</label>
+            <input 
+              v-model="changeUsernameDialog.newUsername"
+              type="text" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new username">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeChangeUsernameDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleChangeUsername"
+            class="px-4 py-2 bg-secondary-button text-black rounded-lg hover:opacity-90 transition-opacity">
+            Change Username
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Delete User Dialog -->
     <div v-if="deleteUserDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
@@ -392,6 +438,12 @@ export default {
       user: null,
       adminPassword: '',
       newPassword: ''
+    })
+    const changeUsernameDialog = ref({
+      isOpen: false,
+      user: null,
+      adminPassword: '',
+      newUsername: ''
     })
     const deleteUserDialog = ref({
       isOpen: false,
@@ -528,7 +580,7 @@ export default {
     }
 
     const handleUsernameChange = (userId, currentUsername) => {
-      openEditDialog({ user_id: userId, username: currentUsername })
+      openChangeUsernameDialog({ user_id: userId, username: currentUsername })
     }
 
     const handleQuotaChange = (userId, username, currentQuota) => {
@@ -606,6 +658,42 @@ export default {
       }
     }
 
+    const openChangeUsernameDialog = (user) => {
+      changeUsernameDialog.value = {
+        isOpen: true,
+        user: user,
+        adminPassword: '',
+        newUsername: ''
+      }
+    }
+
+    const closeChangeUsernameDialog = () => {
+      changeUsernameDialog.value.isOpen = false
+    }
+
+    const handleChangeUsername = async () => {
+      const { user, adminPassword, newUsername } = changeUsernameDialog.value
+      
+      if (!adminPassword || !newUsername) {
+        showNotification('Admin password and new username are required', 'error')
+        return
+      }
+      
+      if (newUsername === user.username) {
+        showNotification('New username must be different from current username', 'error')
+        return
+      }
+      
+      const result = await changeUsername(props.token, user.user_id, newUsername)
+      if (result.success) {
+        showNotification('Username changed successfully!', 'ok')
+        closeChangeUsernameDialog()
+        await loadUsers(props.token)
+      } else {
+        showNotification('Failed to change username: ' + result.error, 'error')
+      }
+    }
+
     const openDeleteUserDialog = (user) => {
       deleteUserDialog.value = {
         isOpen: true,
@@ -649,6 +737,7 @@ export default {
       editDialog,
       changeRoleDialog,
       changePasswordDialog,
+      changeUsernameDialog,
       deleteUserDialog,
       filteredUsers,
       toggleUserFiles,
@@ -669,6 +758,9 @@ export default {
       openChangePasswordDialog,
       closeChangePasswordDialog,
       handleChangePassword,
+      openChangeUsernameDialog,
+      closeChangeUsernameDialog,
+      handleChangeUsername,
       openDeleteUserDialog,
       closeDeleteUserDialog,
       handleConfirmDeleteUser
