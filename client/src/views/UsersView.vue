@@ -67,34 +67,35 @@
                       </button>
                     </div>
                   </td>
-                  <td class="px-4 py-3 text-sm text-center">
-                    <div class="flex items-center justify-center gap-1">
-                      <button 
-                        @click="openChangeRoleDialog(user)"
-                        class="bg-purple-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
-                        title="Change Role">
-                        <span class="material-icons-outlined text-sm">people</span>
-                      </button>
-                      <button 
-                        @click="openChangePasswordDialog(user)"
-                        class="bg-blue-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
-                        title="Change Password">
-                        <span class="material-icons-outlined text-sm">lock</span>
-                      </button>
-                      <button 
-                        @click="openEditDialog(user)"
-                        class="bg-yellow-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
-                        title="Change Quota">
-                        <span class="material-icons-outlined text-sm">list</span>
-                      </button>
-                      <button 
-                        @click="openDeleteUserDialog(user)"
-                        class="bg-red-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
-                        title="Delete User">
-                        <span class="material-icons-outlined text-sm">delete</span>
-                      </button>
-                    </div>
-                  </td>
+                  <td class="px-4 py-3 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button @click="toggleAdminStatus(user.user_id, user.username, user.is_admin)" 
+                            class="bg-purple-500 text-white w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
+                            title="Toggle Admin Status">
+                        <span class="material-icons text-sm">{{ user.is_admin ? 'admin_panel_settings' : 'person_add' }}</span>
+                    </button>
+                    <button @click="handlePasswordChange(user.user_id, user.username)" 
+                            class="bg-primary-button text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
+                            title="Change Password">
+                        <span class="material-icons text-sm">lock</span>
+                    </button>
+                    <button @click="handleUsernameChange(user.user_id, user.username)" 
+                            class="bg-secondary-button text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
+                            title="Change Username">
+                        <span class="material-icons text-sm">edit</span>
+                    </button>
+                    <button @click="handleQuotaChange(user.user_id, user.username, user.quota)" 
+                            class="bg-yellow-500 text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
+                            title="Change Quota">
+                        <span class="material-icons text-sm">storage</span>
+                    </button>
+                    <button @click="handleDeleteUserClick(user.user_id, user.username)" 
+                            class="bg-error text-white w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
+                            title="Delete User">
+                        <span class="material-icons text-sm">delete</span>
+                    </button>
+                </div>
+              </td>
                 </tr>
                 <!-- User files expansion -->
                 <tr v-if="expandedUsers.includes(user.user_id)">
@@ -513,6 +514,26 @@ export default {
       }
     }
 
+    const toggleAdminStatus = (userId, username, currentIsAdmin) => {
+      openChangeRoleDialog({ user_id: userId, username, is_admin: currentIsAdmin })
+    }
+
+    const handlePasswordChange = (userId, username) => {
+      openChangePasswordDialog({ user_id: userId, username })
+    }
+
+    const handleUsernameChange = (userId, currentUsername) => {
+      openEditDialog({ user_id: userId, username: currentUsername })
+    }
+
+    const handleQuotaChange = (userId, username, currentQuota) => {
+      openEditDialog({ user_id: userId, username, quota: currentQuota })
+    }
+
+    const handleDeleteUserClick = (userId, username) => {
+      openDeleteUserDialog({ user_id: userId, username })
+    }
+
     const openChangeRoleDialog = (user) => {
       changeRoleDialog.value = {
         isOpen: true,
@@ -632,6 +653,11 @@ export default {
       openEditDialog,
       closeEditDialog,
       handleSaveUser,
+      toggleAdminStatus,
+      handlePasswordChange,
+      handleUsernameChange,
+      handleQuotaChange,
+      handleDeleteUserClick,
       openChangeRoleDialog,
       closeChangeRoleDialog,
       handleChangeRole,
