@@ -34,6 +34,13 @@
             ]">refresh</span>
           Refresh
         </button>
+        <button 
+          @click="saveAllChanges"
+          :disabled="!currentTable || loading || !hasChanges"
+          class="bg-green-500 text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+          <span class="material-icons text-sm">save</span>
+          Save
+        </button>
       </div>
 
       <!-- Table selector and search controls -->
@@ -169,6 +176,7 @@ export default {
       error,
       loadTables,
       loadTableData,
+      saveTableData,
       getTableSchema,
       updateDatabaseCell,
       insertDatabaseRow,
@@ -183,6 +191,7 @@ export default {
     const editingCell = ref(null)
     const originalValue = ref(null)
     const statusMessage = ref('')
+    const hasChanges = ref(false)
 
     const tableColumns = computed(() => {
       if (tableData.value.length === 0) return []
@@ -242,29 +251,9 @@ export default {
       })
     }
 
-    const stopEditingCell = async () => {
+    const stopEditingCell = () => {
       if (editingCell.value) {
-        const [rowId, column] = editingCell.value.split('-')
-        const row = tableData.value.find(r => getRowId(r) === rowId)
-        
-        if (row) {
-          const newValue = row[column]
-          try {
-            const result = await updateDatabaseCell(props.token, currentTable.value, rowId, column, newValue)
-            if (result.success) {
-              showNotification('Cell updated successfully!', 'ok')
-              await loadTableData(props.token, currentTable.value)
-            } else {
-              showNotification('Failed to update cell: ' + result.error, 'error')
-              // Revert the change
-              row[column] = originalValue.value
-            }
-          } catch (error) {
-            showNotification('Failed to update cell: ' + error.message, 'error')
-            // Revert the change
-            row[column] = originalValue.value
-          }
-        }
+        hasChanges.value = true
       }
       editingCell.value = null
       originalValue.value = null
@@ -282,7 +271,7 @@ export default {
       originalValue.value = null
     }
 
-    const insertRow = async () => {
+    const insertRow = () => {
       if (!currentTable.value || tableColumns.value.length === 0) return
       
       const newRow = {}
@@ -290,62 +279,64 @@ export default {
         newRow[column] = null
       })
       
-      try {
-        const result = await insertDatabaseRow(props.token, currentTable.value, newRow)
-        if (result.success) {
-          showNotification('Row inserted successfully!', 'ok')
-          await loadTableData(props.token, currentTable.value)
-        } else {
-          showNotification('Failed to insert row: ' + result.error, 'error')
-        }
-      } catch (error) {
-        showNotification('Failed to insert row: ' + error.message, 'error')
-      }
+      tableData.value.unshift(newRow)
+      hasChanges.value = true
+      showNotification('New row added. Click Save to persist changes.', 'info')
     }
 
-    const deleteSelectedRow = async () => {
+    const deleteSelectedRow = () => {
       if (!selectedRow.value) return
       
       if (confirm('Are you sure you want to delete this row?')) {
-        try {
-          const result = await deleteDatabaseRow(props.token, currentTable.value, selectedRow.value)
-          if (result.success) {
-            showNotification('Row deleted successfully!', 'ok')
-            selectedRow.value = null
-            await loadTableData(props.token, currentTable.value)
-          } else {
-            showNotification('Failed to delete row: ' + result.error, 'error')
-          }
-        } catch (error) {
-          showNotification('Failed to delete row: ' + error.message, 'error')
+        const index = tableData.value.findIndex(row => getRowId(row) === selectedRow.value)
+        if (index > -1) {
+          tableData.value.splice(index, 1)
+          selectedRow.value = null
+          hasChanges.value = true
+          showNotification('Row marked for deletion. Click Save to persist changes.', 'info')
         }
       }
     }
 
-    const clearSelectedCell = async () => {
+    const clearSelectedCell = () => {
       if (!selectedCell.value) return
       
       const [rowId, column] = selectedCell.value.split('-')
       const row = tableData.value.find(r => getRowId(r) === rowId)
       if (row) {
-        try {
-          const result = await updateDatabaseCell(props.token, currentTable.value, rowId, column, null)
-          if (result.success) {
-            showNotification('Cell cleared successfully!', 'ok')
-            await loadTableData(props.token, currentTable.value)
-          } else {
-            showNotification('Failed to clear cell: ' + result.error, 'error')
-          }
-        } catch (error) {
-          showNotification('Failed to clear cell: ' + error.message, 'error')
-        }
+        row[column] = null
+        hasChanges.value = true
+        showNotification('Cell cleared. Click Save to persist changes.', 'info')
       }
     }
 
     const refreshData = async () => {
       if (currentTable.value) {
         await loadTableData(props.token, currentTable.value)
+        hasChanges.value = false
         showNotification('Data refreshed.', 'ok')
+      }
+    }
+
+    const saveAllChanges = async () => {
+      if (!currentTable.value) return
+      
+      loading.value = true
+      try {
+        // Process all changes - for now we'll implement a simple approach
+        // In a real implementation, we'd track individual changes more precisely
+        const result = await saveTableData(props.token, currentTable.value, tableData.value)
+        if (result.success) {
+          hasChanges.value = false
+          showNotification('Changes saved successfully!', 'ok')
+          await loadTableData(props.token, currentTable.value)
+        } else {
+          showNotification('Failed to save changes: ' + result.error, 'error')
+        }
+      } catch (error) {
+        showNotification('Failed to save changes: ' + error.message, 'error')
+      } finally {
+        loading.value = false
       }
     }
 
@@ -383,6 +374,7 @@ export default {
       selectedRow,
       selectedCell,
       editingCell,
+      hasChanges,
       statusMessage,
       tableColumns,
       filteredTableData,
@@ -397,6 +389,7 @@ export default {
       deleteSelectedRow,
       clearSelectedCell,
       refreshData,
+      saveAllChanges,
       filterTableData,
       loadTableData: () => loadTableData(props.token, currentTable.value)
     }
