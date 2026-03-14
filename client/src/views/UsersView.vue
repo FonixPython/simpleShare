@@ -349,6 +349,71 @@
       </div>
     </div>
 
+    <!-- Change Quota Dialog -->
+    <div v-if="changeQuotaDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold text-white mb-4">Change Quota Confirmation</h3>
+        
+        <div class="mb-4">
+          <p class="text-gray-300 mb-2">
+            Are you sure you want to change quota for <span class="text-primary-button font-medium">{{ changeQuotaDialog.user?.username }}</span>?
+          </p>
+          <p class="text-gray-400 text-sm">
+            Current quota: {{ changeQuotaDialog.user?.quotaFormatted }}
+          </p>
+          <p class="text-gray-400 text-sm">
+            This will affect the user's upload limits. If quota is exceeded, the user cannot upload new files. Please verify the new quota carefully!
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Admin Password</label>
+            <input 
+              v-model="changeQuotaDialog.adminPassword"
+              type="password" 
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter admin password">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">New quota</label>
+            <div class="flex gap-2">
+              <input 
+                v-model="changeQuotaDialog.newQuotaValue"
+                type="number" 
+                class="flex-1 px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+                placeholder="Enter quota value"
+                :disabled="changeQuotaDialog.newQuotaUnit === 'Unlimited'">
+              <select 
+                v-model="changeQuotaDialog.newQuotaUnit"
+                class="px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none">
+                <option value="Unlimited">Unlimited</option>
+                <option value="B">B</option>
+                <option value="kB">kB</option>
+                <option value="MB">MB</option>
+                <option value="GB">GB</option>
+                <option value="TB">TB</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button 
+            @click="closeChangeQuotaDialog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button 
+            @click="handleChangeQuota"
+            class="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:opacity-90 transition-opacity">
+            Change Quota
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Delete User Dialog -->
     <div v-if="deleteUserDialog.isOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md">
@@ -444,6 +509,14 @@ export default {
       user: null,
       adminPassword: '',
       newUsername: ''
+    })
+
+    const changeQuotaDialog = ref({
+      isOpen: false,
+      user: null,
+      adminPassword: '',
+      newQuotaValue: null,
+      newQuotaUnit: 'Unlimited'
     })
     const deleteUserDialog = ref({
       isOpen: false,
@@ -584,7 +657,7 @@ export default {
     }
 
     const handleQuotaChange = (userId, username, currentQuota) => {
-      openEditDialog({ user_id: userId, username, quota: currentQuota })
+      openChangeQuotaDialog({ user_id: userId, username, quota: currentQuota })
     }
 
     const handleDeleteUserClick = (userId, username) => {
@@ -694,6 +767,58 @@ export default {
       }
     }
 
+    const openChangeQuotaDialog = (user) => {
+      changeQuotaDialog.value = {
+        isOpen: true,
+        user: user,
+        adminPassword: '',
+        newQuotaValue: null,
+        newQuotaUnit: 'Unlimited'
+      }
+    }
+
+    const closeChangeQuotaDialog = () => {
+      changeQuotaDialog.value.isOpen = false
+    }
+
+    const handleChangeQuota = async () => {
+      const { user, adminPassword, newQuotaValue, newQuotaUnit } = changeQuotaDialog.value
+      
+      if (!adminPassword) {
+        showNotification('Admin password is required', 'error')
+        return
+      }
+      
+      let newQuotaInBytes
+      if (newQuotaUnit === 'Unlimited') {
+        newQuotaInBytes = 0 // 0 means unlimited in the system
+      } else {
+        if (!newQuotaValue || newQuotaValue <= 0) {
+          showNotification('Please enter a valid quota value', 'error')
+          return
+        }
+        
+        // Convert to bytes
+        const multipliers = {
+          'B': 1,
+          'kB': 1024,
+          'MB': 1024 * 1024,
+          'GB': 1024 * 1024 * 1024,
+          'TB': 1024 * 1024 * 1024 * 1024
+        }
+        newQuotaInBytes = newQuotaValue * multipliers[newQuotaUnit]
+      }
+      
+      const result = await changeUserQuota(props.token, user.user_id, newQuotaInBytes)
+      if (result.success) {
+        showNotification('Quota changed successfully!', 'ok')
+        closeChangeQuotaDialog()
+        await loadUsers(props.token)
+      } else {
+        showNotification('Failed to change quota: ' + result.error, 'error')
+      }
+    }
+
     const openDeleteUserDialog = (user) => {
       deleteUserDialog.value = {
         isOpen: true,
@@ -738,6 +863,7 @@ export default {
       changeRoleDialog,
       changePasswordDialog,
       changeUsernameDialog,
+      changeQuotaDialog,
       deleteUserDialog,
       filteredUsers,
       toggleUserFiles,
@@ -761,6 +887,9 @@ export default {
       openChangeUsernameDialog,
       closeChangeUsernameDialog,
       handleChangeUsername,
+      openChangeQuotaDialog,
+      closeChangeQuotaDialog,
+      handleChangeQuota,
       openDeleteUserDialog,
       closeDeleteUserDialog,
       handleConfirmDeleteUser
