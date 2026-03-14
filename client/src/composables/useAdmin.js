@@ -73,22 +73,28 @@ export function useAdmin() {
       }
 
       const data = await response.json()
-      users.value = data.map(user => ({
-        ...user,
-        quotaFormatted: formatBytes(user.quota),
-        files: user.files.map(file => ({
-          ...file,
-          sizeFormatted: formatBytes(file.size),
-          dateFormatted: new Date(file.date).toLocaleDateString("hu-HU", {
-            year: "2-digit",
-            month: "2-digit",
-            day: "2-digit",
-          }) + " " + new Date(file.date).toLocaleTimeString("hu-HU", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        }))
-      }))
+      users.value = data.map(user => {
+        // Calculate used storage from user's files
+        const usedStorage = user.files.reduce((total, file) => total + (file.size || 0), 0)
+        
+        return {
+          ...user,
+          quotaFormatted: formatBytes(user.quota),
+          usedFormatted: formatBytes(usedStorage),
+          files: user.files.map(file => ({
+            ...file,
+            sizeFormatted: formatBytes(file.size),
+            dateFormatted: new Date(file.date).toLocaleDateString("hu-HU", {
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
+            }) + " " + new Date(file.date).toLocaleTimeString("hu-HU", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          }))
+        }
+      })
     } catch (error) {
       error.value = error.message
     } finally {

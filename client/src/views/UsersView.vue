@@ -2,7 +2,7 @@
   <div class="w-full h-full pt-[100px] mobile:pt-[80px] overflow-y-auto p-6">
     <div class="w-full max-w-7xl mx-auto">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white">Users Management</h2>
+        <h2 class="text-2xl font-bold text-white mb-4">Users Management</h2>
         <div class="flex items-center gap-4">
           <div class="relative">
             <span class="material-icons-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
@@ -28,10 +28,10 @@
           <table class="w-full">
             <thead class="bg-black/30">
               <tr>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">ID</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Username</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Admin</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Quota</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Used</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Created</th>
                 <th class="px-4 py-3 text-left text-sm font-medium text-gray-300">Files</th>
                 <th class="px-4 py-3 text-center text-sm font-medium text-gray-300">Actions</th>
@@ -40,7 +40,6 @@
             <tbody>
               <template v-for="user in filteredUsers" :key="user.user_id">
                 <tr class="border-b border-[#444] hover:bg-black/20 transition-colors">
-                  <td class="px-4 py-3 text-sm">{{ user.user_id }}</td>
                   <td class="px-4 py-3 text-sm font-medium">{{ user.username }}</td>
                   <td class="px-4 py-3 text-sm">
                     <span 
@@ -54,6 +53,7 @@
                     </span>
                   </td>
                   <td class="px-4 py-3 text-sm">{{ user.quotaFormatted }}</td>
+                  <td class="px-4 py-3 text-sm">{{ user.usedFormatted }}</td>
                   <td class="px-4 py-3 text-sm">
                     {{ new Date(user.creation_date).toLocaleDateString() }}
                   </td>
@@ -72,27 +72,27 @@
                     <button @click="toggleAdminStatus(user.user_id, user.username, user.is_admin)" 
                             class="bg-purple-500 text-white w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
                             title="Toggle Admin Status">
-                        <span class="material-icons text-sm">{{ user.is_admin ? 'admin_panel_settings' : 'person_add' }}</span>
+                        <span class="material-icons text-xs">{{ user.is_admin ? 'admin_panel_settings' : 'person_add' }}</span>
                     </button>
                     <button @click="handlePasswordChange(user.user_id, user.username)" 
                             class="bg-primary-button text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
                             title="Change Password">
-                        <span class="material-icons text-sm">lock</span>
+                        <span class="material-icons text-xs">lock</span>
                     </button>
                     <button @click="handleUsernameChange(user.user_id, user.username)" 
                             class="bg-secondary-button text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
                             title="Change Username">
-                        <span class="material-icons text-sm">edit</span>
+                        <span class="material-icons text-xs">edit</span>
                     </button>
                     <button @click="handleQuotaChange(user.user_id, user.username, user.quota)" 
                             class="bg-yellow-500 text-black w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
                             title="Change Quota">
-                        <span class="material-icons text-sm">storage</span>
+                        <span class="material-icons text-xs">storage</span>
                     </button>
                     <button @click="handleDeleteUserClick(user.user_id, user.username)" 
                             class="bg-error text-white w-10 h-10 rounded flex items-center justify-center hover:scale-105 transition-transform" 
                             title="Delete User">
-                        <span class="material-icons text-sm">delete</span>
+                        <span class="material-icons text-xs">delete</span>
                     </button>
                 </div>
               </td>
