@@ -1,150 +1,324 @@
 # SimpleShare
 
-SimpleShare is a web application that allows users to upload and share files easily. This project is designed to provide a simple and intuitive interface for file sharing with a clean, modern frontend and robust backend.
+SimpleShare is a modern web application that allows users to upload and share files easily. This project provides a simple and intuitive interface for file sharing with a clean, Vue.js 3 frontend and robust Node.js/TypeScript backend.
 
 ## Features
 
-- User-friendly interface built with Vue.js 3
-- File upload functionality with progress tracking and drag-and-drop support
-- User authentication and registration system
-- Dashboard for managing uploaded files
-- Responsive design with Tailwind CSS
-- Admin panel for user management
-- File sharing via unique codes
-- Group file uploads
-- Real-time notifications
-- Quota management system
-- Mobile-responsive design
+- **User-friendly interface** built with Vue.js 3 and Composition API
+- **File upload functionality** with progress tracking and drag-and-drop support
+- **User authentication and registration** system with secure session management
+- **Dashboard for managing uploaded files** with intuitive UI
+- **Responsive design** with Tailwind CSS and custom animations
+- **Admin panel** for comprehensive user management
+- **File sharing via unique codes** for secure access
+- **Group file uploads** with batch operations
+- **Real-time notifications** and user feedback
+- **Quota management system** for storage control
+- **Mobile-responsive design** optimized for all devices
+- **Database migration system** for easy schema updates
+- **Modern confirmation modal system** replacing browser alerts
+- **TypeScript support** throughout the codebase for better maintainability
 
 ## Technology Stack
 
-- **Frontend**: Vue.js 3, Vue Router, Tailwind CSS, Vite
+- **Frontend**: Vue.js 3 (Composition API), Vue Router, Tailwind CSS, Vite
 - **Backend**: Node.js, Express.js, TypeScript
-- **Database**: MariaDB
-- **Authentication**: bcrypt
-- **File Handling**: Multer
-- **Styling**: Tailwind CSS with custom animations
+- **Database**: MariaDB with automated migration system
+- **Authentication**: bcrypt for password hashing, secure session tokens
+- **File Handling**: Multer for multipart uploads, Archiver for zip operations
+- **Development Tools**: Concurrently, Nodemon, Prettier, TypeScript compiler
+- **Styling**: Tailwind CSS v4 with custom animations and responsive design
 
 ## Project Structure
 
 ```
 simpleShare/
-├── backend/                 # Backend API server
+├── backend/                 # Backend API server (TypeScript)
 │   ├── src/
-│   │   ├── adminActions.ts  # Admin operations
-│   │   ├── auth.ts          # Authentication logic
-│   │   ├── routes.ts        # API routes
-│   │   └── ...              # Other backend files
+│   │   ├── adminActions.ts  # Admin operations and user management
+│   │   ├── auth.ts          # Authentication and session logic
+│   │   ├── routes.ts        # API route definitions
+│   │   ├── server.ts        # Express server setup
+│   │   ├── uploadActions.ts # File upload and management
+│   │   ├── userActions.ts   # User operations
+│   │   ├── db.ts            # Database connection
+│   │   ├── migration-runner.ts # Database migration system
+│   │   └── controllers/     # API controllers
+│   ├── migrations/          # Database migration files
 │   └── tsconfig.json        # TypeScript configuration
 ├── client/                  # Frontend Vue.js application
 │   ├── public/              # Static assets
 │   ├── src/
-│   │   ├── components/      # Vue components
-│   │   ├── composables/     # Vue composables
-│   │   ├── views/           # Page views
-│   │   ├── App.vue          # Root component
+│   │   ├── components/      # Reusable Vue components
+│   │   ├── composables/     # Vue composables (useConfirm, etc.)
+│   │   ├── views/           # Page views and routing
+│   │   ├── App.vue          # Root component with global modal
 │   │   └── main.js          # Application entry point
 │   ├── index.html           # HTML template
 │   ├── tailwind.config.js   # Tailwind configuration
-│   └── vite.config.js       # Vite configuration
+│   └── vite.config.js       # Vite build configuration
+├── uploads/                 # File storage directory
+├── dist/                    # Compiled TypeScript output
 ├── .env.example             # Environment variables template
 ├── .gitignore              # Git ignore rules
+├── MIGRATIONS.md           # Database migration documentation
+├── Alert-box.md            # Confirmation modal system documentation
 ├── LICENSE                 # MIT License
 ├── README.md               # This file
-└── package.json            # Dependencies and scripts
+└── package.json            # Dependencies and npm scripts
 ```
 
 ## Installation
 
-1. Clone the repository:
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+- MariaDB database server
+
+### Setup Steps
+
+1. **Clone the repository:**
 
    ```bash
    git clone https://github.com/cigoria/simpleShare.git
    cd simpleShare
    ```
 
-2. Install the dependencies:
+2. **Install the dependencies:**
 
    ```bash
    npm install
    ```
 
-3. Copy environment file:
+3. **Configure environment variables:**
 
    ```bash
    cp .env.example .env
    ```
 
-4. Configure your database settings in `.env`
+   Edit `.env` with your database configuration:
+   ```
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=your_username
+   DB_PASSWORD=your_password
+   DB_NAME=simpleShare
+   PORT=3000
+   UPLOAD_PATH=./uploads/
+   ```
 
-5. Build the frontend:
+4. **Database Setup:**
+   
+   Create an empty database named `simpleShare` in MariaDB. The migration system will automatically create all necessary tables when you start the server.
+
+5. **Build the application:**
 
    ```bash
    npm run build
    ```
 
-6. Start the server:
+6. **Start the production server:**
 
    ```bash
    npm start
    ```
+
+   The application will be available at `http://localhost:3000`
 
 ## Development
 
-For development with hot reload:
+### Development Mode with Hot Reload
 
-1. Start the backend server:
+For development with hot reload on both frontend and backend:
+
+```bash
+npm run dev
+```
+
+This command uses `concurrently` to run both frontend and backend development servers simultaneously.
+
+### Individual Development Servers
+
+If you prefer to run servers separately:
+
+1. **Start the backend server with auto-reload:**
    ```bash
-   npm start
+   npm run dev:backend
    ```
 
-2. In another terminal, start the frontend dev server:
+2. **In another terminal, start the frontend dev server:**
    ```bash
-   npm run dev
+   npm run dev:frontend
    ```
 
-The frontend will be available at `http://localhost:5173` and the backend API at `http://localhost:3000`.
+### Development URLs
 
-## Code Quality
+- **Frontend**: `http://localhost:5173` (Vite dev server)
+- **Backend API**: `http://localhost:3000` (Express server)
 
-The frontend codebase has been optimized for maintainability:
-- All comments are in English
-- Unnecessary comments have been removed
-- Helpful comments explain complex logic
-- Code follows Vue.js best practices
-- Components are well-structured and reusable
+### Available Scripts
+
+- `npm run dev` - Run both frontend and backend in development mode
+- `npm run dev:backend` - Run only backend with TypeScript compilation and auto-reload
+- `npm run dev:frontend` - Run only frontend with Vite hot reload
+- `npm run build` - Build both frontend and backend for production
+- `npm run build:backend` - Compile TypeScript backend to `dist/`
+- `npm run build:frontend` - Build Vue.js frontend for production
+- `npm start` - Start production server from compiled files
+- `npm run clean` - Remove compiled `dist/` directory
+
+### Code Quality
+
+The codebase follows these quality standards:
+- **TypeScript**: Full type safety in backend, progressive adoption in frontend
+- **Code Style**: Prettier configuration for consistent formatting
+- **Vue.js Best Practices**: Composition API, proper component structure
+- **Documentation**: Inline comments for complex logic, comprehensive README
+- **Error Handling**: Modern confirmation modals instead of browser alerts
 
 ## API Endpoints
 
 ### Authentication
-- `POST /login` - User login
-- `POST /register` - User registration
-- `GET /logout` - User logout
-- `GET /verifySession` - Verify session token
+- `POST /login` - User login with email/password
+- `POST /register` - User registration with validation
+- `GET /logout` - User logout and session cleanup
+- `GET /verifySession` - Verify active session token
 
 ### File Operations
-- `POST /upload` - Upload single file
-- `POST /upload-group` - Upload multiple files as group
-- `GET /files/:code` - Download file
-- `GET /checkFile` - Check if file exists
-- `GET /delete/:code` - Delete file
-- `GET /getAllFiles` - Get all user files
-- `GET /quota` - Get user quota information
+- `POST /upload` - Upload single file with metadata
+- `POST /upload-group` - Upload multiple files as a group
+- `GET /files/:code` - Download file by unique code
+- `GET /checkFile` - Check if file exists by code
+- `GET /delete/:code` - Delete file by code (owner/admin only)
+- `GET /getAllFiles` - Get all files for current user
+- `GET /quota` - Get user quota and usage information
 
 ### Admin Operations
-- Various admin endpoints for user management
+- `GET /admin/users` - List all users (admin only)
+- `POST /admin/user/:id/ban` - Ban/unban user (admin only)
+- `POST /admin/user/:id/quota` - Update user quota (admin only)
+- Additional endpoints for user management and system administration
+
+## Key Systems
+
+### Database Migration System
+
+The project uses an automated migration system for database schema management:
+
+- **Migration files**: Located in `/backend/migrations/` with numeric prefixes
+- **Automatic execution**: Migrations run automatically on server startup
+- **Version tracking**: Applied migrations are tracked in the `migrations` table
+- **Safe rollback**: Failed migrations are automatically rolled back
+
+For detailed information, see [MIGRATIONS.md](MIGRATIONS.md).
+
+### Confirmation Modal System
+
+Modern confirmation dialogs replace browser alerts throughout the application:
+
+- **Reusable components**: `ConfirmModal.vue` with `useConfirm` composable
+- **Multiple types**: Info, warning, error, success dialogs
+- **Customizable**: Custom buttons, icons, and messages
+- **Accessible**: Keyboard navigation and proper focus management
+- **Animated**: Smooth transitions and backdrop effects
+
+For usage examples and documentation, see [Alert-box.md](Alert-box.md).
+
+### Authentication & Security
+
+- **Secure password hashing** using bcrypt
+- **Session-based authentication** with secure tokens
+- **Role-based access control** for admin features
+- **File access control** via unique codes and ownership verification
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
+We welcome contributions from the community! Here's how to get started:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### Development Workflow
 
-Please ensure your code follows the existing style and conventions.
+1. **Fork the repository** on GitHub
+2. **Create a feature branch** from the main branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes** following our code standards
+4. **Test your changes** thoroughly:
+   - Run `npm run dev` to test in development mode
+   - Test both frontend and backend functionality
+   - Ensure database migrations work if you've modified the schema
+5. **Format your code** using Prettier:
+   ```bash
+   npm run format
+   ```
+6. **Commit your changes** with clear, descriptive messages
+7. **Push to your fork** and create a pull request
+
+### Code Standards
+
+- **TypeScript**: Use proper types in backend, consider types in frontend
+- **Vue.js**: Use Composition API, follow component best practices
+- **CSS**: Use Tailwind CSS classes, avoid inline styles
+- **Comments**: Write clear comments in English for complex logic
+- **Confirmation dialogs**: Use the `useConfirm` composable instead of browser alerts
+- **Database changes**: Create migration files for any schema modifications
+
+### Areas for Contribution
+
+- **Frontend**: UI improvements, new components, accessibility enhancements
+- **Backend**: API optimizations, new features, security improvements
+- **Documentation**: Better documentation, examples, guides
+- **Testing**: Unit tests, integration tests, end-to-end tests
+- **Performance**: Optimization, caching, database improvements
+
+### Pull Request Guidelines
+
+- Provide a clear description of changes
+- Reference any related issues
+- Include screenshots for UI changes
+- Ensure all tests pass
+- Keep PRs focused on a single feature or fix
+
+## Getting Help
+
+### Documentation
+
+- **[MIGRATIONS.md](MIGRATIONS.md)** - Database migration system documentation
+- **[Alert-box.md](Alert-box.md)** - Confirmation modal system guide
+- **API Endpoints** - Listed above with descriptions
+- **Project Structure** - Detailed directory overview
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **Database Connection Errors**
+   - Ensure MariaDB is running
+   - Check `.env` configuration matches database credentials
+   - Verify the database `simpleShare` exists
+
+2. **Migration Failures**
+   - Check database permissions
+   - Ensure migration files have correct naming format
+   - Review migration SQL for syntax errors
+
+3. **Build Errors**
+   - Run `npm install` to update dependencies
+   - Clear `dist/` directory with `npm run clean`
+   - Check Node.js version compatibility (v16+)
+
+4. **File Upload Issues**
+   - Ensure `uploads/` directory exists and is writable
+   - Check file size limits in configuration
+   - Verify disk space availability
+
+### Support
+
+For questions, bug reports, or feature requests:
+- Create an issue on GitHub
+- Check existing issues for solutions
+- Review documentation before asking questions
 
 ## License
 
@@ -152,10 +326,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Thanks to all contributors and users for their support!
-- Built with modern web technologies for optimal performance
+- **Contributors**: Thanks to all developers who have contributed to this project
+- **Technologies**: Built with modern web technologies for optimal performance
+- **Community**: Special thanks to our users for feedback and suggestions
 
-## Creators
+## Project Creators
 
-- [zeti1223](https://github.com/zeti1223)
-- [FonixPython](https://github.com/FonixPython)
+- **[zeti1223](https://github.com/zeti1223)** - Frontend development and UI/UX design
+- **[FonixPython](https://github.com/FonixPython)** - Backend development
+
