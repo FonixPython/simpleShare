@@ -317,7 +317,7 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
   } catch(err){console.log(err);return null}
 }
 
-export async function deleteItem(code:string|string[],deleteSubItems:boolean=false,validation:string | null=null):Promise<Number>{
+export async function deleteItem(code:string|string[],deleteSubItems:boolean=false,validation:string | null=null):Promise<number>{
   try{
     // Get item and type of it
     let type:ItemType = "file"
