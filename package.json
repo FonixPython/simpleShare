@@ -10,7 +10,9 @@
     "build:backend": "cd backend && tsc",
     "build:frontend": "cd client && vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "update:start": "node set-update-status.js true",
+    "update:stop": "node set-update-status.js false"
   },
   "dependencies": {
     "@types/archiver": "^7.0.0",
