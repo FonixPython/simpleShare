@@ -20,7 +20,7 @@
           {{ notification.text }}
         </p>
       </div>
-      
+
       <div class="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
         <div
           ref="progressBar"
@@ -34,12 +34,12 @@
 
 <script>
 export default {
-  name: 'Notification',
+  name: "Notification",
   props: {
     notification: {
       type: Object,
-      default: null
-    }
+      default: null,
+    },
   },
   data() {
     return {
@@ -47,165 +47,168 @@ export default {
       timer: null,
       progressTimer: null,
       isPaused: false,
-      remainingTime: 2500
-    }
+      remainingTime: 2500,
+    };
   },
   computed: {
     notificationClasses() {
-      if (!this.notification) return ''
-      
-      const baseClasses = 'border border-opacity-30'
+      if (!this.notification) return "";
+
+      const baseClasses = "border border-opacity-30";
       const colorClasses = {
-        ok: 'bg-ok/20 border-ok text-ok',
-        danger: 'bg-danger/20 border-danger text-danger',
-        error: 'bg-error/20 border-error text-error',
-        info: 'bg-info/20 border-info text-info'
-      }
-      
-      return `${baseClasses} ${colorClasses[this.notification.color] || colorClasses.info}`
+        ok: "bg-ok/20 border-ok text-ok",
+        danger: "bg-danger/20 border-danger text-danger",
+        error: "bg-error/20 border-error text-error",
+        info: "bg-info/20 border-info text-info",
+      };
+
+      return `${baseClasses} ${colorClasses[this.notification.color] || colorClasses.info}`;
     },
     iconClasses() {
-      if (!this.notification) return ''
-      
+      if (!this.notification) return "";
+
       const colorClasses = {
-        ok: 'text-ok',
-        danger: 'text-danger',
-        error: 'text-error',
-        info: 'text-info'
-      }
-      
-      return colorClasses[this.notification.color] || colorClasses.info
+        ok: "text-ok",
+        danger: "text-danger",
+        error: "text-error",
+        info: "text-info",
+      };
+
+      return colorClasses[this.notification.color] || colorClasses.info;
     },
     getIcon() {
-      if (!this.notification) return 'info'
-      
+      if (!this.notification) return "info";
+
       const icons = {
-        ok: 'check_circle',
-        danger: 'warning',
-        error: 'error',
-        info: 'info'
-      }
-      
-      return icons[this.notification.color] || icons.info
-    }
+        ok: "check_circle",
+        danger: "warning",
+        error: "error",
+        info: "info",
+      };
+
+      return icons[this.notification.color] || icons.info;
+    },
   },
   watch: {
     notification: {
       handler(newNotification) {
         if (newNotification) {
-          this.startTimer()
+          this.startTimer();
         } else {
-          this.clearTimer()
+          this.clearTimer();
         }
       },
-      immediate: true
-    }
+      immediate: true,
+    },
   },
   methods: {
     startTimer() {
-      this.clearTimer()
-      this.progressWidth = 100
-      this.remainingTime = 2500
-      this.isPaused = false
-      
+      this.clearTimer();
+      this.progressWidth = 100;
+      this.remainingTime = 2500;
+      this.isPaused = false;
+
       this.timer = setTimeout(() => {
-        this.removeNotification()
-      }, this.remainingTime)
-      
-      const startTime = Date.now()
-      const duration = this.remainingTime
-      
+        this.removeNotification();
+      }, this.remainingTime);
+
+      const startTime = Date.now();
+      const duration = this.remainingTime;
+
       this.progressTimer = setInterval(() => {
         if (!this.isPaused) {
-          const elapsed = Date.now() - startTime
-          const progress = Math.max(0, 100 - (elapsed / duration) * 100)
-          this.progressWidth = progress
-          
+          const elapsed = Date.now() - startTime;
+          const progress = Math.max(0, 100 - (elapsed / duration) * 100);
+          this.progressWidth = progress;
+
           if (progress <= 0) {
-            this.clearTimer()
+            this.clearTimer();
           }
         }
-      }, 50)
+      }, 50);
     },
     pauseTimer() {
       if (this.timer && !this.isPaused) {
-        this.isPaused = true
-        clearTimeout(this.timer)
-        
-        this.remainingTime = Math.round((this.progressWidth / 100) * 2500)
-        
+        this.isPaused = true;
+        clearTimeout(this.timer);
+
+        this.remainingTime = Math.round((this.progressWidth / 100) * 2500);
+
         if (this.progressTimer) {
-          clearInterval(this.progressTimer)
-          this.progressTimer = null
+          clearInterval(this.progressTimer);
+          this.progressTimer = null;
         }
       }
     },
     resumeTimer() {
       if (this.isPaused && this.remainingTime > 0) {
-        this.isPaused = false
-        
+        this.isPaused = false;
+
         this.timer = setTimeout(() => {
-          this.removeNotification()
-        }, this.remainingTime)
-        
-        const startTime = Date.now()
-        const duration = this.remainingTime
-        const startProgress = this.progressWidth
-        
+          this.removeNotification();
+        }, this.remainingTime);
+
+        const startTime = Date.now();
+        const duration = this.remainingTime;
+        const startProgress = this.progressWidth;
+
         this.progressTimer = setInterval(() => {
           if (!this.isPaused) {
-            const elapsed = Date.now() - startTime
-            const progress = Math.max(0, startProgress - (elapsed / duration) * startProgress)
-            this.progressWidth = progress
-            
+            const elapsed = Date.now() - startTime;
+            const progress = Math.max(
+              0,
+              startProgress - (elapsed / duration) * startProgress,
+            );
+            this.progressWidth = progress;
+
             if (progress <= 0) {
-              this.clearTimer()
-              this.removeNotification()
+              this.clearTimer();
+              this.removeNotification();
             }
           }
-        }, 50)
+        }, 50);
       }
     },
     clearTimer() {
       if (this.timer) {
-        clearTimeout(this.timer)
-        this.timer = null
+        clearTimeout(this.timer);
+        this.timer = null;
       }
       if (this.progressTimer) {
-        clearInterval(this.progressTimer)
-        this.progressTimer = null
+        clearInterval(this.progressTimer);
+        this.progressTimer = null;
       }
     },
     removeNotification() {
-      this.clearTimer()
-      this.$emit('remove')
+      this.clearTimer();
+      this.$emit("remove");
     },
     onBeforeEnter(el) {
-      el.style.opacity = '0'
-      el.style.transform = 'translateX(100%) scale(0.9)'
+      el.style.opacity = "0";
+      el.style.transform = "translateX(100%) scale(0.9)";
     },
     onEnter(el, done) {
-      el.offsetHeight
-      el.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-      el.style.opacity = '1'
-      el.style.transform = 'translateX(0) scale(1)'
-      setTimeout(done, 300)
+      el.offsetHeight;
+      el.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+      el.style.opacity = "1";
+      el.style.transform = "translateX(0) scale(1)";
+      setTimeout(done, 300);
     },
     onLeave(el, done) {
-      el.style.transition = 'all 0.3s ease-in'
-      el.style.opacity = '0'
-      el.style.transform = 'translateX(100%) scale(0.9)'
-      el.style.marginBottom = '0'
-      el.style.paddingTop = '0'
-      el.style.paddingBottom = '0'
-      el.style.height = '0'
-      setTimeout(done, 300)
-    }
+      el.style.transition = "all 0.3s ease-in";
+      el.style.opacity = "0";
+      el.style.transform = "translateX(100%) scale(0.9)";
+      el.style.marginBottom = "0";
+      el.style.paddingTop = "0";
+      el.style.paddingBottom = "0";
+      el.style.height = "0";
+      setTimeout(done, 300);
+    },
   },
   beforeUnmount() {
-    this.clearTimer()
-  }
-}
+    this.clearTimer();
+  },
+};
 </script>
 
 <style scoped>

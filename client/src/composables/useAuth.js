@@ -1,10 +1,10 @@
 // Authentication management composable
-import { ref } from 'vue'
+import { ref } from "vue";
 
 export function useAuth() {
-  const sessionToken = ref(localStorage.getItem("token"))
-  const isAuthenticated = ref(!!sessionToken.value)
-  const accessLevel = ref(null)
+  const sessionToken = ref(localStorage.getItem("token"));
+  const isAuthenticated = ref(!!sessionToken.value);
+  const accessLevel = ref(null);
 
   const verifyAccessToken = async () => {
     if (sessionToken.value) {
@@ -12,26 +12,26 @@ export function useAuth() {
         const response = await fetch("/verifySession", {
           method: "GET",
           headers: {
-            "Authorization": sessionToken.value,
+            Authorization: sessionToken.value,
           },
-        })
-        
+        });
+
         if (!response.ok) {
-          throw new Error("Session invalid")
+          throw new Error("Session invalid");
         }
-        
-        const content = await response.json()
-        accessLevel.value = content.permission
-        isAuthenticated.value = true
-        return accessLevel.value
+
+        const content = await response.json();
+        accessLevel.value = content.permission;
+        isAuthenticated.value = true;
+        return accessLevel.value;
       } catch (error) {
-        console.error("Session verification failed:", error)
-        logout()
-        return null
+        console.error("Session verification failed:", error);
+        logout();
+        return null;
       }
     }
-    return null
-  }
+    return null;
+  };
 
   const login = async (username, password) => {
     try {
@@ -41,24 +41,24 @@ export function useAuth() {
           "Content-Type": "application/json; charset=UTF-8",
         },
         body: JSON.stringify({ username, password }),
-      })
+      });
 
-      const result = await response.json()
-      
+      const result = await response.json();
+
       if (response.ok && result.status === 200) {
-        sessionToken.value = result.token
-        localStorage.setItem("token", result.token)
-        isAuthenticated.value = true
-        await verifyAccessToken()
-        return { success: true }
+        sessionToken.value = result.token;
+        localStorage.setItem("token", result.token);
+        isAuthenticated.value = true;
+        await verifyAccessToken();
+        return { success: true };
       } else {
-        return { success: false, error: result.error || "Login failed" }
+        return { success: false, error: result.error || "Login failed" };
       }
     } catch (error) {
-      console.error("Login error:", error)
-      return { success: false, error: "Network error" }
+      console.error("Login error:", error);
+      return { success: false, error: "Network error" };
     }
-  }
+  };
 
   const logout = async () => {
     if (sessionToken.value) {
@@ -66,19 +66,19 @@ export function useAuth() {
         await fetch("/logout", {
           method: "GET",
           headers: {
-            "Authorization": sessionToken.value,
+            Authorization: sessionToken.value,
           },
-        })
+        });
       } catch (error) {
-        console.error("Logout error:", error)
+        console.error("Logout error:", error);
       }
     }
-    
-    localStorage.removeItem("token")
-    sessionToken.value = null
-    isAuthenticated.value = false
-    accessLevel.value = null
-  }
+
+    localStorage.removeItem("token");
+    sessionToken.value = null;
+    isAuthenticated.value = false;
+    accessLevel.value = null;
+  };
 
   return {
     sessionToken,
@@ -86,6 +86,6 @@ export function useAuth() {
     accessLevel,
     verifyAccessToken,
     login,
-    logout
-  }
+    logout,
+  };
 }
