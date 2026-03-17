@@ -1,12 +1,12 @@
-const multer = require("multer");
-const path = require("path")
+import multer from "multer";
+import path from "path"
 import { group } from 'console';
 import { Request, Response, NextFunction } from 'express';
 import { FileFilterCallback } from "multer";
 import { setSyntheticLeadingComments } from 'typescript';
-require("dotenv").config();
-const pool = require("./db");
-const fs = require("fs").promises
+import "dotenv/config";
+import pool from "./db";
+import { promises as fs } from "fs";
 
 type ItemType = "file" | "group"
 
@@ -102,7 +102,7 @@ export const uploadMiddleware = (req:Request& Record<string, any>, res:Response,
     limits: limits,
   }).single("file");
 
-  upload(req, res, (err:Error) => {
+  upload(req, res, (err: any) => {
     if (err) return next(err);
     next();
   });
@@ -130,7 +130,7 @@ export const uploadGroupMiddleware = (req:Request& Record<string, any>, res:Resp
     limits: limits,
   }).array("files");
 
-  upload(req, res, (err:Error) => {
+  upload(req, res, (err: any) => {
     if (err) return next(err);
     next();
   });

@@ -1,8 +1,8 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
-const pool = require("./db");
+import pool from "./db";
 import * as auth from "./auth";
-const bcrypt = require("bcrypt")
-require("dotenv").config();
+import bcrypt from "bcrypt"
+import "dotenv/config";
 
 // Either returns 0:success and 1:already exists 2:other error
 export async function registerUser(new_username:string,new_password:string,is_admin:boolean=false,quota:Number=52428800):Promise<Number>{

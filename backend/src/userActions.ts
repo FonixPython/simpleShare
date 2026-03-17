@@ -1,9 +1,9 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
 import { Request, Response, NextFunction } from 'express';
 import { FileFilterCallback } from "multer";
-const bcrypt = require("bcrypt");
-const pool = require("./db");
-require("dotenv").config();
+import bcrypt from "bcrypt";
+import pool from "./db";
+import "dotenv/config";
 
 export interface File {
   code:string;

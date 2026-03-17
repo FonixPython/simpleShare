@@ -92,4 +92,4 @@ class MigrationRunner {
   }
 }
 
-module.exports = MigrationRunner;
+export default MigrationRunner;

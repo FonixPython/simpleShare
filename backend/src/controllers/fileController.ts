@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-const path = require("path");
-const archiver = require("archiver");
+import path from "path";
+import archiver from "archiver";
 import * as auth from "../auth";
 import * as uploadActions from "../uploadActions";
 

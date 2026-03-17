@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import * as auth from "./auth";
 import * as uploadActions from "./uploadActions";
