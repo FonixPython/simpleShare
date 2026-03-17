@@ -17,12 +17,55 @@
       <div
         class="w-full h-full p-4 mobile:p-2 pt-12 mobile:pt-10 rounded-[28px] mobile:rounded-[20px] border border-[#444] bg-black/10 overflow-hidden"
       >
+        <!-- Batch Actions Bar -->
+        <div
+          v-if="selectedItems.size > 0"
+          class="mb-4 p-3 bg-primary-button/20 border border-primary-button/30 rounded-lg flex items-center justify-between"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium">
+              {{ selectedItems.size }} item{{ selectedItems.size !== 1 ? 's' : '' }} selected
+            </span>
+            <button
+              @click="clearSelection"
+              class="text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              Clear selection
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              @click="downloadSelected"
+              class="bg-secondary-button text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              <span class="material-icons-outlined text-sm">download</span>
+              Download
+            </button>
+            <button
+              @click="deleteSelected"
+              class="bg-error text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              <span class="material-icons-outlined text-sm">delete</span>
+              Delete
+            </button>
+          </div>
+        </div>
         <div class="flex h-full relative">
           <div class="flex-1 overflow-hidden">
             <div class="h-full overflow-y-auto overflow-x-auto">
               <table class="w-full border-collapse">
                 <thead class="sticky top-0 bg-black/40 z-10 backdrop-blur-md">
                   <tr>
+                    <th
+                      class="px-2 mobile:px-1 py-2 mobile:py-1 text-center border-b border-[#444] w-[40px] mobile:w-[30px] text-sm mobile:text-xs"
+                    >
+                      <input
+                        type="checkbox"
+                        :checked="isAllSelected"
+                        @change="toggleSelectAll"
+                        class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                      />
+                    </th>
                     <th
                       class="px-2 mobile:px-1 py-2 mobile:py-1 text-left border-b border-[#444] text-sm mobile:text-xs"
                     >
@@ -59,11 +102,23 @@
                   <template v-for="item in files" :key="item.code">
                     <tr
                       class="border-b border-[#444] hover:bg-black/20 h-[50px] cursor-pointer"
-                      :class="{ 'bg-blue-900/10': item.type === 'group' }"
+                      :class="{ 
+                        'bg-blue-900/10': item.type === 'group',
+                        'bg-primary-button/20': isItemSelected(item.code)
+                      }"
                       @click="
                         item.type === 'group' ? toggleGroup(item.code) : null
                       "
                     >
+                      <td class="px-4 py-2 align-middle text-center">
+                        <input
+                          type="checkbox"
+                          :checked="isItemSelected(item.code)"
+                          @change="toggleItemSelection(item.code)"
+                          @click.stop
+                          class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                        />
+                      </td>
                       <td class="px-4 py-2 align-middle whitespace-nowrap">
                         <div class="flex items-center gap-2">
                           <span
@@ -172,7 +227,19 @@
                         v-for="file in item.files"
                         :key="file.code"
                         class="border-b border-[#444] hover:bg-black/10 h-[50px] bg-gray-900/20"
+                        :class="{ 'bg-primary-button/20': isItemSelected(file.code) }"
                       >
+                        <td
+                          class="px-4 py-2 align-middle whitespace-nowrap pl-12 text-center"
+                        >
+                          <input
+                            type="checkbox"
+                            :checked="isItemSelected(file.code)"
+                            @change="toggleItemSelection(file.code)"
+                            @click.stop
+                            class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                          />
+                        </td>
                         <td
                           class="px-4 py-2 align-middle whitespace-nowrap pl-12"
                         >
@@ -296,7 +363,14 @@ export default {
     return {
       expandedGroups: new Set(),
       showCopyIcon: {},
+      selectedItems: new Set(),
     };
+  },
+  computed: {
+    isAllSelected() {
+      const allItems = this.getAllItems();
+      return allItems.length > 0 && allItems.every(item => this.selectedItems.has(item.code));
+    },
   },
   methods: {
     fixFilename(filename) {
@@ -432,6 +506,84 @@ export default {
         setTimeout(() => {
           this.showCopyIcon[code] = false;
         }, 2000);
+      }
+    },
+    getAllItems() {
+      const items = [];
+      
+      this.files.forEach(item => {
+        items.push(item);
+        
+        if (item.type === 'group' && item.files) {
+          item.files.forEach(file => {
+            items.push(file);
+          });
+        }
+      });
+      
+      return items;
+    },
+    isItemSelected(code) {
+      return this.selectedItems.has(code);
+    },
+    toggleItemSelection(code) {
+      if (this.selectedItems.has(code)) {
+        this.selectedItems.delete(code);
+      } else {
+        this.selectedItems.add(code);
+      }
+      this.selectedItems = new Set(this.selectedItems); // Force reactivity
+    },
+    toggleSelectAll() {
+      const allItems = this.getAllItems();
+      
+      if (this.isAllSelected) {
+        this.selectedItems.clear();
+      } else {
+        allItems.forEach(item => {
+          this.selectedItems.add(item.code);
+        });
+      }
+      this.selectedItems = new Set(this.selectedItems); // Force reactivity
+    },
+    clearSelection() {
+      this.selectedItems.clear();
+      this.selectedItems = new Set(this.selectedItems); // Force reactivity
+    },
+    async downloadSelected() {
+      const selectedCodes = Array.from(this.selectedItems);
+      
+      for (const code of selectedCodes) {
+        const link = document.createElement("a");
+        link.href = "/files/" + code;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Small delay between downloads to avoid overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Clear selection after download
+      this.clearSelection();
+    },
+    async deleteSelected() {
+      try {
+        const selectedCodes = Array.from(this.selectedItems);
+        const count = selectedCodes.length;
+        
+        await this.confirmDelete(`${count} selected item${count !== 1 ? 's' : ''}`);
+        
+        // Emit delete events for each selected item
+        for (const code of selectedCodes) {
+          this.$emit("delete", code);
+        }
+        
+        // Clear selection after deletion
+        this.clearSelection();
+      } catch {
+        // User cancelled deletion
       }
     },
   },
