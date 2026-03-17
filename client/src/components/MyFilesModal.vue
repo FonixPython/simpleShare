@@ -140,7 +140,7 @@
                             {{ item.code }}
                             <span
                               v-if="showCopyIcon[item.code]"
-                              class="material-icons-outlined text-sm ml-1 animate-bounce"
+                              class="material-icons-outlined text-sm ml-1"
                             >
                               content_copy
                             </span>
@@ -251,7 +251,7 @@
                             {{ file.code }}
                             <span
                               v-if="showCopyIcon[file.code]"
-                              class="material-icons-outlined text-sm ml-1 animate-bounce"
+                              class="material-icons-outlined text-sm ml-1"
                             >
                               content_copy
                             </span>
