@@ -339,18 +339,22 @@
                     class="bg-primary-button h-2 rounded-full"
                     :style="{
                       width:
-                        Math.min(
-                          (user.used_storage / user.quota_in_bytes) * 100,
-                          100,
-                        ) + '%',
+                        user.quota_in_bytes > 0
+                          ? Math.min(
+                              (user.used_storage / user.quota_in_bytes) * 100,
+                              100,
+                            ) + '%'
+                          : '0%',
                     }"
                   ></div>
                 </div>
                 <span class="text-xs text-gray-400"
                   >{{
-                    ((user.used_storage / user.quota_in_bytes) * 100).toFixed(
-                      1,
-                    )
+                    user.quota_in_bytes > 0
+                      ? ((user.used_storage / user.quota_in_bytes) * 100).toFixed(
+                          1,
+                        )
+                      : '0.0'
                   }}%</span
                 >
               </div>
