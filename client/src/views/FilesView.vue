@@ -154,14 +154,26 @@
                         v-else
                         @click="downloadFile(file.code)"
                         class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Download File"
                       >
                         <span class="material-icons-outlined text-sm"
                           >download</span
                         >
                       </button>
                       <button
+                        v-if="file.type === 'file'"
+                        @click.stop="openEditModal(file)"
+                        class="bg-primary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Edit File"
+                      >
+                        <span class="material-icons-outlined text-sm"
+                          >edit</span
+                        >
+                      </button>
+                      <button
                         @click.stop="handleDeleteFile(file)"
                         class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Delete"
                       >
                         <span class="material-icons-outlined text-sm"
                           >delete</span
@@ -207,14 +219,25 @@
                       <button
                         @click="downloadFile(groupFile.code)"
                         class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Download File"
                       >
                         <span class="material-icons-outlined text-sm"
                           >download</span
                         >
                       </button>
                       <button
-                        @click="handleDeleteFile(groupFile)"
+                        @click.stop="openEditModal(groupFile)"
+                        class="bg-primary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Edit File"
+                      >
+                        <span class="material-icons-outlined text-sm"
+                          >edit</span
+                        >
+                      </button>
+                      <button
+                        @click.stop="handleDeleteFile(groupFile)"
                         class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Delete"
                       >
                         <span class="material-icons-outlined text-sm"
                           >delete</span
@@ -232,6 +255,68 @@
           >
             No files found
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit File Modal -->
+    <div
+      v-if="showEditModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      @click="closeEditModal"
+    >
+      <div
+        class="bg-gray-900 border border-[#444] rounded-xl p-6 w-full max-w-md mx-4"
+        @click.stop
+      >
+        <h3 class="text-xl font-semibold text-white mb-4">Edit File</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              File ID
+            </label>
+            <input
+              v-model="editForm.fileId"
+              type="text"
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new file ID"
+            />
+            <p class="text-xs text-gray-400 mt-1">
+              Warning: Changing file ID may affect file accessibility
+            </p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Filename
+            </label>
+            <input
+              v-model="editForm.fileName"
+              type="text"
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new filename"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            @click="closeEditModal"
+            class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleEditFile"
+            :disabled="!editForm.fileId || !editForm.fileName || editLoading"
+            class="px-4 py-2 bg-primary-button text-black rounded-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="editLoading" class="material-icons-outlined animate-spin text-sm">
+              hourglass_empty
+            </span>
+            <span v-else>Save Changes</span>
+          </button>
         </div>
       </div>
     </div>
@@ -258,6 +343,8 @@ export default {
       deleteFile,
       formatBytes,
       getGroupDetails,
+      updateFileId,
+      updateFileName,
     } = useAdmin();
 
     const { showNotification } = useNotification();
@@ -268,6 +355,15 @@ export default {
     const groupFilesCache = ref(new Map());
     const searchLoading = ref(false);
     const matchingGroupCodes = ref(new Set());
+
+    // Edit modal state
+    const showEditModal = ref(false);
+    const editLoading = ref(false);
+    const currentEditingFile = ref(null);
+    const editForm = ref({
+      fileId: "",
+      fileName: ""
+    });
 
     // Function to search within all groups
     const searchInGroups = async (query) => {
@@ -461,6 +557,68 @@ export default {
       return iconMap[mimeType] || iconMap["application"];
     };
 
+    // Edit modal functions
+    const openEditModal = (file) => {
+      currentEditingFile.value = file;
+      editForm.value = {
+        fileId: file.code,
+        fileName: file.name
+      };
+      showEditModal.value = true;
+    };
+
+    const closeEditModal = () => {
+      showEditModal.value = false;
+      currentEditingFile.value = null;
+      editForm.value = {
+        fileId: "",
+        fileName: ""
+      };
+    };
+
+    const handleEditFile = async () => {
+      if (!editForm.value.fileId || !editForm.value.fileName) {
+        showNotification("Please fill in all fields", "error");
+        return;
+      }
+
+      editLoading.value = true;
+      try {
+        let success = true;
+        let error = "";
+
+        // Update file ID if changed
+        if (editForm.value.fileId !== currentEditingFile.value.code) {
+          const idResult = await updateFileId(props.token, currentEditingFile.value.code, editForm.value.fileId);
+          if (!idResult.success) {
+            success = false;
+            error = idResult.error;
+          }
+        }
+
+        // Update file name if changed
+        if (success && editForm.value.fileName !== currentEditingFile.value.name) {
+          const nameResult = await updateFileName(props.token, editForm.value.fileId, editForm.value.fileName);
+          if (!nameResult.success) {
+            success = false;
+            error = nameResult.error;
+          }
+        }
+
+        if (success) {
+          showNotification("File updated successfully!", "ok");
+          closeEditModal();
+          await loadAllFiles(props.token);
+        } else {
+          showNotification("Failed to update file: " + error, "error");
+        }
+      } catch (error) {
+        showNotification("Failed to edit file: " + error.message, "error");
+      } finally {
+        editLoading.value = false;
+      }
+    };
+
     onMounted(() => {
       loadAllFiles(props.token);
     });
@@ -479,6 +637,12 @@ export default {
       getGroupFiles,
       getFileCount,
       getFileIcon,
+      showEditModal,
+      editLoading,
+      editForm,
+      openEditModal,
+      closeEditModal,
+      handleEditFile,
     };
   },
 };

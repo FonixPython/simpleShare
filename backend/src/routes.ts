@@ -41,6 +41,10 @@ router.post("/admin/database/updateCell", adminController.updateCell);
 router.post("/admin/database/insertRow", adminController.insertRow);
 router.post("/admin/database/deleteRow", adminController.deleteRow);
 
+// File management endpoints
+router.post("/admin/file/updateId", adminController.updateFileId);
+router.post("/admin/file/updateName", adminController.updateFileName);
+
 // User action API endpoints
 router.post("/login", userController.login);
 router.get("/logout", userController.logout);

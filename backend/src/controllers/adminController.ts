@@ -483,3 +483,55 @@ export const deleteRow = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to delete row" });
   }
 };
+
+// File management endpoints
+
+export const updateFileId = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { currentId, newId } = req.body;
+  
+  if (!currentId || !newId) {
+    return res.status(400).json({error:"currentId and newId are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateFileId(currentId, newId);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "File ID updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update file ID!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update file ID" });
+  }
+};
+
+export const updateFileName = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { fileId, newName } = req.body;
+  
+  if (!fileId || !newName) {
+    return res.status(400).json({error:"fileId and newName are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateFileName(fileId, newName);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "File name updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update file name!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update file name" });
+  }
+};

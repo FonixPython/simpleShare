@@ -822,6 +822,65 @@ export function useAdmin() {
     }
   };
 
+  // File management functions
+  const updateFileId = async (token, currentId, newId) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/file/updateId", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ currentId, newId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update file ID");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateFileName = async (token, fileId, newName) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/file/updateName", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ fileId, newName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update file name");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     users,
     allFiles,
@@ -856,5 +915,7 @@ export function useAdmin() {
     getUserStatistics,
     getFileTypeStatistics,
     getSystemHealthMetrics,
+    updateFileId,
+    updateFileName,
   };
 }
