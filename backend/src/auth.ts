@@ -1,8 +1,8 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
 import { Request, Response, NextFunction } from 'express';
-const pool = require("./db");
-const bcrypt = require("bcrypt");
-require("dotenv").config();
+import pool from "./db";
+import bcrypt from "bcrypt";
+import "dotenv/config";
 
 export type PermissionLevel = "admin" | "user" | "none"
 export interface PermissionResponse {

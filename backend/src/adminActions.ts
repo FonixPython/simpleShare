@@ -1,8 +1,8 @@
 import { isEmptyBindingElement, PollingWatchKind } from "typescript";
-const pool = require("./db");
+import pool from "./db";
 import * as auth from "./auth";
-const bcrypt = require("bcrypt")
-require("dotenv").config();
+import bcrypt from "bcrypt"
+import "dotenv/config";
 
 // Either returns 0:success and 1:already exists 2:other error
 export async function registerUser(new_username:string,new_password:string,is_admin:boolean=false,quota:Number=52428800):Promise<Number>{
@@ -626,6 +626,108 @@ export async function deleteTableRow(tableName: string, rowId: string):Promise<{
         await pool.query(
             `DELETE FROM \`${tableName}\` WHERE \`${primaryKey.Field}\` = ?`,
             [rowId]
+        );
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+// File management functions
+
+export async function updateFileId(currentId: string, newId: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!currentId || !newId) {
+            throw new Error('File ID is required');
+        }
+        
+        if (!/^[a-zA-Z0-9]{6}$/.test(newId)) {
+            throw new Error('File ID must be exactly 6 alphanumeric characters');
+        }
+        
+        // Check if current file exists
+        const currentFile = await pool.query("SELECT * FROM file_index WHERE id = ?", [currentId]);
+        if (currentFile.length === 0) {
+            throw new Error('File not found');
+        }
+        
+        // Check if new ID already exists
+        const existingFile = await pool.query("SELECT * FROM file_index WHERE id = ?", [newId]);
+        if (existingFile.length > 0) {
+            throw new Error('File ID already exists');
+        }
+        
+        // Get file extension from stored filename
+        const storedFilename = currentFile[0].stored_filename;
+        const extension = storedFilename.includes('.') ? storedFilename.substring(storedFilename.lastIndexOf('.')) : '';
+        
+        // Rename physical file
+        const fs = require('fs');
+        const oldPath = process.env.UPLOAD_PATH + storedFilename;
+        const newPath = process.env.UPLOAD_PATH + newId + extension;
+        
+        if (fs.existsSync(oldPath)) {
+            fs.renameSync(oldPath, newPath);
+        }
+        
+        // Update database
+        await pool.query(
+            "UPDATE file_index SET id = ?, stored_filename = ? WHERE id = ?",
+            [newId, newId + extension, currentId]
+        );
+        
+        // Update file references in groups
+        const groupsContainingFile = await pool.query("SELECT * FROM file_groups WHERE file_ids LIKE ?", [`%${currentId}%`]);
+        for (const group of groupsContainingFile) {
+            let fileIds: string[] = [];
+            try {
+                if (typeof group.file_ids === 'string') {
+                    fileIds = JSON.parse(group.file_ids);
+                } else if (Array.isArray(group.file_ids)) {
+                    fileIds = group.file_ids;
+                }
+                
+                // Replace the file ID in the array
+                const index = fileIds.indexOf(currentId);
+                if (index > -1) {
+                    fileIds[index] = newId;
+                    await pool.query(
+                        "UPDATE file_groups SET file_ids = ? WHERE id = ?",
+                        [JSON.stringify(fileIds), group.id]
+                    );
+                }
+            } catch (e) {
+                console.error('Failed to update group file IDs:', group.id, e);
+            }
+        }
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+export async function updateFileName(fileId: string, newName: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!fileId || !newName) {
+            throw new Error('File ID and name are required');
+        }
+        
+        // Check if file exists
+        const file = await pool.query("SELECT * FROM file_index WHERE id = ?", [fileId]);
+        if (file.length === 0) {
+            throw new Error('File not found');
+        }
+        
+        // Update database
+        await pool.query(
+            "UPDATE file_index SET original_name = ? WHERE id = ?",
+            [newName, fileId]
         );
         
         return { success: true };

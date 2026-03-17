@@ -1,60 +1,82 @@
 <template>
   <div class="file-card-container">
     <!-- Single File Card -->
-    <div v-if="fileData && fileData.type === 'file'" class="file-card animate-slide-up">
+    <div
+      v-if="fileData && fileData.type === 'file'"
+      class="file-card animate-slide-up"
+    >
       <div class="file-icon">
         <span class="material-icons-outlined">{{ getFileIcon(fileData) }}</span>
       </div>
       <div class="file-info">
-        <div class="file-name" :title="fixFilename(fileData.name)">{{ fixFilename(fileData.name) }}</div>
+        <div class="file-name" :title="fixFilename(fileData.name)">
+          {{ fixFilename(fileData.name) }}
+        </div>
         <div class="file-details">
           <span class="file-size">{{ formatBytes(fileData.size) }}</span>
           <span class="separator">•</span>
-          <span class="upload-date">Uploaded {{ formatDate(fileData.upload_date) }}</span>
+          <span class="upload-date"
+            >Uploaded {{ formatDate(fileData.upload_date) }}</span
+          >
         </div>
       </div>
     </div>
 
     <!-- Group Card -->
-    <div v-else-if="fileData && fileData.type === 'group'" class="group-card animate-slide-up">
+    <div
+      v-else-if="fileData && fileData.type === 'group'"
+      class="group-card animate-slide-up"
+    >
       <div class="group-header">
         <div class="group-icon">
           <span class="material-icons-outlined">folder</span>
         </div>
         <div class="group-info">
-          <div class="group-name" :title="fileData.name">{{ fileData.name }}</div>
+          <div class="group-name" :title="fileData.name">
+            {{ fileData.name }}
+          </div>
           <div class="group-details">
             <span class="file-count">{{ fileData.files.length }} files</span>
             <span class="separator">•</span>
-            <span class="total-size">{{ formatBytes(fileData.total_size) }}</span>
+            <span class="total-size">{{
+              formatBytes(fileData.total_size)
+            }}</span>
             <span class="separator">•</span>
-            <span class="upload-date">Uploaded {{ formatDate(fileData.create_date) }}</span>
+            <span class="upload-date"
+              >Uploaded {{ formatDate(fileData.create_date) }}</span
+            >
           </div>
         </div>
-        <button @click="$emit('download-group', fileData.code)" class="collective-download-btn">
+        <button
+          @click="$emit('download-group', fileData.code)"
+          class="collective-download-btn"
+        >
           <span class="material-icons-outlined">download</span>
           Download All
         </button>
       </div>
-      
+
       <div class="files-list">
-        <div 
-          v-for="file in fileData.files" 
-          :key="file.code"
-          class="file-item"
-        >
+        <div v-for="file in fileData.files" :key="file.code" class="file-item">
           <div class="file-icon">
             <span class="material-icons-outlined">{{ getFileIcon(file) }}</span>
           </div>
           <div class="file-info">
-            <div class="file-name" :title="fixFilename(file.original_name)">{{ fixFilename(file.original_name) }}</div>
+            <div class="file-name" :title="fixFilename(file.original_name)">
+              {{ fixFilename(file.original_name) }}
+            </div>
             <div class="file-details">
               <span class="file-size">{{ formatBytes(file.size) }}</span>
               <span class="separator">•</span>
-              <span class="upload-date">Uploaded {{ formatDate(file.upload_date) }}</span>
+              <span class="upload-date"
+                >Uploaded {{ formatDate(file.upload_date) }}</span
+              >
             </div>
           </div>
-          <button @click="$emit('download-file', file.code)" class="download-btn">
+          <button
+            @click="$emit('download-file', file.code)"
+            class="download-btn"
+          >
             <span class="material-icons-outlined">download</span>
           </button>
         </div>
@@ -65,119 +87,123 @@
 
 <script>
 export default {
-  name: 'FileCard',
+  name: "FileCard",
   props: {
     fileData: {
       type: Object,
-      default: null
-    }
+      default: null,
+    },
   },
-  emits: ['download-file', 'download-group'],
+  emits: ["download-file", "download-group"],
   methods: {
     fixFilename(filename) {
       if (!filename) return filename;
-      
+
       // Check if filename contains corrupted characters that need fixing
       // Common corruption patterns from latin1->utf8 conversion
       const hasCorruption = /[ÅÂÃÄ]/.test(filename);
-      
+
       if (hasCorruption) {
         try {
           // Fix by treating the string as if it was corrupted by latin1->utf8 conversion
           // Convert back to bytes as latin1, then decode as utf8
-          return Buffer.from(filename, 'latin1').toString('utf8').normalize("NFC");
+          return Buffer.from(filename, "latin1")
+            .toString("utf8")
+            .normalize("NFC");
         } catch (error) {
           // If conversion fails, return original
           return filename;
         }
       }
-      
+
       return filename;
     },
-    
+
     getFileIcon(fileData) {
       // Use mimetype if available, otherwise fall back to filename extension
-      let mimeType = '';
+      let mimeType = "";
       if (fileData.mimetype) {
-        mimeType = fileData.mimetype.split('/')[0]; // Get the part before '/'
+        mimeType = fileData.mimetype.split("/")[0]; // Get the part before '/'
       } else {
         // Fallback to extension if mimetype is not available
-        const extension = fileData.name?.split('.').pop().toLowerCase() || 
-                         fileData.original_name?.split('.').pop().toLowerCase() || '';
+        const extension =
+          fileData.name?.split(".").pop().toLowerCase() ||
+          fileData.original_name?.split(".").pop().toLowerCase() ||
+          "";
         const extensionToMime = {
-          'pdf': 'application/pdf',
-          'doc': 'application/msword',
-          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'txt': 'text/plain',
-          'jpg': 'image/jpeg',
-          'jpeg': 'image/jpeg',
-          'png': 'image/png',
-          'gif': 'image/gif',
-          'mp3': 'audio/mpeg',
-          'wav': 'audio/wav',
-          'mp4': 'video/mp4',
-          'avi': 'video/x-msvideo',
-          'zip': 'application/zip',
-          'js': 'application/javascript',
-          'css': 'text/css',
-          'html': 'text/html',
-          'json': 'application/json'
+          pdf: "application/pdf",
+          doc: "application/msword",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          txt: "text/plain",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          png: "image/png",
+          gif: "image/gif",
+          mp3: "audio/mpeg",
+          wav: "audio/wav",
+          mp4: "video/mp4",
+          avi: "video/x-msvideo",
+          zip: "application/zip",
+          js: "application/javascript",
+          css: "text/css",
+          html: "text/html",
+          json: "application/json",
         };
-        mimeType = extensionToMime[extension]?.split('/')[0] || 'application';
+        mimeType = extensionToMime[extension]?.split("/")[0] || "application";
       }
 
       const iconMap = {
-        'application': 'insert_drive_file',
-        'text': 'text_snippet',
-        'image': 'image',
-        'audio': 'audio_file',
-        'video': 'video_file',
-        'multipart': 'folder_zip'
+        application: "insert_drive_file",
+        text: "text_snippet",
+        image: "image",
+        audio: "audio_file",
+        video: "video_file",
+        multipart: "folder_zip",
       };
-      
-      return iconMap[mimeType] || iconMap['application'];
+
+      return iconMap[mimeType] || iconMap["application"];
     },
-    
+
     formatBytes(bytes) {
-      if (bytes === 0) return "0 B"
-      const units = ["B", "kB", "MB", "GB", "TB"]
-      const threshold = 1024
-      let unitIndex = 0
-      let size = bytes
+      if (bytes === 0) return "0 B";
+      const units = ["B", "kB", "MB", "GB", "TB"];
+      const threshold = 1024;
+      let unitIndex = 0;
+      let size = bytes;
 
       while (size >= threshold && unitIndex < units.length - 1) {
-        size /= threshold
-        unitIndex++
+        size /= threshold;
+        unitIndex++;
       }
 
-      return `${size.toFixed(1)} ${units[unitIndex]}`
+      return `${size.toFixed(1)} ${units[unitIndex]}`;
     },
-    
+
     formatDate(dateString) {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffTime = Math.abs(now - date)
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-      
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
       if (diffDays === 0) {
-        return 'today'
+        return "today";
       } else if (diffDays === 1) {
-        return 'yesterday'
+        return "yesterday";
       } else if (diffDays < 7) {
-        return `${diffDays} days ago`
+        return `${diffDays} days ago`;
       } else if (diffDays < 30) {
-        const weeks = Math.floor(diffDays / 7)
-        return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+        const weeks = Math.floor(diffDays / 7);
+        return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
       } else if (diffDays < 365) {
-        const months = Math.floor(diffDays / 30)
-        return `${months} month${months > 1 ? 's' : ''} ago`
+        const months = Math.floor(diffDays / 30);
+        return `${months} month${months > 1 ? "s" : ""} ago`;
       } else {
-        const years = Math.floor(diffDays / 365)
-        return `${years} year${years > 1 ? 's' : ''} ago`
+        const years = Math.floor(diffDays / 365);
+        return `${years} year${years > 1 ? "s" : ""} ago`;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -188,8 +214,9 @@ export default {
   margin-right: auto;
 }
 
-.file-card, .group-card {
-  background: theme('colors.main');
+.file-card,
+.group-card {
+  background: theme("colors.main");
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -197,7 +224,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.file-card:hover, .group-card:hover {
+.file-card:hover,
+.group-card:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
 }
@@ -222,7 +250,8 @@ export default {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.file-icon, .group-icon {
+.file-icon,
+.group-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -236,18 +265,20 @@ export default {
 .file-icon .material-icons-outlined,
 .group-icon .material-icons-outlined {
   font-size: 32px;
-  color: theme('colors.text');
+  color: theme("colors.text");
 }
 
-.file-info, .group-info {
+.file-info,
+.group-info {
   flex: 1;
   min-width: 0;
 }
 
-.file-name, .group-name {
+.file-name,
+.group-name {
   font-size: 16px;
   font-weight: 600;
-  color: theme('colors.text');
+  color: theme("colors.text");
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -255,7 +286,8 @@ export default {
   text-align: left;
 }
 
-.file-details, .group-details {
+.file-details,
+.group-details {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   display: flex;
@@ -272,8 +304,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: theme('colors.primary-button');
-  color: theme('colors.text');
+  background: theme("colors.primary-button");
+  color: theme("colors.text");
   border: none;
   padding: 10px 16px;
   border-radius: 8px;
@@ -346,8 +378,8 @@ export default {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: theme('colors.secondary-button');
-  color: theme('colors.bg');
+  background: theme("colors.secondary-button");
+  color: theme("colors.bg");
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -373,40 +405,41 @@ export default {
   .file-card-container {
     margin: 20px 16px 0;
   }
-  
-  .file-card, .group-card {
+
+  .file-card,
+  .group-card {
     padding: 16px;
   }
-  
+
   .group-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .collective-download-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .file-item {
     padding: 10px;
   }
-  
+
   .file-item .file-icon {
     width: 36px;
     height: 36px;
   }
-  
+
   .file-item .file-icon .material-icons-outlined {
     font-size: 18px;
   }
-  
+
   .download-btn {
     width: 32px;
     height: 32px;
   }
-  
+
   .download-btn .material-icons-outlined {
     font-size: 16px;
   }

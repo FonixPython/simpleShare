@@ -1,9 +1,18 @@
 <template>
-  <div id="app" class="m-0 p-0 bg-bg text-white font-inter flex justify-center items-center h-screen overflow-hidden select-none mobile:overflow-x-hidden">
+  <div
+    id="app"
+    class="m-0 p-0 bg-bg text-white font-inter flex justify-center items-center h-screen overflow-hidden select-none mobile:overflow-x-hidden"
+  >
     <router-view />
-    
-    <div class="fixed top-6 right-6 z-[60] space-y-3 transition-all duration-300 ease-in-out">
-      <TransitionGroup name="notification-list" tag="div" class="flex flex-col space-y-3">
+
+    <div
+      class="fixed top-6 right-6 z-[60] space-y-3 transition-all duration-300 ease-in-out"
+    >
+      <TransitionGroup
+        name="notification-list"
+        tag="div"
+        class="flex flex-col space-y-3"
+      >
         <Notification
           v-for="notification in notifications"
           :key="notification.id"
@@ -12,7 +21,7 @@
         />
       </TransitionGroup>
     </div>
-    
+
     <ConfirmModal
       :visible="confirmState.visible"
       :title="confirmState.title"
@@ -33,37 +42,38 @@
 </template>
 
 <script>
-import Notification from './components/Notification.vue'
-import ConfirmModal from './components/ConfirmModal.vue'
-import { useNotification } from './composables/useNotification.js'
-import { useConfirm } from './composables/useConfirm.js'
+import Notification from "./components/Notification.vue";
+import ConfirmModal from "./components/ConfirmModal.vue";
+import { useNotification } from "./composables/useNotification.js";
+import { useConfirm } from "./composables/useConfirm.js";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     Notification,
-    ConfirmModal
+    ConfirmModal,
   },
   setup() {
-    const { notifications, removeNotification } = useNotification()
-    const { confirmState, handleConfirm, handleSecondary, handleCancel } = useConfirm()
-    
+    const { notifications, removeNotification } = useNotification();
+    const { confirmState, handleConfirm, handleSecondary, handleCancel } =
+      useConfirm();
+
     return {
       notifications,
       removeNotification,
       confirmState,
       handleConfirm,
       handleSecondary,
-      handleCancel
-    }
-  }
-}
+      handleCancel,
+    };
+  },
+};
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Red+Hat+Mono:ital,wght@0,300..700;1,300..700&display=swap');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Red+Hat+Mono:ital,wght@0,300..700;1,300..700&display=swap");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons+Outlined");
 
 @tailwind base;
 @tailwind components;

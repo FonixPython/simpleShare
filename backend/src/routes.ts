@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 import * as auth from "./auth";
 import * as uploadActions from "./uploadActions";
@@ -40,6 +40,10 @@ router.get("/admin/database/getTableSchema/:tableName", adminController.getTable
 router.post("/admin/database/updateCell", adminController.updateCell);
 router.post("/admin/database/insertRow", adminController.insertRow);
 router.post("/admin/database/deleteRow", adminController.deleteRow);
+
+// File management endpoints
+router.post("/admin/file/updateId", adminController.updateFileId);
+router.post("/admin/file/updateName", adminController.updateFileName);
 
 // User action API endpoints
 router.post("/login", userController.login);

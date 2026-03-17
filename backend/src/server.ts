@@ -1,12 +1,11 @@
 import express from "express";
-const cookieParser = require("cookie-parser");
+import cookieParser from "cookie-parser";
 import router from "./routes";
-const pool = require("./db");
-const MigrationRunner = require("./migration-runner");
-const os = require("os")
+import pool from "./db";
+import MigrationRunner from "./migration-runner";
+import os from "os"
 import path from "path"
-require("dotenv").config();
-
+import "dotenv/config";
 
 const PORT = process.env.PORT || 3000;
 const app = express()
@@ -39,9 +38,12 @@ function getIPv4Addresses() {
   const interfaces = os.networkInterfaces();
   const addresses = [];
   for (const name of Object.keys(interfaces)) {
-    for (const inter of interfaces[name]) {
-      if (inter.family === "IPv4" && !inter.internal) {
-        addresses.push(inter.address);
+    const networkInterface = interfaces[name];
+    if (networkInterface) {
+      for (const inter of networkInterface) {
+        if (inter.family === "IPv4" && !inter.internal) {
+          addresses.push(inter.address);
+        }
       }
     }
   }
