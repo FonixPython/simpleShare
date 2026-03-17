@@ -16,6 +16,40 @@
         </div>
       </div>
 
+      <!-- Batch Actions Bar -->
+      <div
+        v-if="selectedItems.size > 0"
+        class="mb-6 p-3 bg-primary-button/20 border border-primary-button/30 rounded-lg flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-medium">
+            {{ selectedItems.size }} item{{ selectedItems.size !== 1 ? 's' : '' }} selected
+          </span>
+          <button
+            @click="clearSelection"
+            class="text-xs text-gray-400 hover:text-white transition-colors"
+          >
+            Clear selection
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="downloadSelected"
+            class="bg-secondary-button text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
+          >
+            <span class="material-icons-outlined text-sm">download</span>
+            Download
+          </button>
+          <button
+            @click="deleteSelected"
+            class="bg-error text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
+          >
+            <span class="material-icons-outlined text-sm">delete</span>
+            Delete
+          </button>
+        </div>
+      </div>
+
       <div
         v-if="loading || searchLoading"
         class="flex justify-center items-center py-12"
@@ -41,6 +75,16 @@
           <table class="w-full">
             <thead class="bg-black/30">
               <tr>
+                <th
+                  class="px-4 py-3 text-center text-sm font-medium text-gray-300 w-[40px]"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    @change="toggleSelectAll"
+                    class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                  />
+                </th>
                 <th
                   class="px-4 py-3 text-left text-sm font-medium text-gray-300"
                 >
@@ -82,9 +126,21 @@
               <template v-for="file in filteredFiles" :key="file.code">
                 <tr
                   class="border-b border-[#444] hover:bg-black/20 transition-colors"
-                  :class="{ 'bg-blue-900/10': file.type === 'group' }"
+                  :class="{ 
+                    'bg-blue-900/10': file.type === 'group',
+                    'bg-primary-button/20': isItemSelected(file.code)
+                  }"
                   @click="file.type === 'group' ? toggleGroup(file.code) : null"
                 >
+                  <td class="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      :checked="isItemSelected(file.code)"
+                      @change="toggleItemSelection(file.code)"
+                      @click.stop
+                      class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                    />
+                  </td>
                   <td class="px-4 py-3 text-sm font-mono">
                     <div class="flex items-center gap-2">
                       <span
@@ -188,7 +244,17 @@
                   :key="groupFile.code"
                   v-show="file.type === 'group' && isGroupExpanded(file.code)"
                   class="border-b border-[#444] hover:bg-black/10 bg-gray-900/20"
+                  :class="{ 'bg-primary-button/20': isItemSelected(groupFile.code) }"
                 >
+                  <td class="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      :checked="isItemSelected(groupFile.code)"
+                      @change="toggleItemSelection(groupFile.code)"
+                      @click.stop
+                      class="w-4 h-4 rounded border-gray-300 bg-gray-700 text-primary-button focus:ring-primary-button"
+                    />
+                  </td>
                   <td class="px-4 py-3 text-sm font-mono pl-12">
                     {{ groupFile.code }}
                   </td>
@@ -355,6 +421,7 @@ export default {
     const groupFilesCache = ref(new Map());
     const searchLoading = ref(false);
     const matchingGroupCodes = ref(new Set());
+    const selectedItems = ref(new Set());
 
     // Edit modal state
     const showEditModal = ref(false);
@@ -455,6 +522,12 @@ export default {
       filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       return filtered;
+    });
+
+    // Computed property for select all functionality
+    const isAllSelected = computed(() => {
+      const allItems = getAllItems();
+      return allItems.length > 0 && allItems.every(item => selectedItems.value.has(item.code));
     });
 
     const handleDeleteFile = async (file) => {
@@ -619,6 +692,108 @@ export default {
       }
     };
 
+    // Batch operations methods
+    const getAllItems = () => {
+      const items = [];
+      
+      filteredFiles.value.forEach(item => {
+        items.push(item);
+        
+        if (item.type === 'group' && isGroupExpanded(item.code)) {
+          const groupFiles = getGroupFiles(item.code);
+          items.push(...groupFiles);
+        }
+      });
+      
+      return items;
+    };
+
+    const isItemSelected = (code) => {
+      return selectedItems.value.has(code);
+    };
+
+    const toggleItemSelection = (code) => {
+      if (selectedItems.value.has(code)) {
+        selectedItems.value.delete(code);
+      } else {
+        selectedItems.value.add(code);
+      }
+      selectedItems.value = new Set(selectedItems.value); // Force reactivity
+    };
+
+    const toggleSelectAll = () => {
+      const allItems = getAllItems();
+      
+      if (isAllSelected.value) {
+        selectedItems.value.clear();
+      } else {
+        allItems.forEach(item => {
+          selectedItems.value.add(item.code);
+        });
+      }
+      selectedItems.value = new Set(selectedItems.value); // Force reactivity
+    };
+
+    const clearSelection = () => {
+      selectedItems.value.clear();
+      selectedItems.value = new Set(selectedItems.value); // Force reactivity
+    };
+
+    const downloadSelected = async () => {
+      const selectedCodes = Array.from(selectedItems.value);
+      
+      for (const code of selectedCodes) {
+        const link = document.createElement("a");
+        link.href = "/files/" + code;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Small delay between downloads to avoid overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Clear selection after download
+      clearSelection();
+      showNotification("Download started for selected files!", "info");
+    };
+
+    const deleteSelected = async () => {
+      try {
+        const selectedCodes = Array.from(selectedItems.value);
+        const count = selectedCodes.length;
+        
+        await confirmDelete(`${count} selected item${count !== 1 ? 's' : ''}`);
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        // Delete each selected item
+        for (const code of selectedCodes) {
+          const result = await deleteFile(props.token, code);
+          if (result.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        }
+        
+        // Show result notification
+        if (errorCount === 0) {
+          showNotification(`Successfully deleted ${successCount} item${successCount !== 1 ? 's' : ''}!`, "ok");
+        } else {
+          showNotification(`Deleted ${successCount} item${successCount !== 1 ? 's' : ''}, ${errorCount} failed`, "error");
+        }
+        
+        // Reload files and clear selection
+        await loadAllFiles(props.token);
+        clearSelection();
+      } catch {
+        // User cancelled deletion
+      }
+    };
+
     onMounted(() => {
       loadAllFiles(props.token);
     });
@@ -630,6 +805,8 @@ export default {
       searchQuery,
       searchLoading,
       filteredFiles,
+      selectedItems,
+      isAllSelected,
       handleDeleteFile,
       downloadFile,
       toggleGroup,
@@ -643,6 +820,13 @@ export default {
       openEditModal,
       closeEditModal,
       handleEditFile,
+      // Batch operations
+      isItemSelected,
+      toggleItemSelection,
+      toggleSelectAll,
+      clearSelection,
+      downloadSelected,
+      deleteSelected,
     };
   },
 };
