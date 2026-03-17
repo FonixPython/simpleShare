@@ -9,6 +9,7 @@ import * as baseController from "./controllers/baseController";
 import * as adminController from "./controllers/adminController";
 import * as userController from "./controllers/userController";
 import * as fileController from "./controllers/fileController";
+import * as updateStatusController from "./controllers/updateStatus";
 
 // Base routes
 router.get("/", baseController.serveIndex);
@@ -61,5 +62,9 @@ router.get("/delete/:code", fileController.deleteItem);
 router.get("/delete-groups/:code", fileController.deleteGroups);
 router.get("/files/:file_code", fileController.getFile);
 router.post("/checkFile", fileController.checkFile);
+
+// Update status endpoints
+router.get("/api/update-status", updateStatusController.getUpdateStatus);
+router.post("/api/update-status", updateStatusController.setUpdatingStatus);
 
 export default router;
