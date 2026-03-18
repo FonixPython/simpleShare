@@ -5,6 +5,9 @@
   >
     <router-view />
 
+    <!-- Update Screen Overlay -->
+    <UpdateScreen v-if="isUpdating" />
+
     <div
       class="fixed top-6 right-6 z-[60] space-y-3 transition-all duration-300 ease-in-out"
     >
@@ -44,19 +47,23 @@
 <script>
 import Notification from "./components/Notification.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
+import UpdateScreen from "./components/UpdateScreen.vue";
 import { useNotification } from "./composables/useNotification.js";
 import { useConfirm } from "./composables/useConfirm.js";
+import { useUpdateStatus } from "./composables/useUpdateStatus.js";
 
 export default {
   name: "App",
   components: {
     Notification,
     ConfirmModal,
+    UpdateScreen,
   },
   setup() {
     const { notifications, removeNotification } = useNotification();
     const { confirmState, handleConfirm, handleSecondary, handleCancel } =
       useConfirm();
+    const { isUpdating } = useUpdateStatus();
 
     return {
       notifications,
@@ -65,6 +72,7 @@ export default {
       handleConfirm,
       handleSecondary,
       handleCancel,
+      isUpdating,
     };
   },
 };

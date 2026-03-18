@@ -17,6 +17,7 @@ SimpleShare is a modern web application that allows users to upload and share fi
 - **Mobile-responsive design** optimized for all devices
 - **Database migration system** for easy schema updates
 - **Modern confirmation modal system** replacing browser alerts
+- **Update screen** for maintenance mode during server updates
 - **TypeScript support** throughout the codebase for better maintainability
 
 ## Technology Stack
@@ -50,9 +51,12 @@ simpleShare/
 │   ├── public/              # Static assets
 │   ├── src/
 │   │   ├── components/      # Reusable Vue components
-│   │   ├── composables/     # Vue composables (useConfirm, etc.)
+│   │   │   ├── UpdateScreen.vue    # Maintenance/update screen
+│   │   │   ├── Notification.vue    # Notification system
+│   │   │   └── ConfirmModal.vue    # Confirmation modal
+│   │   ├── composables/     # Vue composables (useConfirm, useUpdateStatus, etc.)
 │   │   ├── views/           # Page views and routing
-│   │   ├── App.vue          # Root component with global modal
+│   │   ├── App.vue          # Root component with global modals
 │   │   └── main.js          # Application entry point
 │   ├── index.html           # HTML template
 │   ├── tailwind.config.js   # Tailwind configuration
@@ -167,6 +171,8 @@ If you prefer to run servers separately:
 - `npm run build:frontend` - Build Vue.js frontend for production
 - `npm start` - Start production server from compiled files
 - `npm run clean` - Remove compiled `dist/` directory
+- `npm run update:start` - Show maintenance screen during updates
+- `npm run update:stop` - Hide maintenance screen after updates
 
 ### Code Quality
 
@@ -200,6 +206,10 @@ The codebase follows these quality standards:
 - `POST /admin/user/:id/quota` - Update user quota (admin only)
 - Additional endpoints for user management and system administration
 
+### Update Status Management
+- `GET /api/update-status` - Get current update status
+- `POST /api/update-status` - Set update status (maintenance mode)
+
 ## Key Systems
 
 ### Database Migration System
@@ -224,6 +234,29 @@ Modern confirmation dialogs replace browser alerts throughout the application:
 - **Animated**: Smooth transitions and backdrop effects
 
 For usage examples and documentation, see [Alert-box.md](Alert-box.md).
+
+### Update Screen System
+
+The application includes a maintenance screen that appears during server updates:
+
+- **Automatic display**: Shows when server is in update mode
+- **Real-time polling**: Frontend checks update status every 5 seconds
+- **Clean UI**: Modern loading animation with informative messages
+- **Easy control**: Simple npm scripts to toggle maintenance mode
+
+**Usage:**
+```bash
+# Show maintenance screen
+npm run update:start
+
+# Hide maintenance screen
+npm run update:stop
+```
+
+**Components:**
+- `UpdateScreen.vue` - Maintenance screen component
+- `useUpdateStatus.js` - Composable for status polling
+- `updateStatus.ts` - Backend controller for status management
 
 ### Authentication & Security
 
