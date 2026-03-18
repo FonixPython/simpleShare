@@ -38,7 +38,7 @@ export async function getUsedQuota(user_id:string | null): Promise<Number> {
   try {
     if (user_id === null) {return 1}
     let used_res = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
-    return used_res[0].total_used;
+    return Number(used_res[0].total_used);
   } catch(err){console.log(err); return 1}
 }
 
@@ -54,7 +54,7 @@ export async function getAllFiles(user_id:string | null){
         code:file.id,
         visibility:file.visibility,
         upload_date:file.date_added,
-        size:file.file_size_in_bytes,
+        size:Number(file.file_size_in_bytes),
         stored_name:file.stored_filename,
         original_name:file.original_name,
         mimetype:file.mime_type,
