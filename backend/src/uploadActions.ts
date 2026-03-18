@@ -80,7 +80,14 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
       ],
     );
     return !!res;
-  } catch(err){console.log(err)}
+  } catch(err){
+    if (req.file !== undefined) {
+      const ext = path.extname(req.file.originalname);
+      const newFilename = `${req.fileCode}${ext}`;
+      await fs.unlink(process.env.UPLOAD_PATH + newFilename);
+    }
+    console.log(err);
+  }
 }
 
 const storage = multer.diskStorage({
