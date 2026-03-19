@@ -153,7 +153,7 @@ export default {
   props: {
     token: String,
   },
-  emits: ["navigate-to-stats", "navigate-to-database"],
+  emits: ["navigate-to-stats"],
   setup(props) {
     const {
       globalStorage,
