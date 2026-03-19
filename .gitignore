@@ -44,3 +44,4 @@ tmp/
 temp/
 
 uploads/
+/generated/prisma
