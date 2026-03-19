@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import router from "./routes";
-import pool from "./db";
+import { prisma } from "./db";
 import os from "os"
 import path from "path"
 import "dotenv/config";
