@@ -7,28 +7,30 @@ import { setSyntheticLeadingComments } from 'typescript';
 import "dotenv/config";
 import { prisma } from "./db";
 import { promises as fs } from "fs";
+import { callWithErrorHandling } from "vue";
+import { userInfo } from "os";
 
 type ItemType = "file" | "group"
 
 export async function getTotalStorageUsed():Promise<number | null> {
   try {
-    const result = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index",);
-    return Number(result[0].total_used || 0);
+    const result = await prisma.file_index.aggregate({_sum: {file_size_in_bytes: true}});
+    return Number(result._sum.file_size_in_bytes || 0);
   } catch(err){console.log(err);return null}
 }
 
 export async function getTotalFiles():Promise<number | null> {
   try {
-    const result = await pool.query("SELECT COUNT(*) AS total_files FROM file_index");
-    return Number(result[0].total_files || 0);
+    const result = await prisma.file_index.count({})
+    return Number(result || 0);
   } catch(err){console.log(err);return null}
 }
 
 export async function getGlobalStorageLimit():Promise<number | null> {
   try {
-    const result = await pool.query("SELECT num_value FROM settings WHERE name = ?",["global-storage-limit"]);
-    return result.length > 0 ? Number(BigInt(result[0].num_value)) : 0;
-  } catch(err){console.log(err);return null}
+    const result = await prisma.settings.findFirstOrThrow({where:{name:"global-storage-limit"}})
+    return Number(BigInt(result.num_value));
+  } catch(err){console.log(err);return 0 }
 }
 
 export async function calculateRemainingGlobalStorage() {
@@ -40,14 +42,15 @@ export async function calculateRemainingGlobalStorage() {
 
 export async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
   try {
-    let result = await pool.query("SELECT quota_in_bytes FROM users WHERE id = ?",[user_id]);
-    if (result.length === 0) return 0;
-    let quota:number = Number(result[0].quota_in_bytes);
-    if (quota == 0) return null;
-    let used_res = await pool.query("SELECT SUM(file_size_in_bytes) AS total_used FROM file_index WHERE user_id = ?",[user_id]);
-    let used_up:number = Number(used_res[0].total_used || 0)
-    let remaining:number = quota - used_up
-    return remaining;
+    try {
+      let result = await prisma.users.findFirstOrThrow({where:{id:user_id}})
+      let quota:number = Number(result.quota_in_bytes);
+      if (quota == 0) return null;
+      let used_res = await prisma.file_index.aggregate({_sum:{file_size_in_bytes:true}})
+      let used_up:number = Number(used_res._sum.file_size_in_bytes || 0)
+      let remaining:number = quota - used_up
+      return remaining;
+    } catch {return 0;}
   } catch(err){console.log(err);return 1}
 }
 
@@ -68,17 +71,8 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
       fs.renameSync(oldPath, newPath);
     }
     let fixed_filename = Buffer.from(req.file.originalname, "latin1").toString("utf8").normalize("NFC");
-    let res = await pool.query(
-      "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
-      [
-        req.fileCode,
-        req.file.mimetype,
-        newFilename,
-        fixed_filename,
-        req.file.size,
-        req.user.id,
-      ],
-    );
+    let res = await prisma.file_index.create({data:{id:req.fileCode,mime_type:req.file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:req.file.size,user_id:req.user.id}})
+
     return !!res;
   } catch(err){
     if (req.file !== undefined) {
@@ -121,8 +115,8 @@ async function generateUniqueCode(code_length:number) {
     while (true) {
       let result:string = "";
       for (let i = 0; i < code_length; i++) {result += chars.charAt(Math.floor(Math.random() * chars.length));}
-      let res = await pool.query("SELECT * FROM file_groups WHERE id = ?", [result]);
-      let res2 = await pool.query("SELECT * FROM file_index WHERE id = ?", [result]);
+      let res = await prisma.file_groups.findMany({where:{id:result}})
+      let res2 = await prisma.file_groups.findMany({where:{id:result}})
       if (res.length == 0 && res2.length==0) {return result}
     }
   } catch(err){console.log(err)}
@@ -203,17 +197,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
       }
       
       // Register file in database
-      await pool.query(
-        "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
-        [
-          fileCode,
-          file.mimetype,
-          newFilename,
-          fixed_filename,
-          file.size,
-          req.user.id,
-        ],
-      );
+      await prisma.file_index.create({data:{id:fileCode,mime_type:file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:file.size,user_id:req.user.id}})
 
       uploadedFiles.push({
         code: fileCode,
@@ -223,16 +207,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
     }
 
     // Then create the group entry
-    await pool.query(
-      "INSERT INTO file_groups(id, name, file_ids, user_id, created_at) VALUES (?,?,?,?,?)",
-      [
-        req.groupCode,
-        groupName,
-        JSON.stringify(fileIds),
-        req.user.id,
-        new Date().toISOString().slice(0, 19).replace('T', ' '),
-      ],
-    );
+    await prisma.file_groups.create({data:{id:req.groupCode,name:groupName,file_ids:JSON.stringify(fileIds),user_id:req.user.id,created_at:new Date().toISOString().slice(0, 19).replace('T', ' ')}})
 
     return {
       group: {
@@ -299,17 +274,8 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
       }
       
       // Register file in database
-      await pool.query(
-        "INSERT INTO file_index(id, mime_type, stored_filename, original_name, file_size_in_bytes, user_id) VALUES (?,?,?,?,?,?)",
-        [
-          fileCode,
-          file.mimetype,
-          newFilename,
-          fixed_filename,
-          file.size,
-          req.user.id,
-        ],
-      );
+      await prisma.file_index.create({data:{id:fileCode,mime_type:file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:file.size,user_id:req.user.id}})
+
 
       uploadedFiles.push({
         code: fileCode,
@@ -328,10 +294,10 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
   try{
     // Get item and type of it
     let type:ItemType = "file"
-    let files_result = await pool.query("SELECT * FROM file_index WHERE id=?",[code])
+        let files_result = await prisma.file_index.findMany({where:{id:code}})
     if (files_result.length === 0){type="group"}
     if (type === "group"){
-      let group_results = await pool.query("SELECT * FROM file_groups WHERE id=?",[code])
+      let group_results = await prisma.file_groups.findMany({where:{id:code}})
       if (group_results.length === 0){return 1;} // An Item with such code does not exist!
       if(validation!==null && group_results[0].user_id !== validation){return 3} // Unauthorized!
       if (deleteSubItems){
@@ -341,22 +307,22 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
           if(process_result===2){return 2}
         }
       }
-      await pool.query("DELETE FROM file_groups WHERE id = ?", [code]);
+      await prisma.file_groups.delete({where:{id:code}})
       return 0 // Success
     } if (type === "file"){
       if(validation!==null && files_result[0].user_id !== validation){return 3} // Unauthorized!
-      let groups_containing_file = await pool.query("SELECT * FROM file_groups WHERE file_ids LIKE ?",[`%${code}%`])
+      const groups_containing_file = await prisma.file_groups.findMany({where: {file_ids: {contains: code}}});
       for (let group of groups_containing_file){
         let file_ids = group.file_ids
         if(file_ids.indexOf(code)>-1){file_ids.splice(file_ids.indexOf(code),1)}
-        await pool.query("UPDATE file_groups SET file_ids = ? WHERE id = ?",[JSON.stringify(file_ids), group.id]);
+        await prisma.file_groups.update({where: {id: group.id},data: {file_ids: JSON.stringify(file_ids)}});
       }
       try {await fs.unlink(process.env.UPLOAD_PATH + files_result[0].stored_filename);} 
       catch (err) {
         console.log("File deletion error:", err);
         return 2 // Stop process if file deletion faliure
       }
-      await pool.query("DELETE FROM file_index WHERE id = ?", [code]);
+      await prisma.file_index.delete({where:{id:code}})
       return 0 // Success
     }
     return 2;
@@ -366,10 +332,10 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
 export async function retrieveObjectInfo(code:string):Promise<Record<string, any>|null> {
   try {
     let type:ItemType = "file"
-    let files_result = await pool.query("SELECT * FROM file_index WHERE id=?",[code])
+    let files_result = await prisma.file_index.findMany({where:{id:code}})
     if (files_result.length === 0){type="group"}
     if (type === "group"){
-      let group_results = await pool.query("SELECT * FROM file_groups WHERE id=?",[code])
+      let group_results = await prisma.file_groups.findMany({where:{id:code}})
       if (group_results.length === 0){return null} // An Item with such code does not exist!
       group_results[0].type="group"
       group_results[0].files = []
