@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import { FileFilterCallback } from "multer";
 import { setSyntheticLeadingComments } from 'typescript';
 import "dotenv/config";
-import pool from "./db";
+import { prisma } from "./db";
 import { promises as fs } from "fs";
 
 type ItemType = "file" | "group"
