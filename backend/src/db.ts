@@ -1,15 +1,14 @@
-import mariadb from "mariadb";
 import "dotenv/config";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaClient } from "./prisma/client";
 
-const pool = mariadb.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT),
-    connectionLimit: 12,
-    charset: "utf8mb4",
-    timezone: "UTC",
+const adapter = new PrismaMariaDb({
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
+  connectionLimit: 5,
 });
+const prisma = new PrismaClient({ adapter });
 
-export default pool;
+export { prisma };
