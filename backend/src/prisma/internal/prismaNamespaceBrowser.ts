@@ -55,6 +55,7 @@ export const ModelName = {
   file_index: 'file_index',
   migrations: 'migrations',
   session_tokens: 'session_tokens',
+  settings: 'settings',
   users: 'users'
 } as const
 
@@ -117,6 +118,16 @@ export const Session_tokensScalarFieldEnum = {
 } as const
 
 export type Session_tokensScalarFieldEnum = (typeof Session_tokensScalarFieldEnum)[keyof typeof Session_tokensScalarFieldEnum]
+
+
+export const SettingsScalarFieldEnum = {
+  name: 'name',
+  num_value: 'num_value',
+  text_value: 'text_value',
+  comment: 'comment'
+} as const
+
+export type SettingsScalarFieldEnum = (typeof SettingsScalarFieldEnum)[keyof typeof SettingsScalarFieldEnum]
 
 
 export const UsersScalarFieldEnum = {
@@ -183,6 +194,15 @@ export const session_tokensOrderByRelevanceFieldEnum = {
 } as const
 
 export type session_tokensOrderByRelevanceFieldEnum = (typeof session_tokensOrderByRelevanceFieldEnum)[keyof typeof session_tokensOrderByRelevanceFieldEnum]
+
+
+export const settingsOrderByRelevanceFieldEnum = {
+  name: 'name',
+  text_value: 'text_value',
+  comment: 'comment'
+} as const
+
+export type settingsOrderByRelevanceFieldEnum = (typeof settingsOrderByRelevanceFieldEnum)[keyof typeof settingsOrderByRelevanceFieldEnum]
 
 
 export const usersOrderByRelevanceFieldEnum = {

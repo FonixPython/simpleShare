@@ -9,6 +9,7 @@ import { prisma } from "./db";
 import { promises as fs } from "fs";
 import { callWithErrorHandling } from "vue";
 import { userInfo } from "os";
+import { FileGroup } from "./userActions";
 
 type ItemType = "file" | "group"
 
@@ -29,7 +30,7 @@ export async function getTotalFiles():Promise<number | null> {
 export async function getGlobalStorageLimit():Promise<number | null> {
   try {
     const result = await prisma.settings.findFirstOrThrow({where:{name:"global-storage-limit"}})
-    return Number(BigInt(result.num_value));
+    return Number(BigInt(result.num_value || 0));
   } catch(err){console.log(err);return 0 }
 }
 
@@ -294,10 +295,10 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
   try{
     // Get item and type of it
     let type:ItemType = "file"
-        let files_result = await prisma.file_index.findMany({where:{id:code}})
+    let files_result = await prisma.file_index.findMany({where:{id:Array.isArray(code) ? code[0] : code}})
     if (files_result.length === 0){type="group"}
     if (type === "group"){
-      let group_results = await prisma.file_groups.findMany({where:{id:code}})
+      let group_results = await prisma.file_groups.findMany({where:{id:Array.isArray(code) ? code[0] : code}})
       if (group_results.length === 0){return 1;} // An Item with such code does not exist!
       if(validation!==null && group_results[0].user_id !== validation){return 3} // Unauthorized!
       if (deleteSubItems){
@@ -307,14 +308,15 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
           if(process_result===2){return 2}
         }
       }
-      await prisma.file_groups.delete({where:{id:code}})
+      await prisma.file_groups.delete({where:{id:Array.isArray(code) ? code[0] : code}})
       return 0 // Success
     } if (type === "file"){
       if(validation!==null && files_result[0].user_id !== validation){return 3} // Unauthorized!
-      const groups_containing_file = await prisma.file_groups.findMany({where: {file_ids: {contains: code}}});
+      const groups_containing_file = await prisma.file_groups.findMany({where: {file_ids: {contains: Array.isArray(code) ? code[0] : code}}});
       for (let group of groups_containing_file){
-        let file_ids = group.file_ids
-        if(file_ids.indexOf(code)>-1){file_ids.splice(file_ids.indexOf(code),1)}
+        let file_ids: string[] = JSON.parse(group.file_ids);
+        const codeValue = Array.isArray(code) ? code[0] : code;
+        file_ids = file_ids.filter(id => id !== codeValue);
         await prisma.file_groups.update({where: {id: group.id},data: {file_ids: JSON.stringify(file_ids)}});
       }
       try {await fs.unlink(process.env.UPLOAD_PATH + files_result[0].stored_filename);} 
@@ -322,32 +324,40 @@ export async function deleteItem(code:string|string[],deleteSubItems:boolean=fal
         console.log("File deletion error:", err);
         return 2 // Stop process if file deletion faliure
       }
-      await prisma.file_index.delete({where:{id:code}})
+      await prisma.file_index.delete({where:{id:Array.isArray(code) ? code[0] : code}})
       return 0 // Success
     }
     return 2;
   } catch(err){console.log(err);return 2}
 }
 
+type Extended = any & {
+  type: string;
+  files: any[];
+};
+
 export async function retrieveObjectInfo(code:string):Promise<Record<string, any>|null> {
   try {
     let type:ItemType = "file"
-    let files_result = await prisma.file_index.findMany({where:{id:code}})
-    if (files_result.length === 0){type="group"}
+    try {
+      let files_result = await prisma.file_index.findFirst({where:{id:code}})
+    } catch {type="group"}
     if (type === "group"){
-      let group_results = await prisma.file_groups.findMany({where:{id:code}})
-      if (group_results.length === 0){return null} // An Item with such code does not exist!
-      group_results[0].type="group"
-      group_results[0].files = []
-      for (let id of group_results[0].file_ids){
-        let file_data = await retrieveObjectInfo(id)
-        group_results[0].files.push(file_data)
-      }
-      return group_results[0]
+      try {
+        let group_results:Extended = await prisma.file_groups.findFirstOrThrow({where:{id:code}})
+        group_results.type ="group";
+        group_results.files = []
+        for (let id of group_results.file_ids){
+          let file_data = await retrieveObjectInfo(id)
+          group_results.files.push(file_data)
+          return group_results  
+        }
+      } catch {return null}
     }
     if (type === "file"){
-      files_result[0].type = "file"
-      return files_result[0]
+      let files_result:Extended = await prisma.file_index.findFirstOrThrow({where:{id:code}})
+      files_result.type = "file"
+      return files_result
     }
     return null
   } catch(err){console.log(err);return null}

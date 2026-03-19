@@ -38,6 +38,11 @@ export type migrations = Prisma.migrationsModel
  */
 export type session_tokens = Prisma.session_tokensModel
 /**
+ * Model settings
+ * The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+ */
+export type settings = Prisma.settingsModel
+/**
  * Model users
  * 
  */

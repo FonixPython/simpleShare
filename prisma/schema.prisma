@@ -44,7 +44,7 @@ model session_tokens {
 }
 
 model settings {
-  name       String  @id @db.VarChar(255)
+  name       String  @id @db.VarChar(255) @unique
   num_value  BigInt?
   text_value String? @db.Text
   comment    String? @db.Text

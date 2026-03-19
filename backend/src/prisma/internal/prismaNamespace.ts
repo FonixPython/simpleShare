@@ -388,6 +388,7 @@ export const ModelName = {
   file_index: 'file_index',
   migrations: 'migrations',
   session_tokens: 'session_tokens',
+  settings: 'settings',
   users: 'users'
 } as const
 
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "file_groups" | "file_index" | "migrations" | "session_tokens" | "users"
+    modelProps: "file_groups" | "file_index" | "migrations" | "session_tokens" | "settings" | "users"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -672,6 +673,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    settings: {
+      payload: Prisma.$settingsPayload<ExtArgs>
+      fields: Prisma.settingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.settingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.settingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        findFirst: {
+          args: Prisma.settingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.settingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        findMany: {
+          args: Prisma.settingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>[]
+        }
+        create: {
+          args: Prisma.settingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        createMany: {
+          args: Prisma.settingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.settingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        update: {
+          args: Prisma.settingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.settingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.settingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.settingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$settingsPayload>
+        }
+        aggregate: {
+          args: Prisma.SettingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSettings>
+        }
+        groupBy: {
+          args: Prisma.settingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SettingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.settingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SettingsCountAggregateOutputType> | number
+        }
+      }
+    }
     users: {
       payload: Prisma.$usersPayload<ExtArgs>
       fields: Prisma.usersFieldRefs
@@ -822,6 +889,16 @@ export const Session_tokensScalarFieldEnum = {
 export type Session_tokensScalarFieldEnum = (typeof Session_tokensScalarFieldEnum)[keyof typeof Session_tokensScalarFieldEnum]
 
 
+export const SettingsScalarFieldEnum = {
+  name: 'name',
+  num_value: 'num_value',
+  text_value: 'text_value',
+  comment: 'comment'
+} as const
+
+export type SettingsScalarFieldEnum = (typeof SettingsScalarFieldEnum)[keyof typeof SettingsScalarFieldEnum]
+
+
 export const UsersScalarFieldEnum = {
   id: 'id',
   username: 'username',
@@ -886,6 +963,15 @@ export const session_tokensOrderByRelevanceFieldEnum = {
 } as const
 
 export type session_tokensOrderByRelevanceFieldEnum = (typeof session_tokensOrderByRelevanceFieldEnum)[keyof typeof session_tokensOrderByRelevanceFieldEnum]
+
+
+export const settingsOrderByRelevanceFieldEnum = {
+  name: 'name',
+  text_value: 'text_value',
+  comment: 'comment'
+} as const
+
+export type settingsOrderByRelevanceFieldEnum = (typeof settingsOrderByRelevanceFieldEnum)[keyof typeof settingsOrderByRelevanceFieldEnum]
 
 
 export const usersOrderByRelevanceFieldEnum = {
@@ -1043,6 +1129,7 @@ export type GlobalOmitConfig = {
   file_index?: Prisma.file_indexOmit
   migrations?: Prisma.migrationsOmit
   session_tokens?: Prisma.session_tokensOmit
+  settings?: Prisma.settingsOmit
   users?: Prisma.usersOmit
 }
 
