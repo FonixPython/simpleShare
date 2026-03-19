@@ -43,14 +43,11 @@ model session_tokens {
   added_on   DateTime? @default(now()) @db.Timestamp(0)
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model settings {
-  name       String  @db.Text
+  name       String  @id @db.VarChar(255)
   num_value  BigInt?
   text_value String? @db.Text
   comment    String? @db.Text
-
-  @@ignore
 }
 
 model users {
