@@ -480,24 +480,18 @@ export default {
     },
 
     async handleFiles(files) {
-      console.log("handleFiles called with:", files.length, "files");
-      console.log("uploadType:", this.uploadType);
-      console.log("showGroupChoiceModal:", this.showGroupChoiceModal);
 
       if (files.length === 0) return;
 
       // If multiple files selected and no upload choice made, show group choice modal
       if (files.length > 1 && !this.uploadType) {
-        console.log("Should show GroupChoiceModal");
         this.pendingFiles = files;
         this.showGroupChoiceModal = true;
-        console.log("showGroupChoiceModal set to:", this.showGroupChoiceModal);
         return;
       }
 
       // Determine upload type and proceed
       const isGroupUpload = this.uploadType === "group" && files.length > 0;
-      console.log("Proceeding with upload, isGroupUpload:", isGroupUpload);
 
       // Store upload configuration for potential retry
       this.lastUploadedFiles = files;

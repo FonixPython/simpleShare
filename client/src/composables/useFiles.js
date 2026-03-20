@@ -211,24 +211,12 @@ export function useFiles() {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
 
-      console.log("Files received:", files);
-      console.log("Files type:", typeof files);
-      console.log("Files length:", files.length);
-      if (files.length > 0) {
-        console.log("First file:", files[0]);
-        console.log("First file type:", files[0] instanceof File);
-        console.log("First file name:", files[0].name);
-        console.log("First file size:", files[0].size);
-      }
-
       // Determine the upload type and endpoint
       let endpoint = "/upload";
       let isMultipleIndividualUpload = false;
 
       if (isGroupUpload && files.length > 0) {
-        console.log("Group upload - files to upload:", files.length);
         for (let i = 0; i < files.length; i++) {
-          console.log(`Appending file ${i}:`, files[i]);
           formData.append("files", files[i]);
         }
         formData.append("groupName", groupName);
@@ -236,12 +224,7 @@ export function useFiles() {
         endpoint = "/upload-group";
       } else if (files.length > 1) {
         // Multiple files uploaded individually - use new endpoint
-        console.log(
-          "Multiple individual upload - files to upload:",
-          files.length,
-        );
         for (let i = 0; i < files.length; i++) {
-          console.log(`Appending file ${i}:`, files[i]);
           formData.append("files", files[i]);
         }
         endpoint = "/upload-multiple-individual";
@@ -249,7 +232,6 @@ export function useFiles() {
       } else {
         // Single file upload
         const file = files[0];
-        console.log("Appending file to formData:", file);
         formData.append("file", file);
       }
 
@@ -373,15 +355,6 @@ export function useFiles() {
 
       xhr.open("POST", endpoint);
       xhr.setRequestHeader("Authorization", token);
-
-      console.log("Upload request:", {
-        endpoint,
-        token: token ? "present" : "missing",
-        isGroupUpload,
-        isMultipleIndividualUpload,
-        filesCount: files.length,
-        formDataEntries: Array.from(formData.entries()),
-      });
 
       xhr.send(formData);
     });
