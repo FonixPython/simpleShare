@@ -197,8 +197,6 @@ export default {
               };
             }
 
-            // Debug log
-            console.log("FileData set:", this.fileData);
           } else {
             this.fileInfo.text = "File not found";
             this.fileInfo.color = "#f77b5e";

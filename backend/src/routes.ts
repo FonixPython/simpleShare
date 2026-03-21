@@ -34,14 +34,6 @@ router.get("/admin/getSystemHealthMetrics", adminController.getSystemHealthMetri
 router.delete("/admin/deleteFile/:fileCode", adminController.deleteFile);
 router.post("/admin/updateStorageLimit", adminController.updateStorageLimit);
 
-// Database management endpoints
-router.get("/admin/database/getTables", adminController.getDatabaseTables);
-router.get("/admin/database/getTableData/:tableName", adminController.getTableData);
-router.get("/admin/database/getTableSchema/:tableName", adminController.getTableSchema);
-router.post("/admin/database/updateCell", adminController.updateCell);
-router.post("/admin/database/insertRow", adminController.insertRow);
-router.post("/admin/database/deleteRow", adminController.deleteRow);
-
 // File management endpoints
 router.post("/admin/file/updateId", adminController.updateFileId);
 router.post("/admin/file/updateName", adminController.updateFileName);

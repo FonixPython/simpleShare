@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model file_groups {
+  id         String    @id @db.VarChar(255)
+  name       String    @db.VarChar(255)
+  file_ids   String    @db.LongText
+  user_id    String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model file_index {
+  id                 String    @id @db.VarChar(6)
+  visibility         Int       @default(1)
+  date_added         DateTime? @default(dbgenerated("(curtime())")) @db.Timestamp(0)
+  file_size_in_bytes BigInt?
+  stored_filename    String    @db.Text
+  original_name      String    @db.Text
+  mime_type          String    @db.Text
+  user_id            String    @db.Text
+}
+
+model migrations {
+  id         String    @id @db.VarChar(255)
+  filename   String    @db.VarChar(255)
+  applied_at DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model session_tokens {
+  token      String    @id @db.VarChar(200)
+  user_id    String    @db.Text
+  is_valid   Boolean?  @default(true)
+  user_agent String?   @db.Text
+  added_on   DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model settings {
+  name       String  @id @db.VarChar(255) @unique
+  num_value  BigInt?
+  text_value String? @db.Text
+  comment    String? @db.Text
+}
+
+model users {
+  id               String        @id @default(dbgenerated("(uuid())")) @db.VarChar(255)
+  username         String        @unique(map: "username") @db.VarChar(255)
+  password_hash    String        @db.Text
+  quota_in_bytes   BigInt        @default(500000000)
+  is_admin         Boolean       @default(false)
+  date_of_creation DateTime      @default(dbgenerated("(curtime())")) @db.Timestamp(0)
+  file_groups      file_groups[]
+}

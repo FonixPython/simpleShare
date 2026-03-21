@@ -81,7 +81,6 @@ export default {
         console.error("No token found in localStorage");
         return;
       }
-      console.log("Redirecting to admin dashboard");
       window.location.href = "/admin";
     },
 

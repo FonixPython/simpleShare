@@ -1,8 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import router from "./routes";
-import pool from "./db";
-import MigrationRunner from "./migration-runner";
+import { prisma } from "./db";
 import os from "os"
 import path from "path"
 import "dotenv/config";
@@ -16,9 +15,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 async function startServer() {
   try {
-    const migrationRunner = new MigrationRunner(pool);
-    await migrationRunner.runMigrations();
-    
     app.listen(PORT, () => {
       console.log("Server is Running");
       console.log(`http://localhost:${PORT}`);

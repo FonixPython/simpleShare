@@ -407,7 +407,7 @@ export default {
   props: {
     token: String,
   },
-  emits: ["navigate-to-users", "navigate-to-files", "navigate-to-database"],
+  emits: ["navigate-to-users", "navigate-to-files"],
   setup(props) {
     const {
       globalStorage,
