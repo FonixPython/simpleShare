@@ -24,6 +24,9 @@
       :token="sessionToken"
       @navigate-to-stats="activeTab = 'stats'"
     />
+
+    <!-- Database View -->
+    <DatabaseView v-if="activeTab === 'database'" :token="sessionToken" />
   </div>
 </template>
 
@@ -37,6 +40,7 @@ import UsersView from "./UsersView.vue";
 import FilesView from "./FilesView.vue";
 import StatsView from "./StatsView.vue";
 import GlobalStorageView from "./GlobalStorageView.vue";
+import DatabaseView from "./DatabaseView.vue";
 
 export default {
   name: "AdminDashboard",
@@ -46,6 +50,7 @@ export default {
     FilesView,
     StatsView,
     GlobalStorageView,
+    DatabaseView,
   },
   setup() {
     const { sessionToken } = useAuth();

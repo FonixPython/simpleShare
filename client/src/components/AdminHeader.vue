@@ -45,6 +45,7 @@ export default {
         { id: "files", label: "All Files" },
         { id: "stats", label: "Stats" },
         { id: "storage", label: "Global Storage" },
+        { id: "database", label: "Database" },
       ],
     };
   },
