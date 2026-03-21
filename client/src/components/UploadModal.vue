@@ -442,7 +442,7 @@ export default {
         this.uploadResult.group &&
         this.uploadResult.group.id
       ) {
-        return window.location.href + "groups/" + this.uploadResult.group.id;
+        return window.location.href + "files/" + this.uploadResult.group.id;
       }
       return "";
     },
