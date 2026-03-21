@@ -255,19 +255,44 @@ export async function getAllFiles():Promise<any[] | null> {
                 where: { id: group.user_id },
                 select: { username: true }
             });
+            const fileIds = JSON.parse(group.file_ids);
+            
+            // Calculate actual group size by summing file sizes
+            let groupSize = 0;
+            if (fileIds.length > 0) {
+                const groupFiles = await prisma.file_index.findMany({
+                    where: { id: { in: fileIds } },
+                    select: { file_size_in_bytes: true }
+                });
+                groupSize = groupFiles.reduce((total, file) => total + Number(file.file_size_in_bytes), 0);
+            }
+            
             return {
                 code: group.id,
                 name: group.name,
-                size: 0, // Would need to calculate from file_ids
+                size: groupSize,
                 date: group.created_at,
                 username: user?.username || 'unknown',
                 type: 'group',
-                fileIds: JSON.parse(group.file_ids)
+                fileIds: fileIds,
+                fileCount: fileIds.length
             };
         }));
 
-        // Combine and sort by date
-        return [...formattedFiles, ...formattedGroups].sort((a, b) => 
+        // Filter out empty groups (groups with 0 files)
+        const nonEmptyGroups = formattedGroups.filter(group => group.fileCount > 0);
+
+        // Get all file IDs that are in groups to filter them out from individual files
+        const fileIdsInGroups = new Set();
+        nonEmptyGroups.forEach(group => {
+            group.fileIds.forEach((fileId: string) => fileIdsInGroups.add(fileId));
+        });
+
+        // Filter out individual files that are already in groups
+        const individualFiles = formattedFiles.filter(file => !fileIdsInGroups.has(file.code));
+
+        // Combine individual files and groups, then sort by date
+        return [...individualFiles, ...nonEmptyGroups].sort((a, b) => 
             new Date(b.date).getTime() - new Date(a.date).getTime()
         );
     } catch(err){
