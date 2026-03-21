@@ -262,7 +262,7 @@ export async function getAllFiles():Promise<any[] | null> {
                 date: group.created_at,
                 username: user?.username || 'unknown',
                 type: 'group',
-                fileIds: group.file_ids.split(',').filter((id: string) => id.trim())
+                fileIds: JSON.parse(group.file_ids)
             };
         }));
 
@@ -291,7 +291,7 @@ export async function getGroupDetails(groupCode: string):Promise<any | null> {
             select: { username: true }
         });
 
-        const fileIds = group.file_ids.split(',').filter((id: string) => id.trim());
+        const fileIds = JSON.parse(group.file_ids)
 
         // Get file details
         const files = fileIds.length > 0 ? await prisma.file_index.findMany({
@@ -324,7 +324,7 @@ export async function getGroupDetails(groupCode: string):Promise<any | null> {
             type: 'group',
             fileIds: fileIds,
             files: filesWithUser,
-            fileCount: files.length
+            fileCount: fileIds.length
         };
     } catch(err) {
         console.log(err);

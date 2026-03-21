@@ -208,7 +208,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
     }
 
     // Then create the group entry
-    await prisma.file_groups.create({data:{id:req.groupCode,name:groupName,file_ids:JSON.stringify(fileIds),user_id:req.user.id,created_at:new Date().toISOString().slice(0, 19).replace('T', ' ')}})
+    await prisma.file_groups.create({data:{id:req.groupCode,name:groupName,file_ids:JSON.stringify(fileIds),user_id:req.user.id}})
 
     return {
       group: {
@@ -340,22 +340,23 @@ export async function retrieveObjectInfo(code:string):Promise<Record<string, any
   try {
     let type:ItemType = "file"
     try {
-      let files_result = await prisma.file_index.findFirst({where:{id:code}})
+      await prisma.file_index.findFirstOrThrow({where:{id:code}})
     } catch {type="group"}
     if (type === "group"){
       try {
         let group_results:Extended = await prisma.file_groups.findFirstOrThrow({where:{id:code}})
         group_results.type ="group";
         group_results.files = []
-        for (let id of group_results.file_ids){
+        for (let id of JSON.parse(group_results.file_ids)){
           let file_data = await retrieveObjectInfo(id)
           group_results.files.push(file_data)
-          return group_results  
         }
+        return group_results
       } catch {return null}
     }
     if (type === "file"){
       let files_result:Extended = await prisma.file_index.findFirstOrThrow({where:{id:code}})
+      files_result.file_size_in_bytes = Number(files_result.file_size_in_bytes)
       files_result.type = "file"
       return files_result
     }

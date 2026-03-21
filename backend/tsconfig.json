@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "target": "ES2023",
-    "strict": true,
-    "esModuleInterop": true,
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
     "outDir": "../dist",
     "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

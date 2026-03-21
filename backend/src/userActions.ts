@@ -81,7 +81,7 @@ export async function getAllFiles(user_id:string | null){
       let temp_dict:FileGroup = {
         code:group.id,
         name:group.name,
-        file_ids:group.file_ids.split(','),
+        file_ids:JSON.parse(group.file_ids),
         files:[],
         create_date: group.created_at?.toISOString() || '',
         type:"group"
