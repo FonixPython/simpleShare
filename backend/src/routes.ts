@@ -59,4 +59,11 @@ router.post("/checkFile", fileController.checkFile);
 router.get("/api/update-status", updateStatusController.getUpdateStatus);
 router.post("/api/update-status", updateStatusController.setUpdatingStatus);
 
+// Database management endpoints
+router.get("/admin/database/tables", adminController.getDatabaseTables);
+router.get("/admin/database/:table", adminController.getTableData);
+router.post("/admin/database/:table/update", adminController.updateTableRow);
+router.post("/admin/database/:table/delete", adminController.deleteTableRow);
+router.post("/admin/database/:table/insert", adminController.insertTableRow);
+
 export default router;
