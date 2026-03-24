@@ -74,13 +74,14 @@ simpleShare/
 
 ## Installation
 
-### Prerequisites
+### Method 1. - Manual Install (Recommended)
+#### Prerequisites
 
 - Node.js (v16 or higher)
 - npm or yarn
 - MariaDB database server
 
-### Setup Steps
+#### Setup Steps
 
 1. **Clone the repository:**
 
@@ -103,17 +104,17 @@ simpleShare/
 
    Edit `.env` with your database configuration:
    ```
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   DB_NAME=simpleShare
-   PORT=3000
-   UPLOAD_PATH=./uploads/
+    DB_HOST=localhost
+    DB_PORT=3306
+    DB_USER=simpleShare
+    DB_PASSWORD=simpleShare
+    DB_NAME=simpleShare
+    PORT=3000
+    UPLOAD_PATH=./uploads/
    ```
 
 4. **Database Setup:**
-   
+
    Create an empty database named `simpleShare` in MariaDB. The migration system will automatically create all necessary tables when you start the server.
 
 5. **Build the application:**
@@ -129,6 +130,53 @@ simpleShare/
    ```
 
    The application will be available at `http://localhost:3000`
+
+### Method 2. - Docker (Beta)
+
+1. **docker-compose.yaml**
+```yaml
+---
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: simpleShare-Database
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: simpleShare
+      MYSQL_DATABASE: simpleShare
+      MYSQL_USER: simpleShare
+      MYSQL_PASSWORD: simpleShare
+    volumes:
+      - ./DB/mysql:/var/lib/mysql
+      - ./DB/Schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    ports:
+      - 3306:3306
+
+  simpleShare:
+    image: ghcr.io/cigoria/simpleshare:latest
+    container_name: simpleShare
+    restart: unless-stopped
+    volumes:
+      - ./Main/.env:/app/.env:ro
+    ports:
+      - 3000:3000
+```
+
+2. **Folder structure**
+
+```bash
+mkdir DB Main
+wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/Schema.sql -o ./DB/Schema.sql
+wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/.env.example -o ./Main/.env
+```
+
+3. **Start container**
+
+```bash
+docker compose up -d
+```
+
+4. **Open browser at:** [http://localhost:3000](http://localhost:3000)
 
 ## Development
 
