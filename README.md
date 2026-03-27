@@ -133,6 +133,10 @@ simpleShare/
 
 ### Method 2. - Docker (Beta)
 
+Images availible for use:
+- ghcr.io/cigoria/simpleshare:latest
+- registry.gitlab.com/cigoria/simpleshare:latest
+
 1. **docker-compose.yaml**
 ```yaml
 ---
