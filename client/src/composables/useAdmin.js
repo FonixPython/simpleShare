@@ -3,6 +3,7 @@ import { ref } from "vue";
 export function useAdmin() {
   const users = ref([]);
   const allFiles = ref([]);
+  const allLinks = ref([]);
   const globalStorage = ref({
     totalUsers: 0,
     totalFiles: 0,
@@ -646,9 +647,75 @@ export function useAdmin() {
     }
   };
 
+  const loadAllLinks = async (token) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/all-links", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load links");
+      }
+
+      const data = await response.json();
+      allLinks.value = data.map((link) => ({
+        ...link,
+        dateFormatted:
+          new Date(link.created_at).toLocaleDateString("hu-HU", {
+            year: "2-digit",
+            month: "2-digit",
+            day: "2-digit",
+          }) +
+          " " +
+          new Date(link.created_at).toLocaleTimeString("hu-HU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        username: link.users?.username || "Unknown",
+      }));
+    } catch (error) {
+      error.value = error.message;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteLink = async (token, linkId) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch(`/share-link/${linkId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete link");
+      }
+
+      return { success: true };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     users,
     allFiles,
+    allLinks,
     globalStorage,
     loading,
     error,
@@ -656,9 +723,11 @@ export function useAdmin() {
     verifyAdminAccess,
     loadUsers,
     loadAllFiles,
+    loadAllLinks,
     loadGlobalStorage,
     deleteUser,
     deleteFile,
+    deleteLink,
     getStorageSettings,
     updateStorageLimit,
     changeUserPassword,

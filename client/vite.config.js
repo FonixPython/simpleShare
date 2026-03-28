@@ -28,6 +28,9 @@ export default defineConfig(({ mode }) => {
         '/upload': backend,
         '/upload-group': backend,
         '/upload-multiple-individual': backend,
+        '/share-link': backend,
+        '/api': backend,
+        '^/[a-z]{6}$': backend,
         '/admin': {
           target: backend,
           changeOrigin: true,

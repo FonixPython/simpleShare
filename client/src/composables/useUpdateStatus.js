@@ -8,13 +8,12 @@ export function useUpdateStatus() {
   const checkUpdateStatus = async () => {
     try {
       const response = await fetch('/api/update-status')
-      if (response.ok) {
+      const contentType = response.headers.get('content-type')
+      if (response.ok && contentType && contentType.includes('application/json')) {
         const data = await response.json()
         isUpdating.value = data.isUpdating
         updateMessage.value = data.message || ''
       }
-    } catch (error) {
-      console.error('Failed to check update status:', error)
     }
   }
 
