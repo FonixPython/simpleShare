@@ -14,6 +14,8 @@ export function useUpdateStatus() {
         isUpdating.value = data.isUpdating
         updateMessage.value = data.message || ''
       }
+    } catch (error) {
+      console.error('Failed to check update status:', error)
     }
   }
 

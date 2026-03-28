@@ -6,18 +6,17 @@
     <router-link to="/" class="no-underline">
       <Logo />
     </router-link>
-    <div
-      class="button-container absolute top-5 mobile:top-3 right-5 mobile:right-3 flex gap-2 mobile:gap-1 flex-wrap mobile:flex-col mobile:items-end"
-    >
+    <!-- Tab Navigation -->
+    <div class="absolute top-5 mobile:top-3 left-1/2 -translate-x-1/2 flex bg-gray-800/50 rounded-lg p-1 backdrop-blur-sm">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="$emit('tab-change', tab.id)"
         :class="[
-          'border-none px-[25px] mobile:px-[15px] py-[10px] mobile:py-[8px] rounded-lg text-lg mobile:text-base cursor-pointer tracking-[1px] m-[10px] mobile:m-[5px] transition-all duration-200 hover:scale-105 hover:shadow-lg animate-fade-in',
+          'px-5 mobile:px-3 py-2 mobile:py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap',
           activeTab === tab.id
-            ? 'bg-primary-button text-black hover:shadow-primary-button/50'
-            : 'bg-gray-600 text-white hover:shadow-primary-button/50',
+            ? 'bg-primary-button text-black shadow-sm'
+            : 'text-gray-300 hover:text-white hover:bg-gray-700/50',
         ]"
       >
         {{ tab.label }}
