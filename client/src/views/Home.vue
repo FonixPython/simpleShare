@@ -39,6 +39,7 @@
       @close="showHamburgerMenu = false"
       @show-register="showRegisterModal = true"
       @show-my-files="showMyFilesModal = true"
+      @show-my-links="handleShowMyLinks"
       @show-change-password="showChangePasswordModal = true"
       @logout="handleLogout"
     />
@@ -58,6 +59,14 @@
       :token="sessionToken"
       @close="showChangePasswordModal = false"
       @change-password="handleChangePassword"
+    />
+
+    <MyLinksModal
+      :visible="showMyLinksModal"
+      :links="links"
+      :token="sessionToken"
+      @close="showMyLinksModal = false"
+      @delete="handleDeleteLink"
     />
 
     <RegisterUserModal
@@ -82,6 +91,7 @@ import HamburgerMenu from "../components/HamburgerMenu.vue";
 import MyFilesModal from "../components/MyFilesModal.vue";
 import ChangePasswordModal from "../components/ChangePasswordModal.vue";
 import LinkShareModal from "../components/LinkShareModal.vue";
+import MyLinksModal from "../components/MyLinksModal.vue";
 import RegisterUserModal from "../components/RegisterUserModal.vue";
 
 export default {
@@ -95,6 +105,7 @@ export default {
     HamburgerMenu,
     MyFilesModal,
     ChangePasswordModal,
+    MyLinksModal,
     RegisterUserModal,
   },
   setup() {
@@ -126,14 +137,39 @@ export default {
     const showLinkShareModal = ref(false);
     const showHamburgerMenu = ref(false);
     const showMyFilesModal = ref(false);
+    const showMyLinksModal = ref(false);
     const showChangePasswordModal = ref(false);
     const showRegisterModal = ref(false);
+
+    const links = ref([]);
+
+    const fetchUserLinks = async (token) => {
+      try {
+        const response = await fetch("/share-link", {
+          method: "GET",
+          headers: {
+            Authorization: token,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          links.value = result;
+        } else {
+          links.value = [];
+        }
+      } catch (error) {
+        console.error("Failed to fetch links:", error);
+        links.value = [];
+      }
+    };
 
     onMounted(async () => {
       await verifyAccessToken();
       if (isAuthenticated.value) {
         await updateQuotaDisplay(sessionToken.value);
         await updateFilesDisplay(sessionToken.value);
+        await fetchUserLinks(sessionToken.value);
       }
     });
 
@@ -222,6 +258,31 @@ export default {
       showNotification("Link shared successfully!", "ok");
     };
 
+    const handleShowMyLinks = () => {
+      showHamburgerMenu.value = false;
+      showMyLinksModal.value = true;
+    };
+
+    const handleDeleteLink = async (id) => {
+      try {
+        const response = await fetch(`/share-link/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: sessionToken.value,
+          },
+        });
+
+        if (response.ok) {
+          await fetchUserLinks(sessionToken.value);
+          showNotification("Link deleted successfully!", "ok");
+        } else {
+          showNotification("Failed to delete link!", "error");
+        }
+      } catch (error) {
+        console.error("Delete link error:", error);
+        showNotification("Network error", "error");
+      }
+    };
     const handleShowMyFiles = () => {
       showUploadModal.value = false;
       showMyFilesModal.value = true;
@@ -355,12 +416,16 @@ export default {
       quotaInfo,
       files,
 
+      // Links
+      links,
+
       // Modal states
       showLoginModal,
       showUploadModal,
       showLinkShareModal,
       showHamburgerMenu,
       showMyFilesModal,
+      showMyLinksModal,
       showChangePasswordModal,
       showRegisterModal,
 
@@ -371,6 +436,8 @@ export default {
       handleUploadSuccess,
       handleLinkCreated,
       handleShowMyFiles,
+      handleShowMyLinks,
+      handleDeleteLink,
       handleDeleteFile,
       handleChangePassword,
       handleRegisterUser,
