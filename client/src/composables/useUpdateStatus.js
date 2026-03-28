@@ -14,8 +14,6 @@ export function useUpdateStatus() {
         isUpdating.value = data.isUpdating
         updateMessage.value = data.message || ''
       }
-    } catch (error) {
-      // Silently ignore - endpoint may not exist
     }
   }
 
