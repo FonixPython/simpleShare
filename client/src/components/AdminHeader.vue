@@ -43,6 +43,7 @@ export default {
       tabs: [
         { id: "users", label: "Users" },
         { id: "files", label: "All Files" },
+        { id: "links", label: "All Links" },
         { id: "stats", label: "Stats" },
         { id: "storage", label: "Global Storage" },
         { id: "database", label: "Database" },
