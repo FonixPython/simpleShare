@@ -10,6 +10,9 @@
     <!-- Files View -->
     <FilesView v-if="activeTab === 'files'" :token="sessionToken" />
 
+    <!-- Links View -->
+    <LinksView v-if="activeTab === 'links'" :token="sessionToken" />
+
     <!-- Stats View -->
     <StatsView
       v-if="activeTab === 'stats'"
@@ -41,6 +44,7 @@ import FilesView from "./FilesView.vue";
 import StatsView from "./StatsView.vue";
 import GlobalStorageView from "./GlobalStorageView.vue";
 import DatabaseView from "./DatabaseView.vue";
+import LinksView from "./LinksView.vue";
 
 export default {
   name: "AdminDashboard",
@@ -48,6 +52,7 @@ export default {
     AdminHeader,
     UsersView,
     FilesView,
+    LinksView,
     StatsView,
     GlobalStorageView,
     DatabaseView,

@@ -71,6 +71,7 @@ router.post("/admin/database/:table/insert", adminController.insertTableRow);
 router.post("/share-link", auth.authenticateUser, linkController.createSharedLink);
 router.get("/share-link", auth.authenticateUser, linkController.getUserSharedLinks);
 router.delete("/share-link/:id", auth.authenticateUser, linkController.deleteSharedLink);
+router.get("/admin/all-links", auth.authenticateUser, linkController.getAllSharedLinks);
 router.get("/:id", linkController.getSharedLink);
 
 export default router;

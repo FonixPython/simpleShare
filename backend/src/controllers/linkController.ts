@@ -143,3 +143,32 @@ export const getUserSharedLinks = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to retrieve links" });
   }
 };
+
+export const getAllSharedLinks = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  if (user_permission.level !== "admin") {
+    return res.status(403).json({ error: "Forbidden: Admin access required" });
+  }
+
+  try {
+    const links = await prisma.shared_links.findMany({
+      orderBy: { created_at: 'desc' },
+      include: {
+        users: {
+          select: {
+            username: true
+          }
+        }
+      }
+    });
+
+    return res.status(200).json(links);
+  } catch (error) {
+    console.error("Error retrieving all shared links:", error);
+    return res.status(500).json({ error: "Failed to retrieve links" });
+  }
+};
