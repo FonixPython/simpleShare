@@ -10,6 +10,7 @@ import * as adminController from "./controllers/adminController";
 import * as userController from "./controllers/userController";
 import * as fileController from "./controllers/fileController";
 import * as updateStatusController from "./controllers/updateStatus";
+import * as linkController from "./controllers/linkController";
 
 // Base routes
 router.get("/", baseController.serveIndex);
@@ -65,5 +66,11 @@ router.get("/admin/database/:table", adminController.getTableData);
 router.post("/admin/database/:table/update", adminController.updateTableRow);
 router.post("/admin/database/:table/delete", adminController.deleteTableRow);
 router.post("/admin/database/:table/insert", adminController.insertTableRow);
+
+// Link sharing endpoints
+router.post("/share-link", auth.authenticateUser, linkController.createSharedLink);
+router.get("/share-link", auth.authenticateUser, linkController.getUserSharedLinks);
+router.delete("/share-link/:id", auth.authenticateUser, linkController.deleteSharedLink);
+router.get("/:id", linkController.getSharedLink);
 
 export default router;

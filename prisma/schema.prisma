@@ -57,4 +57,15 @@ model users {
   is_admin         Boolean       @default(false)
   date_of_creation DateTime      @default(dbgenerated("(curtime())")) @db.Timestamp(0)
   file_groups      file_groups[]
+  shared_links     shared_links[]
+}
+
+model shared_links {
+  id         String    @id @db.VarChar(6)
+  url        String    @db.Text
+  user_id    String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onUpdate: Restrict, onDelete: Cascade)
+
+  @@index([user_id], map: "shared_links_user_id_idx")
 }

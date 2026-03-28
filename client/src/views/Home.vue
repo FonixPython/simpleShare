@@ -5,6 +5,7 @@
       :quota-info="quotaInfo"
       @show-login="showLoginModal = true"
       @show-upload="showUploadModal = true"
+      @show-share-link="showLinkShareModal = true"
       @toggle-hamburger="showHamburgerMenu = !showHamburgerMenu"
     />
 
@@ -23,6 +24,13 @@
       @upload-file="handleFileUpload"
       @upload-success="handleUploadSuccess"
       @show-my-files="handleShowMyFiles"
+    />
+
+    <LinkShareModal
+      :visible="showLinkShareModal"
+      :token="sessionToken"
+      @close="showLinkShareModal = false"
+      @link-created="handleLinkCreated"
     />
 
     <HamburgerMenu
@@ -73,6 +81,7 @@ import UploadModal from "../components/UploadModal.vue";
 import HamburgerMenu from "../components/HamburgerMenu.vue";
 import MyFilesModal from "../components/MyFilesModal.vue";
 import ChangePasswordModal from "../components/ChangePasswordModal.vue";
+import LinkShareModal from "../components/LinkShareModal.vue";
 import RegisterUserModal from "../components/RegisterUserModal.vue";
 
 export default {
@@ -82,6 +91,7 @@ export default {
     DownloadForm,
     LoginModal,
     UploadModal,
+    LinkShareModal,
     HamburgerMenu,
     MyFilesModal,
     ChangePasswordModal,
@@ -113,6 +123,7 @@ export default {
 
     const showLoginModal = ref(false);
     const showUploadModal = ref(false);
+    const showLinkShareModal = ref(false);
     const showHamburgerMenu = ref(false);
     const showMyFilesModal = ref(false);
     const showChangePasswordModal = ref(false);
@@ -206,6 +217,10 @@ export default {
     };
 
     const handleUploadSuccess = () => {};
+
+    const handleLinkCreated = () => {
+      showNotification("Link shared successfully!", "ok");
+    };
 
     const handleShowMyFiles = () => {
       showUploadModal.value = false;
@@ -343,6 +358,7 @@ export default {
       // Modal states
       showLoginModal,
       showUploadModal,
+      showLinkShareModal,
       showHamburgerMenu,
       showMyFilesModal,
       showChangePasswordModal,
@@ -353,6 +369,7 @@ export default {
       handleLogout,
       handleFileUpload,
       handleUploadSuccess,
+      handleLinkCreated,
       handleShowMyFiles,
       handleDeleteFile,
       handleChangePassword,
