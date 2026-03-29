@@ -1,0 +1,54 @@
+name: PR Build and Startup Test
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build check
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist folder was not created during build!"
+            exit 1
+          fi
+          if [ ! -f "dist/server.js" ]; then
+            echo "ERROR: dist/server.js does not exist!"
+            exit 1
+          fi
+          echo "Build successful - all files in place"
+
+      - name: Test application startup
+        run: |
+          # Start the server and wait a bit
+          timeout 10s npm start &
+          PID=$!
+          sleep 5
+          
+          # Check if the process is still running
+          if kill -0 $PID 2>/dev/null; then
+            echo "Application started successfully!"
+            kill $PID 2>/dev/null || true
+            exit 0
+          else
+            echo "ERROR: Application failed to start or stopped early!"
+            exit 1
+          fi
