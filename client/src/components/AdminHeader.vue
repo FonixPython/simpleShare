@@ -7,13 +7,13 @@
       <Logo />
     </router-link>
     <!-- Tab Navigation -->
-    <div class="absolute top-5 mobile:top-3 left-1/2 -translate-x-1/2 flex bg-gray-800/50 rounded-lg p-1 backdrop-blur-sm">
+    <div class="absolute top-5 mobile:top-3 left-1/2 -translate-x-1/2 mobile:left-auto mobile:right-3 mobile:translate-x-0 flex bg-gray-800/50 rounded-lg p-1 backdrop-blur-sm mobile:max-w-[70vw] mobile:overflow-x-auto mobile:scrollbar-hide">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         @click="$emit('tab-change', tab.id)"
         :class="[
-          'px-5 mobile:px-3 py-2 mobile:py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap',
+          'px-5 mobile:px-3 py-2 mobile:py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap mobile:flex-shrink-0',
           activeTab === tab.id
             ? 'bg-primary-button text-black shadow-sm'
             : 'text-gray-300 hover:text-white hover:bg-gray-700/50',
@@ -41,13 +41,23 @@ export default {
     return {
       tabs: [
         { id: "users", label: "Users" },
-        { id: "files", label: "All Files" },
-        { id: "links", label: "All Links" },
+        { id: "files", label: "Files" },
+        { id: "links", label: "Links" },
         { id: "stats", label: "Stats" },
-        { id: "storage", label: "Global Storage" },
-        { id: "database", label: "Database" },
+        { id: "storage", label: "Storage" },
+        { id: "database", label: "DB" },
       ],
     };
   },
 };
 </script>
+
+<style scoped>
+.mobile\:scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.mobile\:scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

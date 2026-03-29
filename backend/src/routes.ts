@@ -39,6 +39,14 @@ router.post("/admin/updateStorageLimit", adminController.updateStorageLimit);
 router.post("/admin/file/updateId", adminController.updateFileId);
 router.post("/admin/file/updateName", adminController.updateFileName);
 
+// Group management endpoints
+router.post("/admin/group/updateId", adminController.updateGroupId);
+router.post("/admin/group/updateName", adminController.updateGroupName);
+
+// Link management endpoints
+router.post("/admin/link/updateId", adminController.updateLinkId);
+router.post("/admin/link/updateUrl", adminController.updateLinkUrl);
+
 // User action API endpoints
 router.post("/login", userController.login);
 router.get("/logout", userController.logout);

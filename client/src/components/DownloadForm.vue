@@ -1,6 +1,6 @@
 <template>
   <div
-    class="text-center container animate-slide-up mt-20 mobile:mt-16 px-4 mobile:px-2"
+    class="text-center container animate-slide-up mt-20 mobile:mt-16 px-4 mobile:px-2 relative z-10"
   >
     <!-- Code input -->
     <form @submit.prevent="handleSubmit">
@@ -12,7 +12,7 @@
           :key="index"
           v-model="input.value"
           type="text"
-          class="bg-input border-none outline-none font-inter text-[28px] mobile:text-[20px] w-12 mobile:w-10 h-[52px] mobile:h-[44px] text-center text-[#333] rounded-lg shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.2),inset_2px_2px_5px_rgba(255,255,255,0.5)] transition-all duration-200 code-input select-text focus:scale-110 focus:shadow-lg focus:shadow-primary-button/30"
+          class="bg-input border-none outline-none font-inter text-[28px] mobile:text-[18px] w-12 mobile:w-9 h-[52px] mobile:h-[40px] text-center text-[#333] rounded-lg shadow-[inset_-2px_-2px_5px_rgba(0,0,0,0.2),inset_2px_2px_5px_rgba(255,255,255,0.5)] transition-all duration-200 code-input select-text focus:scale-110 focus:shadow-lg focus:shadow-primary-button/30"
           maxlength="1"
           required
           autocomplete="off"

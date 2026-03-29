@@ -34,7 +34,7 @@
         v-else
         class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] overflow-hidden"
       >
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mobile:-mx-2 mobile:px-2">
           <table class="w-full">
             <thead class="bg-black/30">
               <tr>
@@ -243,10 +243,10 @@
     <!-- Edit User Dialog -->
     <div
       v-if="editDialog.isOpen"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 w-full max-w-md"
+        class="bg-black/90 backdrop-blur-[20px] rounded-xl border border-[#444] p-6 mobile:p-4 w-full max-w-md mobile:max-w-full mobile:mx-2"
       >
         <h3 class="text-xl font-bold text-white mb-4">
           Edit User: {{ editDialog.user?.username }}
@@ -321,10 +321,10 @@
     <!-- Change Role Dialog -->
     <div
       v-if="changeRoleDialog.isOpen"
-      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 mobile:p-5 w-full max-w-lg mobile:max-w-full mobile:mx-2 transform transition-all"
       >
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold text-white">
@@ -421,10 +421,10 @@
     <!-- Change Password Dialog -->
     <div
       v-if="changePasswordDialog.isOpen"
-      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 mobile:p-5 w-full max-w-lg mobile:max-w-full mobile:mx-2 transform transition-all"
       >
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold text-white">Change Password</h3>
@@ -502,10 +502,10 @@
     <!-- Change Username Dialog -->
     <div
       v-if="changeUsernameDialog.isOpen"
-      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 mobile:p-5 w-full max-w-lg mobile:max-w-full mobile:mx-2 transform transition-all"
       >
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold text-white">Change Username</h3>
@@ -585,10 +585,10 @@
     <!-- Change Quota Dialog -->
     <div
       v-if="changeQuotaDialog.isOpen"
-      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 mobile:p-5 w-full max-w-lg mobile:max-w-full mobile:mx-2 transform transition-all"
       >
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold text-white">Change Quota</h3>
@@ -690,10 +690,10 @@
     <!-- Delete User Dialog -->
     <div
       v-if="deleteUserDialog.isOpen"
-      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 mobile:p-4"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 w-full max-w-lg transform transition-all"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl p-8 mobile:p-5 w-full max-w-lg mobile:max-w-full mobile:mx-2 transform transition-all"
       >
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold text-white">Delete User</h3>

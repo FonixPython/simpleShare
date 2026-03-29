@@ -5,7 +5,7 @@
     @click="$emit('close')"
   >
     <div
-      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-20vh)] mobile:h-[calc(100vh-10vh)] w-[calc(100vw-30vw)] mobile:w-[calc(100vw-5vw)] flex items-center justify-center m-[100px_auto] mobile:m-[50px_auto] mobile:mx-4 rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in"
+      class="z-10 bg-black/20 backdrop-blur-[20px] absolute h-[calc(100vh-20vh)] mobile:h-auto mobile:max-h-[80vh] w-[calc(100vw-30vw)] mobile:w-[90vw] mobile:max-w-[360px] flex items-center justify-center m-[100px_auto] mobile:m-auto rounded-[28px] mobile:rounded-[20px] border-3 border-[#a1a1a1] transition-all duration-300 modal animate-scale-in mobile:py-8"
       @click.stop
     >
       <button
@@ -16,7 +16,7 @@
       </button>
       <form
         @submit.prevent="handleSubmit"
-        class="flex flex-col w-full max-w-sm mobile:max-w-xs px-8 mobile:px-4"
+        class="flex flex-col w-full max-w-sm mobile:max-w-[280px] px-8 mobile:px-6"
       >
         <input
           v-model="username"
@@ -24,7 +24,7 @@
           name="username"
           aria-label="Username"
           placeholder="Username"
-          class="min-w-[300px] mobile:min-w-[250px] mobile:w-full p-[15px] mobile:p-[12px] m-[10px_0] mobile:m-[8px_0] rounded-[20px] mobile:rounded-[16px] border-none outline-none text-xl mobile:text-lg bg-input font-red-hat form-input select-text caret-black text-black transition-all duration-200 focus:scale-105 focus:shadow-lg focus:shadow-primary-button/30"
+          class="min-w-[300px] mobile:min-w-0 mobile:w-full p-[15px] mobile:p-[12px] m-[10px_0] mobile:m-[6px_0] rounded-[20px] mobile:rounded-[16px] border-none outline-none text-xl mobile:text-lg bg-input font-red-hat form-input select-text caret-black text-black transition-all duration-200 focus:scale-105 focus:shadow-lg focus:shadow-primary-button/30"
           required
         />
         <br />
@@ -34,7 +34,7 @@
           name="password"
           aria-label="Password"
           placeholder="Password"
-          class="min-w-[300px] mobile:min-w-[250px] mobile:w-full p-[15px] mobile:p-[12px] m-[10px_0] mobile:m-[8px_0] rounded-[20px] mobile:rounded-[16px] border-none outline-none text-xl mobile:text-lg bg-input font-red-hat form-input text-black select-text caret-black transition-all duration-200 focus:scale-105 focus:shadow-lg focus:shadow-primary-button/30"
+          class="min-w-[300px] mobile:min-w-0 mobile:w-full p-[15px] mobile:p-[12px] m-[10px_0] mobile:m-[6px_0] rounded-[20px] mobile:rounded-[16px] border-none outline-none text-xl mobile:text-lg bg-input font-red-hat form-input text-black select-text caret-black transition-all duration-200 focus:scale-105 focus:shadow-lg focus:shadow-primary-button/30"
           required
         />
         <br />
@@ -42,7 +42,7 @@
           type="submit"
           :disabled="loading"
           :class="[
-            'min-w-[300px] mobile:min-w-[250px] mobile:w-full p-[15px] mobile:p-[12px] mt-[15px] mobile:mt-[12px] rounded-[20px] mobile:rounded-[16px] border-none text-xl mobile:text-lg cursor-pointer bg-primary-button font-red-hat transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 submit-button text-black',
+            'min-w-[300px] mobile:min-w-0 mobile:w-full p-[15px] mobile:p-[12px] mt-[15px] mobile:mt-[10px] rounded-[20px] mobile:rounded-[16px] border-none text-xl mobile:text-lg cursor-pointer bg-primary-button font-red-hat transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary-button/50 submit-button text-black',
             loading ? 'opacity-75 cursor-not-allowed' : '',
           ]"
         >
