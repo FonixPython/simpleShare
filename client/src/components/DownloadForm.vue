@@ -33,7 +33,7 @@
           canDownload ? '' : 'opacity-50 cursor-not-allowed',
         ]"
       >
-        Download
+        {{ isLink ? 'Redirect' : 'Download' }}
       </button>
       <div
         id="file-info"
@@ -54,7 +54,7 @@
 
     <!-- File Card Display -->
     <FileCard
-      v-if="fileData"
+      v-if="fileData && fileData.type !== 'link'"
       :file-data="fileData"
       @download-file="handleDownloadFile"
       @download-group="handleDownloadGroup"
@@ -89,6 +89,9 @@ export default {
     },
     canDownload() {
       return this.fullCode.length === 6 && this.fileInfo.exists;
+    },
+    isLink() {
+      return this.fileData && this.fileData.type === 'link';
     },
   },
   mounted() {
@@ -188,6 +191,13 @@ export default {
                   upload_date: file.date_added,
                 })),
               };
+            } else if (result.type === "link") {
+              this.fileData = {
+                type: "link",
+                code: result.id,
+                url: result.url,
+                create_date: result.created_at,
+              };
             } else {
               this.fileData = {
                 type: "file",
@@ -232,6 +242,13 @@ export default {
             }, 500);
           }, index * 30);
         });
+        return;
+      }
+
+      // If it's a link, redirect to the URL
+      if (this.isLink && this.fileData && this.fileData.url) {
+        window.open(this.fileData.url, '_blank');
+        this.resetForm();
         return;
       }
 
