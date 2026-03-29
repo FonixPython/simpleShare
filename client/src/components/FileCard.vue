@@ -293,7 +293,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .separator {
@@ -403,12 +403,34 @@ export default {
 /* Mobile responsive */
 @media (max-width: 768px) {
   .file-card-container {
-    margin: 20px 16px 0;
+    margin: 20px 12px 0;
+    max-width: none;
   }
 
   .file-card,
   .group-card {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .file-card {
+    gap: 12px;
+  }
+
+  .file-icon,
+  .group-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .file-icon .material-icons-outlined,
+  .group-icon .material-icons-outlined {
+    font-size: 24px;
+  }
+
+  .file-name,
+  .group-name {
+    font-size: 14px;
+    max-width: calc(100vw - 140px);
   }
 
   .group-header {
@@ -417,22 +439,44 @@ export default {
     gap: 12px;
   }
 
+  .group-info {
+    width: 100%;
+  }
+
   .collective-download-btn {
     width: 100%;
     justify-content: center;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .file-details,
+  .group-details {
+    font-size: 12px;
+    gap: 4px;
   }
 
   .file-item {
     padding: 10px;
+    gap: 10px;
   }
 
   .file-item .file-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 
   .file-item .file-icon .material-icons-outlined {
     font-size: 18px;
+  }
+
+  .file-item .file-name {
+    font-size: 13px;
+    max-width: calc(100vw - 180px);
+  }
+
+  .file-item .file-details {
+    font-size: 11px;
   }
 
   .download-btn {
@@ -442,6 +486,27 @@ export default {
 
   .download-btn .material-icons-outlined {
     font-size: 16px;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 380px) {
+  .file-card-container {
+    margin: 16px 8px 0;
+  }
+
+  .file-card,
+  .group-card {
+    padding: 12px;
+  }
+
+  .file-name,
+  .group-name {
+    max-width: calc(100vw - 120px);
+  }
+
+  .file-item .file-name {
+    max-width: calc(100vw - 160px);
   }
 }
 
