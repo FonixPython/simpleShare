@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     root: path.resolve(__dirname, './'),
+    publicDir: path.resolve(__dirname, 'public'),
     plugins: [vue()],
     build: {
       outDir: '../dist/public',
