@@ -33,7 +33,7 @@
           canDownload ? '' : 'opacity-50 cursor-not-allowed',
         ]"
       >
-        {{ isLink ? 'Open' : 'Download' }}
+        {{ isLink ? 'Redirect' : 'Download' }}
       </button>
       <div
         id="file-info"
