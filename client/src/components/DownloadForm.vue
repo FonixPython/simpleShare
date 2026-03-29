@@ -1,6 +1,6 @@
 <template>
   <div
-    class="text-center container animate-slide-up mt-20 mobile:mt-16 px-4 mobile:px-2"
+    class="text-center container animate-slide-up mt-20 mobile:mt-16 px-4 mobile:px-2 relative z-10"
   >
     <!-- Code input -->
     <form @submit.prevent="handleSubmit">

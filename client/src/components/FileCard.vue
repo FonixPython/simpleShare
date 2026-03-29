@@ -1,5 +1,5 @@
 <template>
-  <div class="file-card-container">
+  <div class="file-card-container relative z-0">
     <!-- Single File Card -->
     <div
       v-if="fileData && fileData.type === 'file'"
@@ -212,6 +212,8 @@ export default {
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  position: relative;
+  z-index: 0;
 }
 
 .file-card,
@@ -333,7 +335,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 400px;
+  max-height: 300px;
   overflow-y: auto;
   padding-right: 8px;
 }
@@ -472,8 +474,8 @@ export default {
   }
 
   .files-list {
-    max-height: 300px;
-    gap: 10px;
+    max-height: 250px;
+    gap: 8px;
   }
 
   .file-item {
