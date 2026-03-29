@@ -3,6 +3,7 @@ import path from "path";
 import archiver from "archiver";
 import * as auth from "../auth";
 import * as uploadActions from "../uploadActions";
+import { prisma } from "../db";
 
 export const uploadFile = async (req: Request & Record<string, any>, res: Response) => {
   if (!req.file){return res.status(400).json({error:"No file provided"})}
@@ -121,7 +122,22 @@ export const checkFile = async (req: Request, res: Response) => {
   let regex = /\d/;
   if (regex.test(file_code)) {return res.status(400).json({ exists: false });}
   let db_result = await uploadActions.retrieveObjectInfo(file_code);
-  if (db_result === null) {return res.status(200).json({ exists: false });}
+  if (db_result === null) {
+    // Check if it's a shared link
+    const link = await prisma.shared_links.findUnique({
+      where: { id: file_code }
+    });
+    if (link) {
+      return res.status(200).json({
+        exists: true,
+        type: 'link',
+        id: link.id,
+        url: link.url,
+        created_at: link.created_at
+      });
+    }
+    return res.status(200).json({ exists: false });
+  }
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   db_result.exists = true
   return res.status(200).json(db_result);
