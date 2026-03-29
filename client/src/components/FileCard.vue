@@ -333,6 +333,27 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.files-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.files-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.files-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.files-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .file-item {
@@ -450,10 +471,9 @@ export default {
     font-size: 13px;
   }
 
-  .file-details,
-  .group-details {
-    font-size: 12px;
-    gap: 4px;
+  .files-list {
+    max-height: 300px;
+    gap: 10px;
   }
 
   .file-item {

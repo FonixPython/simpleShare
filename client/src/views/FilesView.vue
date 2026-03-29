@@ -71,7 +71,7 @@
         v-else
         class="bg-black/20 backdrop-blur-[20px] rounded-xl border border-[#444] overflow-hidden"
       >
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mobile:-mx-2 mobile:px-2">
           <table class="w-full">
             <thead class="bg-black/30">
               <tr>
