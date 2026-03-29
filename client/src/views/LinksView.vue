@@ -147,17 +147,17 @@
                 <td class="px-4 py-3 text-sm text-center">
                   <div class="flex items-center justify-center gap-2">
                     <button
-                      @click="copyLinkUrl(link.id)"
-                      class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
-                      title="Copy short URL"
+                      @click="openEditModal(link)"
+                      class="bg-primary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                      title="Edit link"
                     >
                       <span class="material-icons-outlined text-sm"
-                        >content_copy</span
+                        >edit</span
                       >
                     </button>
                     <button
                       @click="openLink(link.url)"
-                      class="bg-primary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                      class="bg-secondary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
                       title="Open link"
                     >
                       <span class="material-icons-outlined text-sm"
@@ -188,6 +188,67 @@
         </div>
       </div>
     </div>
+    <!-- Edit Link Modal -->
+    <div
+      v-if="showEditModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      @click="closeEditModal"
+    >
+      <div
+        class="bg-gray-900 border border-[#444] rounded-xl p-6 w-full max-w-md mx-4"
+        @click.stop
+      >
+        <h3 class="text-xl font-semibold text-white mb-4">Edit Link</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Link ID
+            </label>
+            <input
+              v-model="editForm.linkId"
+              type="text"
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new link ID"
+            />
+            <p class="text-xs text-gray-400 mt-1">
+              Warning: Changing ID may affect link accessibility
+            </p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              URL
+            </label>
+            <input
+              v-model="editForm.linkUrl"
+              type="text"
+              class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
+              placeholder="Enter new URL"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            @click="closeEditModal"
+            class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleEditLink"
+            :disabled="!editForm.linkId || !editForm.linkUrl || editLoading"
+            class="px-4 py-2 bg-primary-button text-black rounded-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="editLoading" class="material-icons-outlined animate-spin text-sm">
+              hourglass_empty
+            </span>
+            <span v-else>Save Changes</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -209,6 +270,8 @@ export default {
       error,
       loadAllLinks,
       deleteLink,
+      updateLinkId,
+      updateLinkUrl,
     } = useAdmin();
 
     const { showNotification } = useNotification();
@@ -216,6 +279,15 @@ export default {
 
     const searchQuery = ref("");
     const selectedItems = ref(new Set());
+
+    // Edit modal state
+    const showEditModal = ref(false);
+    const editLoading = ref(false);
+    const currentEditingLink = ref(null);
+    const editForm = ref({
+      linkId: "",
+      linkUrl: ""
+    });
 
     const filteredLinks = computed(() => {
       if (!searchQuery.value) return allLinks.value;
@@ -315,6 +387,68 @@ export default {
       window.open(url, "_blank");
     };
 
+    // Edit modal functions
+    const openEditModal = (link) => {
+      currentEditingLink.value = link;
+      editForm.value = {
+        linkId: link.id,
+        linkUrl: link.url
+      };
+      showEditModal.value = true;
+    };
+
+    const closeEditModal = () => {
+      showEditModal.value = false;
+      currentEditingLink.value = null;
+      editForm.value = {
+        linkId: "",
+        linkUrl: ""
+      };
+    };
+
+    const handleEditLink = async () => {
+      if (!editForm.value.linkId || !editForm.value.linkUrl) {
+        showNotification("Please fill in all fields", "error");
+        return;
+      }
+
+      editLoading.value = true;
+      try {
+        let success = true;
+        let error = "";
+
+        // Update link ID if changed
+        if (editForm.value.linkId !== currentEditingLink.value.id) {
+          const idResult = await updateLinkId(props.token, currentEditingLink.value.id, editForm.value.linkId);
+          if (!idResult.success) {
+            success = false;
+            error = idResult.error;
+          }
+        }
+
+        // Update link URL if changed
+        if (success && editForm.value.linkUrl !== currentEditingLink.value.url) {
+          const urlResult = await updateLinkUrl(props.token, editForm.value.linkId, editForm.value.linkUrl);
+          if (!urlResult.success) {
+            success = false;
+            error = urlResult.error;
+          }
+        }
+
+        if (success) {
+          showNotification("Link updated successfully!", "ok");
+          closeEditModal();
+          await loadAllLinks(props.token);
+        } else {
+          showNotification("Failed to update link: " + error, "error");
+        }
+      } catch (error) {
+        showNotification("Failed to edit link: " + error.message, "error");
+      } finally {
+        editLoading.value = false;
+      }
+    };
+
     onMounted(() => {
       loadAllLinks(props.token);
     });
@@ -336,6 +470,13 @@ export default {
       copyCode,
       copyLinkUrl,
       openLink,
+      showEditModal,
+      editLoading,
+      currentEditingLink,
+      editForm,
+      openEditModal,
+      closeEditModal,
+      handleEditLink,
     };
   },
 };

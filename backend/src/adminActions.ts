@@ -498,3 +498,141 @@ export async function updateFileName(fileId: string, newName: string):Promise<{s
         return { success: false, error: (err as Error).message };
     }
 }
+
+// Group management functions
+export async function updateGroupId(currentId: string, newId: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!currentId || !newId) {
+            throw new Error('Group ID is required');
+        }
+        
+        if (!/^[a-zA-Z0-9]{6}$/.test(newId)) {
+            throw new Error('Group ID must be exactly 6 alphanumeric characters');
+        }
+        
+        // Check if current group exists
+        const currentGroup = await prisma.file_groups.findUnique({
+            where: { id: currentId }
+        });
+        if (!currentGroup) {
+            throw new Error('Group not found');
+        }
+        
+        // Check if new ID already exists
+        const existingGroup = await prisma.file_groups.findUnique({
+            where: { id: newId }
+        });
+        if (existingGroup) {
+            throw new Error('Group ID already exists');
+        }
+        
+        // Update database
+        await prisma.file_groups.update({
+            where: { id: currentId },
+            data: { id: newId }
+        });
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+export async function updateGroupName(groupId: string, newName: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!groupId || !newName) {
+            throw new Error('Group ID and name are required');
+        }
+        
+        // Check if group exists
+        const group = await prisma.file_groups.findUnique({
+            where: { id: groupId }
+        });
+        if (!group) {
+            throw new Error('Group not found');
+        }
+        
+        // Update database
+        await prisma.file_groups.update({
+            where: { id: groupId },
+            data: { name: newName }
+        });
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+// Link management functions
+export async function updateLinkId(currentId: string, newId: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!currentId || !newId) {
+            throw new Error('Link ID is required');
+        }
+        
+        if (!/^[a-zA-Z0-9]{6}$/.test(newId)) {
+            throw new Error('Link ID must be exactly 6 alphanumeric characters');
+        }
+        
+        // Check if current link exists
+        const currentLink = await prisma.shared_links.findUnique({
+            where: { id: currentId }
+        });
+        if (!currentLink) {
+            throw new Error('Link not found');
+        }
+        
+        // Check if new ID already exists
+        const existingLink = await prisma.shared_links.findUnique({
+            where: { id: newId }
+        });
+        if (existingLink) {
+            throw new Error('Link ID already exists');
+        }
+        
+        // Update database
+        await prisma.shared_links.update({
+            where: { id: currentId },
+            data: { id: newId }
+        });
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}
+
+export async function updateLinkUrl(linkId: string, newUrl: string):Promise<{success: boolean, error?: string}> {
+    try {
+        // Validate inputs
+        if (!linkId || !newUrl) {
+            throw new Error('Link ID and URL are required');
+        }
+        
+        // Check if link exists
+        const link = await prisma.shared_links.findUnique({
+            where: { id: linkId }
+        });
+        if (!link) {
+            throw new Error('Link not found');
+        }
+        
+        // Update database
+        await prisma.shared_links.update({
+            where: { id: linkId },
+            data: { url: newUrl }
+        });
+        
+        return { success: true };
+    } catch(err) {
+        console.log(err);
+        return { success: false, error: (err as Error).message };
+    }
+}

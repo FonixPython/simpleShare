@@ -388,6 +388,110 @@ export const updateFileName = async (req: Request, res: Response) => {
   }
 };
 
+// Group management endpoints
+
+export const updateGroupId = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { currentId, newId } = req.body;
+  
+  if (!currentId || !newId) {
+    return res.status(400).json({error:"currentId and newId are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateGroupId(currentId, newId);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Group ID updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update group ID!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update group ID" });
+  }
+};
+
+export const updateGroupName = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { groupId, newName } = req.body;
+  
+  if (!groupId || !newName) {
+    return res.status(400).json({error:"groupId and newName are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateGroupName(groupId, newName);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Group name updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update group name!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update group name" });
+  }
+};
+
+// Link management endpoints
+
+export const updateLinkId = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { currentId, newId } = req.body;
+  
+  if (!currentId || !newId) {
+    return res.status(400).json({error:"currentId and newId are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateLinkId(currentId, newId);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Link ID updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update link ID!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update link ID" });
+  }
+};
+
+export const updateLinkUrl = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
+  
+  const { linkId, newUrl } = req.body;
+  
+  if (!linkId || !newUrl) {
+    return res.status(400).json({error:"linkId and newUrl are required!"});
+  }
+  
+  try {
+    const result = await adminActions.updateLinkUrl(linkId, newUrl);
+    
+    if (result.success) {
+      return res.status(200).json({success: true, message: "Link URL updated successfully!"});
+    } else {
+      return res.status(400).json({error: result.error || "Failed to update link URL!"});
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to update link URL" });
+  }
+};
+
 // Database management functions
 
 const ALLOWED_TABLES = ['users', 'file_index', 'file_groups', 'settings', 'session_tokens'];

@@ -647,6 +647,124 @@ export function useAdmin() {
     }
   };
 
+  // Group management functions
+  const updateGroupId = async (token, currentId, newId) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/group/updateId", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ currentId, newId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update group ID");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateGroupName = async (token, groupId, newName) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/group/updateName", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ groupId, newName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update group name");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Link management functions
+  const updateLinkId = async (token, currentId, newId) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/link/updateId", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ currentId, newId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update link ID");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateLinkUrl = async (token, linkId, newUrl) => {
+    loading.value = true;
+    error.value = "";
+
+    try {
+      const response = await fetch("/admin/link/updateUrl", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({ linkId, newUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update link URL");
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      error.value = error.message;
+      return { success: false, error: error.message };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const loadAllLinks = async (token) => {
     loading.value = true;
     error.value = "";
@@ -740,5 +858,9 @@ export function useAdmin() {
     getSystemHealthMetrics,
     updateFileId,
     updateFileName,
+    updateGroupId,
+    updateGroupName,
+    updateLinkId,
+    updateLinkUrl,
   };
 }

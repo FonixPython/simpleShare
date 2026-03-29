@@ -227,6 +227,16 @@
                         >
                       </button>
                       <button
+                        v-if="file.type === 'group'"
+                        @click.stop="openEditModal(file)"
+                        class="bg-primary-button text-black w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
+                        title="Edit Group"
+                      >
+                        <span class="material-icons-outlined text-sm"
+                          >edit</span
+                        >
+                      </button>
+                      <button
                         @click.stop="handleDeleteFile(file)"
                         class="bg-error text-white w-8 h-8 rounded flex items-center justify-center hover:scale-105 transition-transform"
                         title="Delete"
@@ -325,7 +335,7 @@
       </div>
     </div>
 
-    <!-- Edit File Modal -->
+    <!-- Edit Modal -->
     <div
       v-if="showEditModal"
       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
@@ -335,33 +345,35 @@
         class="bg-gray-900 border border-[#444] rounded-xl p-6 w-full max-w-md mx-4"
         @click.stop
       >
-        <h3 class="text-xl font-semibold text-white mb-4">Edit File</h3>
+        <h3 class="text-xl font-semibold text-white mb-4">
+          Edit {{ currentEditingItem?.type === 'group' ? 'Group' : 'File' }}
+        </h3>
         
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">
-              File ID
+              {{ currentEditingItem?.type === 'group' ? 'Group' : 'File' }} ID
             </label>
             <input
-              v-model="editForm.fileId"
+              v-model="editForm.itemId"
               type="text"
               class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter new file ID"
+              :placeholder="'Enter new ' + (currentEditingItem?.type === 'group' ? 'group' : 'file') + ' ID'"
             />
             <p class="text-xs text-gray-400 mt-1">
-              Warning: Changing file ID may affect file accessibility
+              Warning: Changing ID may affect accessibility
             </p>
           </div>
           
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">
-              Filename
+              {{ currentEditingItem?.type === 'group' ? 'Group' : 'File' }} Name
             </label>
             <input
-              v-model="editForm.fileName"
+              v-model="editForm.itemName"
               type="text"
               class="w-full px-3 py-2 bg-black/30 border border-[#444] rounded-lg text-white focus:border-primary-button focus:outline-none"
-              placeholder="Enter new filename"
+              :placeholder="'Enter new ' + (currentEditingItem?.type === 'group' ? 'group' : 'file') + ' name'"
             />
           </div>
         </div>
@@ -374,8 +386,8 @@
             Cancel
           </button>
           <button
-            @click="handleEditFile"
-            :disabled="!editForm.fileId || !editForm.fileName || editLoading"
+            @click="handleEditItem"
+            :disabled="!editForm.itemId || !editForm.itemName || editLoading"
             class="px-4 py-2 bg-primary-button text-black rounded-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="editLoading" class="material-icons-outlined animate-spin text-sm">
@@ -411,6 +423,8 @@ export default {
       getGroupDetails,
       updateFileId,
       updateFileName,
+      updateGroupId,
+      updateGroupName,
     } = useAdmin();
 
     const { showNotification } = useNotification();
@@ -426,10 +440,10 @@ export default {
     // Edit modal state
     const showEditModal = ref(false);
     const editLoading = ref(false);
-    const currentEditingFile = ref(null);
+    const currentEditingItem = ref(null);
     const editForm = ref({
-      fileId: "",
-      fileName: ""
+      itemId: "",
+      itemName: ""
     });
 
     // Function to search within all groups
@@ -631,26 +645,26 @@ export default {
     };
 
     // Edit modal functions
-    const openEditModal = (file) => {
-      currentEditingFile.value = file;
+    const openEditModal = (item) => {
+      currentEditingItem.value = item;
       editForm.value = {
-        fileId: file.code,
-        fileName: file.name
+        itemId: item.code,
+        itemName: item.name
       };
       showEditModal.value = true;
     };
 
     const closeEditModal = () => {
       showEditModal.value = false;
-      currentEditingFile.value = null;
+      currentEditingItem.value = null;
       editForm.value = {
-        fileId: "",
-        fileName: ""
+        itemId: "",
+        itemName: ""
       };
     };
 
-    const handleEditFile = async () => {
-      if (!editForm.value.fileId || !editForm.value.fileName) {
+    const handleEditItem = async () => {
+      if (!editForm.value.itemId || !editForm.value.itemName) {
         showNotification("Please fill in all fields", "error");
         return;
       }
@@ -660,33 +674,51 @@ export default {
         let success = true;
         let error = "";
 
-        // Update file ID if changed
-        if (editForm.value.fileId !== currentEditingFile.value.code) {
-          const idResult = await updateFileId(props.token, currentEditingFile.value.code, editForm.value.fileId);
-          if (!idResult.success) {
-            success = false;
-            error = idResult.error;
+        const isGroup = currentEditingItem.value.type === 'group';
+
+        // Update ID if changed
+        if (editForm.value.itemId !== currentEditingItem.value.code) {
+          if (isGroup) {
+            const idResult = await updateGroupId(props.token, currentEditingItem.value.code, editForm.value.itemId);
+            if (!idResult.success) {
+              success = false;
+              error = idResult.error;
+            }
+          } else {
+            const idResult = await updateFileId(props.token, currentEditingItem.value.code, editForm.value.itemId);
+            if (!idResult.success) {
+              success = false;
+              error = idResult.error;
+            }
           }
         }
 
-        // Update file name if changed
-        if (success && editForm.value.fileName !== currentEditingFile.value.name) {
-          const nameResult = await updateFileName(props.token, editForm.value.fileId, editForm.value.fileName);
-          if (!nameResult.success) {
-            success = false;
-            error = nameResult.error;
+        // Update name if changed
+        if (success && editForm.value.itemName !== currentEditingItem.value.name) {
+          if (isGroup) {
+            const nameResult = await updateGroupName(props.token, editForm.value.itemId, editForm.value.itemName);
+            if (!nameResult.success) {
+              success = false;
+              error = nameResult.error;
+            }
+          } else {
+            const nameResult = await updateFileName(props.token, editForm.value.itemId, editForm.value.itemName);
+            if (!nameResult.success) {
+              success = false;
+              error = nameResult.error;
+            }
           }
         }
 
         if (success) {
-          showNotification("File updated successfully!", "ok");
+          showNotification((isGroup ? "Group" : "File") + " updated successfully!", "ok");
           closeEditModal();
           await loadAllFiles(props.token);
         } else {
-          showNotification("Failed to update file: " + error, "error");
+          showNotification("Failed to update " + (isGroup ? "group" : "file") + ": " + error, "error");
         }
       } catch (error) {
-        showNotification("Failed to edit file: " + error.message, "error");
+        showNotification("Failed to edit " + (currentEditingItem.value?.type === 'group' ? "group" : "file") + ": " + error.message, "error");
       } finally {
         editLoading.value = false;
       }
@@ -816,10 +848,11 @@ export default {
       getFileIcon,
       showEditModal,
       editLoading,
+      currentEditingItem,
       editForm,
       openEditModal,
       closeEditModal,
-      handleEditFile,
+      handleEditItem,
       // Batch operations
       isItemSelected,
       toggleItemSelection,
