@@ -2,7 +2,7 @@ name: PR Build and Startup Test
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: release
 
 jobs:
   build-and-test:
