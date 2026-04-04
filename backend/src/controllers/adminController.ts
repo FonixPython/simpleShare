@@ -494,7 +494,7 @@ export const updateLinkUrl = async (req: Request, res: Response) => {
 
 // Database management functions
 
-const ALLOWED_TABLES = ['users', 'file_index', 'file_groups', 'settings', 'session_tokens'];
+const ALLOWED_TABLES = ['users', 'file_index', 'file_groups', 'settings', 'session_tokens', 'shared_links'];
 
 export const getDatabaseTables = async (req: Request, res: Response) => {
   if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
@@ -507,7 +507,8 @@ export const getDatabaseTables = async (req: Request, res: Response) => {
       { name: 'file_index', label: 'Files', description: 'Uploaded files index' },
       { name: 'file_groups', label: 'File Groups', description: 'File collections/groups' },
       { name: 'settings', label: 'Settings', description: 'System settings' },
-      { name: 'session_tokens', label: 'Sessions', description: 'Active user sessions (read-only recommended)' }
+      { name: 'session_tokens', label: 'Sessions', description: 'Active user sessions (read-only recommended)' },
+      { name: 'shared_links', label: 'Shared Links', description: 'User shared links' }
     ]
   });
 };
@@ -546,6 +547,10 @@ export const getTableData = async (req: Request, res: Response) => {
       case 'session_tokens':
         data = await prisma.session_tokens.findMany({ orderBy: { added_on: 'desc' } });
         columns = ['token', 'user_id', 'is_valid', 'user_agent', 'added_on'];
+        break;
+      case 'shared_links':
+        data = await prisma.shared_links.findMany({ orderBy: { created_at: 'desc' } });
+        columns = ['id', 'url', 'user_id', 'created_at'];
         break;
     }
     
@@ -619,6 +624,12 @@ export const updateTableRow = async (req: Request, res: Response) => {
           data: updates
         });
         break;
+      case 'shared_links':
+        result = await prisma.shared_links.update({
+          where: { id: primaryKey },
+          data: updates
+        });
+        break;
       default:
         return res.status(400).json({error: "Table not supported for updates"});
     }
@@ -658,6 +669,9 @@ export const deleteTableRow = async (req: Request, res: Response) => {
         break;
       case 'session_tokens':
         await prisma.session_tokens.delete({ where: { token: primaryKey } });
+        break;
+      case 'shared_links':
+        await prisma.shared_links.delete({ where: { id: primaryKey } });
         break;
       default:
         return res.status(400).json({error: "Table not supported for deletion"});
@@ -709,6 +723,9 @@ export const insertTableRow = async (req: Request, res: Response) => {
         break;
       case 'session_tokens':
         return res.status(400).json({error: "Cannot manually insert session tokens"});
+      case 'shared_links':
+        result = await prisma.shared_links.create({ data });
+        break;
       default:
         return res.status(400).json({error: "Table not supported for insertion"});
     }
