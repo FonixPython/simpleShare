@@ -104,13 +104,17 @@ simpleShare/
 
    Edit `.env` with your database configuration:
    ```
-    DB_HOST=localhost
-    DB_PORT=3306
-    DB_USER=simpleShare
-    DB_PASSWORD=simpleShare
-    DB_NAME=simpleShare
-    PORT=3000
-    UPLOAD_PATH=./uploads/
+   DATABASE_URL=mysql://simpleShare:simpleShare@localhost:3306/simpleShare
+   DATABASE_USER=simpleShare
+   DATABASE_PASSWORD=simpleShare
+   DATABASE_NAME=simpleShare
+   DATABASE_HOST=localhost
+   DATABASE_PORT=3306
+   PORT=3000
+   UPLOAD_PATH=./uploads/
+   DEFAULT_ADMIN_USERNAME=admin
+   DEFAULT_ADMIN_PASSWORD=admin
+   DEFAULT_ADMIN_QUOTA=10737418240
    ```
 
 4. **Database Setup:**
@@ -170,8 +174,8 @@ services:
 
 ```bash
 mkdir DB Main
-wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/Schema.sql -o ./DB/Schema.sql
-wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/.env.example -o ./Main/.env
+wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/Schema.sql -O ./DB/Schema.sql
+wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/.env.example -O ./Main/.env
 ```
 
 3. **Start container**
