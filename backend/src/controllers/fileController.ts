@@ -142,3 +142,72 @@ export const checkFile = async (req: Request, res: Response) => {
   db_result.exists = true
   return res.status(200).json(db_result);
 };
+
+export const createGroupFromFiles = async (req: Request, res: Response) => {
+  if (!req.headers.authorization) {return res.sendStatus(401)}
+  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  if (user_permission.level === "none" || !user_permission.user_id) {return res.sendStatus(401)}
+  
+  const { fileIds, groupName } = req.body;
+  
+  if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+    return res.status(400).json({ error: "No files selected" });
+  }
+  
+  if (!groupName || typeof groupName !== 'string' || groupName.trim() === '') {
+    return res.status(400).json({ error: "Group name is required" });
+  }
+  
+  try {
+    // Verify all files exist and belong to the user
+    const files = await prisma.file_index.findMany({
+      where: { id: { in: fileIds } }
+    });
+    
+    if (files.length !== fileIds.length) {
+      return res.status(400).json({ error: "Some files do not exist" });
+    }
+    
+    // Check ownership if not admin
+    if (user_permission.level !== "admin") {
+      const unauthorizedFiles = files.filter(f => f.user_id !== user_permission.user_id);
+      if (unauthorizedFiles.length > 0) {
+        return res.status(403).json({ error: "Unauthorized access to some files" });
+      }
+    }
+    
+    // Generate unique group code
+    const chars = "abcdefghijklmnopqrstuvwxyz";
+    let groupCode = "";
+    while (true) {
+      groupCode = "";
+      for (let i = 0; i < 6; i++) {
+        groupCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const existing = await prisma.file_groups.findUnique({ where: { id: groupCode } });
+      if (!existing) break;
+    }
+    
+    // Create the group
+    await prisma.file_groups.create({
+      data: {
+        id: groupCode,
+        name: groupName.trim(),
+        file_ids: JSON.stringify(fileIds),
+        user_id: user_permission.user_id
+      }
+    });
+    
+    res.status(200).json({
+      error: null,
+      message: "Group created successfully!",
+      group: {
+        id: groupCode,
+        name: groupName.trim()
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to create group" });
+  }
+};

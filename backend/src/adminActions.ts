@@ -364,13 +364,44 @@ export async function getUserStatistics():Promise<any | null> {
         const adminUsers = await prisma.users.count({ where: { is_admin: true } });
         const regularUsers = totalUsers - adminUsers;
 
+        // Get user registration trends for last 6 months
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        
+        const usersByMonth = await prisma.$queryRaw<{ month: string; new_users: bigint }[]>`
+            SELECT 
+                DATE_FORMAT(date_of_creation, '%Y-%m') as month,
+                COUNT(*) as new_users
+            FROM users
+            WHERE date_of_creation >= ${sixMonthsAgo}
+            GROUP BY DATE_FORMAT(date_of_creation, '%Y-%m')
+            ORDER BY month ASC
+        `;
+
+        // Get top users by storage usage
+        const topUsers = await prisma.$queryRaw<{ username: string; quota_in_bytes: bigint; used_storage: bigint }[]>`
+            SELECT 
+                u.username,
+                u.quota_in_bytes,
+                COALESCE(SUM(f.file_size_in_bytes), 0) as used_storage
+            FROM users u
+            LEFT JOIN file_index f ON u.id = f.user_id
+            GROUP BY u.id, u.username, u.quota_in_bytes
+            ORDER BY used_storage DESC
+            LIMIT 10
+        `;
+
         return {
-            userTrends: [], // Would need complex date grouping
+            userTrends: usersByMonth || [],
             adminDistribution: {
-                admin_count: adminUsers,
-                regular_count: regularUsers
+                admin_count: Number(adminUsers),
+                regular_count: Number(regularUsers)
             },
-            topUsersByQuota: [] // Would need complex ordering
+            topUsersByQuota: (topUsers || []).map((user: any) => ({
+                username: user.username,
+                quota_in_bytes: Number(user.quota_in_bytes),
+                used_storage: Number(user.used_storage)
+            }))
         };
     } catch(err) {
         console.log(err);
@@ -380,9 +411,57 @@ export async function getUserStatistics():Promise<any | null> {
 
 export async function getFileTypeStatistics():Promise<any | null> {
     try {
+        // Get file type distribution by MIME type category
+        const fileTypeDistribution = await prisma.$queryRaw<{ file_category: string; file_count: bigint; total_size: bigint }[]>`
+            SELECT 
+                CASE 
+                    WHEN mime_type LIKE 'image/%' THEN 'Images'
+                    WHEN mime_type LIKE 'video/%' THEN 'Videos'
+                    WHEN mime_type LIKE 'audio/%' THEN 'Audio'
+                    WHEN mime_type LIKE 'application/pdf%' THEN 'PDF Documents'
+                    WHEN mime_type LIKE 'application/msword%' 
+                        OR mime_type LIKE 'application/vnd.openxmlformats-officedocument.wordprocessingml%' THEN 'Word Documents'
+                    WHEN mime_type LIKE 'application/vnd.ms-excel%'
+                        OR mime_type LIKE 'application/vnd.openxmlformats-officedocument.spreadsheetml%' THEN 'Excel Files'
+                    WHEN mime_type LIKE 'text/%' THEN 'Text Files'
+                    WHEN mime_type LIKE 'application/zip%'
+                        OR mime_type LIKE 'application/x-rar-compressed%'
+                        OR mime_type LIKE 'application/x-7z-compressed%' THEN 'Archives'
+                    ELSE 'Other'
+                END as file_category,
+                COUNT(*) as file_count,
+                COALESCE(SUM(file_size_in_bytes), 0) as total_size
+            FROM file_index
+            GROUP BY file_category
+            ORDER BY file_count DESC
+        `;
+
+        // Get upload trends for last 14 days
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        
+        const uploadTrends = await prisma.$queryRaw<{ upload_date: Date; files_uploaded: bigint; total_size_uploaded: bigint }[]>`
+            SELECT 
+                DATE(date_added) as upload_date,
+                COUNT(*) as files_uploaded,
+                COALESCE(SUM(file_size_in_bytes), 0) as total_size_uploaded
+            FROM file_index
+            WHERE date_added >= ${fourteenDaysAgo}
+            GROUP BY DATE(date_added)
+            ORDER BY upload_date ASC
+        `;
+
         return {
-            fileTypeDistribution: [], // Would need complex CASE statements
-            uploadTrends: [] // Would need date grouping
+            fileTypeDistribution: (fileTypeDistribution || []).map((item: any) => ({
+                file_category: item.file_category,
+                file_count: Number(item.file_count),
+                total_size: Number(item.total_size)
+            })),
+            uploadTrends: (uploadTrends || []).map((item: any) => ({
+                upload_date: item.upload_date,
+                files_uploaded: Number(item.files_uploaded),
+                total_size_uploaded: Number(item.total_size_uploaded)
+            }))
         };
     } catch(err) {
         console.log(err);
@@ -396,16 +475,67 @@ export async function getSystemHealthMetrics():Promise<any | null> {
         const totalFiles = await prisma.file_index.count();
         const totalGroups = await prisma.file_groups.count();
 
+        // Get total allocated quota
+        const allocatedQuota = await prisma.$queryRaw`
+            SELECT COALESCE(SUM(quota_in_bytes), 0) as total_quota
+            FROM users
+        `;
+
+        // Get total used storage
+        const usedStorage = await prisma.$queryRaw`
+            SELECT COALESCE(SUM(file_size_in_bytes), 0) as total_size
+            FROM file_index
+        `;
+
+        // Get users over 90% quota
+        const usersOverQuota = await prisma.$queryRaw<{ username: string; quota_in_bytes: bigint; used_storage: bigint; usage_percentage: number }[]>`
+            SELECT 
+                u.username,
+                u.quota_in_bytes,
+                COALESCE(SUM(f.file_size_in_bytes), 0) as used_storage,
+                ROUND((COALESCE(SUM(f.file_size_in_bytes), 0) / NULLIF(u.quota_in_bytes, 0)) * 100, 2) as usage_percentage
+            FROM users u
+            LEFT JOIN file_index f ON u.id = f.user_id
+            GROUP BY u.id, u.username, u.quota_in_bytes
+            HAVING usage_percentage >= 90
+            ORDER BY usage_percentage DESC
+        `;
+
+        // Get largest files
+        const largestFiles = await prisma.$queryRaw<{ id: string; name: string; size: bigint; date: Date; username: string }[]>`
+            SELECT 
+                f.id,
+                f.original_name as name,
+                f.file_size_in_bytes as size,
+                f.date_added as date,
+                u.username
+            FROM file_index f
+            JOIN users u ON f.user_id = u.id
+            ORDER BY f.file_size_in_bytes DESC
+            LIMIT 10
+        `;
+
         return {
             quotaUsage: {
-                total_users: totalUsers,
-                total_allocated_quota: 0, // Would need SUM aggregation
-                total_used_storage: 0, // Would need SUM aggregation
-                total_files: totalFiles,
-                total_groups: totalGroups
+                total_users: Number(totalUsers),
+                total_allocated_quota: Number((allocatedQuota as any[])[0]?.total_quota || 0),
+                total_used_storage: Number((usedStorage as any[])[0]?.total_size || 0),
+                total_files: Number(totalFiles),
+                total_groups: Number(totalGroups)
             },
-            usersOverQuota: [], // Would need complex HAVING clause
-            largestFiles: [] // Would need complex ordering
+            usersOverQuota: (usersOverQuota || []).map((user: any) => ({
+                username: user.username,
+                quota_in_bytes: Number(user.quota_in_bytes),
+                used_storage: Number(user.used_storage),
+                usage_percentage: Number(user.usage_percentage)
+            })),
+            largestFiles: (largestFiles || []).map((file: any) => ({
+                code: file.id,
+                name: file.name,
+                size: Number(file.size),
+                date: file.date,
+                username: file.username
+            }))
         };
     } catch(err) {
         console.log(err);

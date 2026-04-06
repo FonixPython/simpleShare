@@ -52,6 +52,7 @@
       @download="downloadFile"
       @download-group="downloadGroup"
       @delete="handleDeleteFile"
+      @group-created="handleGroupCreated"
     />
 
     <ChangePasswordModal
@@ -307,6 +308,11 @@ export default {
       return result;
     };
 
+    const handleGroupCreated = async () => {
+      showNotification("Group created successfully!", "ok");
+      await updateFilesDisplay(sessionToken.value);
+    };
+
     const handleChangePassword = async (oldPassword, newPassword, callback) => {
       try {
         const response = await fetch("/changePassword", {
@@ -439,6 +445,7 @@ export default {
       handleShowMyLinks,
       handleDeleteLink,
       handleDeleteFile,
+      handleGroupCreated,
       handleChangePassword,
       handleRegisterUser,
       checkFileExists,
