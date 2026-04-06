@@ -35,6 +35,13 @@
           </div>
           <div class="flex items-center gap-2">
             <button
+              @click="showCreateGroupModal"
+              class="bg-primary-button text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              <span class="material-icons-outlined text-sm">create_new_folder</span>
+              Create Group
+            </button>
+            <button
               @click="downloadSelected"
               class="bg-secondary-button text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1"
             >
@@ -336,6 +343,50 @@
         </div>
       </div>
     </div>
+
+    <!-- Create Group Modal -->
+    <div
+      v-if="showGroupModal"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      @click.self="closeGroupModal"
+    >
+      <div class="bg-black/90 border border-[#444] rounded-xl p-6 w-[400px] mobile:w-[90vw] shadow-2xl">
+        <h3 class="text-xl font-semibold mb-4 text-white">Create Group</h3>
+        <p class="text-gray-400 mb-4 text-sm">
+          Creating group from {{ selectedItems.size }} selected file{{ selectedItems.size !== 1 ? 's' : '' }}
+        </p>
+        
+        <input
+          v-model="newGroupName"
+          type="text"
+          placeholder="Enter group name..."
+          class="w-full px-4 py-2 bg-black/50 border border-[#555] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-button transition-colors mb-4"
+          @keyup.enter="confirmCreateGroup"
+          ref="groupNameInput"
+        />
+        
+        <div class="flex gap-3">
+          <button
+            @click="confirmCreateGroup"
+            class="flex-1 bg-primary-button text-black py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
+            :disabled="!newGroupName.trim() || isCreatingGroup"
+          >
+            <span v-if="isCreatingGroup" class="flex items-center justify-center gap-2">
+              <span class="material-icons-outlined text-sm animate-spin">refresh</span>
+              Creating...
+            </span>
+            <span v-else>Create Group</span>
+          </button>
+          <button
+            @click="closeGroupModal"
+            class="flex-1 bg-gray-700 text-white py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
+            :disabled="isCreatingGroup"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -349,7 +400,7 @@ export default {
     files: Array,
     token: String,
   },
-  emits: ["close", "download", "download-group", "delete"],
+  emits: ["close", "download", "download-group", "delete", "group-created"],
   setup() {
     const { confirmDelete, confirm, confirmDeleteGroup } = useConfirm();
 
@@ -364,6 +415,9 @@ export default {
       expandedGroups: new Set(),
       showCopyIcon: {},
       selectedItems: new Set(),
+      showGroupModal: false,
+      newGroupName: "",
+      isCreatingGroup: false,
     };
   },
   computed: {
@@ -584,6 +638,67 @@ export default {
         this.clearSelection();
       } catch {
         // User cancelled deletion
+      }
+    },
+    showCreateGroupModal() {
+      this.showGroupModal = true;
+      this.newGroupName = "";
+      // Focus the input after modal opens
+      this.$nextTick(() => {
+        this.$refs.groupNameInput?.focus();
+      });
+    },
+    closeGroupModal() {
+      this.showGroupModal = false;
+      this.newGroupName = "";
+      this.isCreatingGroup = false;
+    },
+    async confirmCreateGroup() {
+      if (!this.newGroupName.trim()) return;
+      if (this.selectedItems.size === 0) return;
+      
+      this.isCreatingGroup = true;
+      
+      try {
+        const fileIds = Array.from(this.selectedItems).filter(code => {
+          // Filter out group codes - only files can be added to groups
+          const item = this.getAllItems().find(i => i.code === code);
+          return item && item.type !== 'group';
+        });
+        
+        if (fileIds.length === 0) {
+          await this.confirm("Please select files (not groups) to create a group.");
+          this.isCreatingGroup = false;
+          return;
+        }
+        
+        const response = await fetch("/create-group-from-files", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: this.token,
+          },
+          body: JSON.stringify({
+            fileIds,
+            groupName: this.newGroupName.trim(),
+          }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          this.closeGroupModal();
+          this.clearSelection();
+          // Emit event to parent to refresh files and show notification
+          this.$emit("group-created");
+        } else {
+          const error = await response.json();
+          await this.confirm(error.error || "Failed to create group");
+        }
+      } catch (err) {
+        console.error("Create group error:", err);
+        await this.confirm("Network error while creating group");
+      } finally {
+        this.isCreatingGroup = false;
       }
     },
   },

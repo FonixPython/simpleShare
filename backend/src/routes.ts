@@ -63,6 +63,7 @@ router.get("/delete/:code", fileController.deleteItem);
 router.get("/delete-groups/:code", fileController.deleteGroups);
 router.get("/files/:file_code", fileController.getFile);
 router.post("/checkFile", fileController.checkFile);
+router.post("/create-group-from-files", auth.authenticateUser, fileController.createGroupFromFiles);
 
 // Update status endpoints
 router.get("/api/update-status", updateStatusController.getUpdateStatus);
