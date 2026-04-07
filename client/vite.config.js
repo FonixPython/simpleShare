@@ -34,8 +34,7 @@ export default defineConfig(({ mode }) => {
         '^/[a-z]{6}$': backend,
         '/admin': {
           target: backend,
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/admin/, '/admin')
+          changeOrigin: true
         }
       }
     }
