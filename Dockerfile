@@ -25,6 +25,7 @@ ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 
 RUN npx prisma generate
 RUN npm run build
+RUN npx prisma migrate release --name update
 RUN npm prune --omit=dev
 
 FROM node:24-alpine
