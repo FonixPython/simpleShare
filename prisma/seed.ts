@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config();
+
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from '@prisma/client';
 import bcrypt from "bcrypt";
