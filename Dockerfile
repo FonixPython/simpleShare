@@ -24,10 +24,7 @@ ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 
 RUN npx prisma generate
 RUN npm run build
-
-# Compile seed.ts alongside the rest of the build
-RUN npx tsc --outDir dist/prisma --rootDir prisma --esModuleInterop true --module commonjs --target es2020 prisma/seed.ts 2>/dev/null || true
-
+RUN npx tsc -p prisma/tsconfig.json
 RUN npm prune --omit=dev
 
 FROM node:24-alpine
