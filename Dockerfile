@@ -34,7 +34,8 @@ WORKDIR /app
 RUN apk add --no-cache \
     libpq \
     vips \
-    vim
+    vim \
+    mariadb-client
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
@@ -47,5 +48,8 @@ COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000 || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
