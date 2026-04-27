@@ -165,14 +165,15 @@ services:
       retries: 10
 
   simpleShare:
-    image: ss:t
+    image: registry.gitlab.com/cigoria/simpleshare:latest
+    # image: ghcr.io/cigoria/simpleshare:latest
     container_name: simpleShare
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DBURL}
+      DATABASE_URL: mysql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DB}
       DATABASE_USER: ${DBUSER}
       DATABASE_PASSWORD: ${DBPASS}
       DATABASE_NAME: ${DB}
@@ -202,7 +203,6 @@ DBDATA=/Docker/simpleShare/DB/
 DBHOST=db
 DBPORT=3306
 DBRPASS=simpleshare
-DBURL=mysql://simpleshare:simpleshare@db:3306/simpleshare
 DBUSER=simpleshare
 DBPASS=simpleshare
 PASS=admin
