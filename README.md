@@ -1,5 +1,12 @@
 # SimpleShare
 
+![Homepage](images/Homepage.png)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D)](https://vuejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)](https://www.typescriptlang.org)
+
 SimpleShare is a modern web application that allows users to upload and share files easily. This project provides a simple and intuitive interface for file sharing with a clean, Vue.js 3 frontend and robust Node.js/TypeScript backend.
 
 ## Features
@@ -29,6 +36,31 @@ SimpleShare is a modern web application that allows users to upload and share fi
 - **File Handling**: Multer for multipart uploads, Archiver for zip operations
 - **Development Tools**: Concurrently, Nodemon, Prettier, TypeScript compiler
 - **Styling**: Tailwind CSS v4 with custom animations and responsive design
+
+## Interface Preview
+
+The application features a clean, modern interface with intuitive navigation:
+
+### Homepage
+![Homepage](images/Homepage.png)
+
+### Files Menu
+![Files Menu](images/Files-menu.png)
+
+### Links Menu
+![Links Menu](images/Links-menu.png)
+
+### Stats Menu
+![Stats Menu](images/Stats-menu.png)
+
+### Storage Menu
+![Storage Menu](images/Storage-menu.png)
+
+### Users Menu (Admin)
+![Users Menu](images/Users-menu.png)
+
+### Database Menu (Admin)
+![DB Menu](images/DB-menu.png)
 
 ## Project Structure
 
@@ -74,7 +106,8 @@ simpleShare/
 
 ## Installation
 
-### Method 1. - Manual Install (Recommended)
+### Method 1 - Manual Install (Recommended)
+
 #### Prerequisites
 
 - Node.js (v16 or higher)
@@ -103,7 +136,8 @@ simpleShare/
    ```
 
    Edit `.env` with your database configuration:
-   ```
+
+   ``` bash
     DB_HOST=localhost
     DB_PORT=3306
     DB_USER=simpleShare
@@ -131,13 +165,15 @@ simpleShare/
 
    The application will be available at `http://localhost:3000`
 
-### Method 2. - Docker (Beta)
+### Method 2 - Docker (Recommended for Production)
 
-Images availible for use:
-- ghcr.io/cigoria/simpleshare:latest
-- registry.gitlab.com/cigoria/simpleshare:latest
+**Available Docker Images:**
+
+- `ghcr.io/cigoria/simpleshare:latest`
+- `registry.gitlab.com/cigoria/simpleshare:latest`
 
 1. **docker-compose.yaml**
+
 ```yaml
 ---
 services:
@@ -199,11 +235,13 @@ This command uses `concurrently` to run both frontend and backend development se
 If you prefer to run servers separately:
 
 1. **Start the backend server with auto-reload:**
+
    ```bash
    npm run dev:backend
    ```
 
 2. **In another terminal, start the frontend dev server:**
+
    ```bash
    npm run dev:frontend
    ```
@@ -229,6 +267,7 @@ If you prefer to run servers separately:
 ### Code Quality
 
 The codebase follows these quality standards:
+
 - **TypeScript**: Full type safety in backend, progressive adoption in frontend
 - **Code Style**: Prettier configuration for consistent formatting
 - **Vue.js Best Practices**: Composition API, proper component structure
@@ -237,30 +276,41 @@ The codebase follows these quality standards:
 
 ## API Endpoints
 
-### Authentication
-- `POST /login` - User login with email/password
-- `POST /register` - User registration with validation
-- `GET /logout` - User logout and session cleanup
-- `GET /verifySession` - Verify active session token
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/login` | User login with email/password |
+| POST | `/register` | User registration with validation |
+| GET | `/logout` | User logout and session cleanup |
+| GET | `/verifySession` | Verify active session token |
 
 ### File Operations
-- `POST /upload` - Upload single file with metadata
-- `POST /upload-group` - Upload multiple files as a group
-- `GET /files/:code` - Download file by unique code
-- `GET /checkFile` - Check if file exists by code
-- `GET /delete/:code` - Delete file by code (owner/admin only)
-- `GET /getAllFiles` - Get all files for current user
-- `GET /quota` - Get user quota and usage information
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/upload` | Upload single file with metadata |
+| POST | `/upload-group` | Upload multiple files as a group |
+| GET | `/files/:code` | Download file by unique code |
+| GET | `/checkFile` | Check if file exists by code |
+| GET | `/delete/:code` | Delete file by code (owner/admin only) |
+| GET | `/getAllFiles` | Get all files for current user |
+| GET | `/quota` | Get user quota and usage information |
 
 ### Admin Operations
-- `GET /admin/users` - List all users (admin only)
-- `POST /admin/user/:id/ban` - Ban/unban user (admin only)
-- `POST /admin/user/:id/quota` - Update user quota (admin only)
-- Additional endpoints for user management and system administration
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/users` | List all users (admin only) |
+| POST | `/admin/user/:id/ban` | Ban/unban user (admin only) |
+| POST | `/admin/user/:id/quota` | Update user quota (admin only) |
 
 ### Update Status Management
-- `GET /api/update-status` - Get current update status
-- `POST /api/update-status` - Set update status (maintenance mode)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/update-status` | Get current update status |
+| POST | `/api/update-status` | Set update status (maintenance mode) |
 
 ## Key Systems
 
@@ -297,6 +347,7 @@ The application includes a maintenance screen that appears during server updates
 - **Easy control**: Simple npm scripts to toggle maintenance mode
 
 **Usage:**
+
 ```bash
 # Show maintenance screen
 npm run update:start
@@ -306,6 +357,7 @@ npm run update:stop
 ```
 
 **Components:**
+
 - `UpdateScreen.vue` - Maintenance screen component
 - `useUpdateStatus.js` - Composable for status polling
 - `updateStatus.ts` - Backend controller for status management
@@ -325,18 +377,22 @@ We welcome contributions from the community! Here's how to get started:
 
 1. **Fork the repository** on GitHub
 2. **Create a feature branch** from the main branch:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
+
 3. **Make your changes** following our code standards
 4. **Test your changes** thoroughly:
    - Run `npm run dev` to test in development mode
    - Test both frontend and backend functionality
    - Ensure database migrations work if you've modified the schema
 5. **Format your code** using Prettier:
+
    ```bash
    npm run format
    ```
+
 6. **Commit your changes** with clear, descriptive messages
 7. **Push to your fork** and create a pull request
 
@@ -378,31 +434,19 @@ We welcome contributions from the community! Here's how to get started:
 
 **Common Issues:**
 
-1. **Database Connection Errors**
-   - Ensure MariaDB is running
-   - Check `.env` configuration matches database credentials
-   - Verify the database `simpleShare` exists
-
-2. **Migration Failures**
-   - Check database permissions
-   - Ensure migration files have correct naming format
-   - Review migration SQL for syntax errors
-
-3. **Build Errors**
-   - Run `npm install` to update dependencies
-   - Clear `dist/` directory with `npm run clean`
-   - Check Node.js version compatibility (v16+)
-
-4. **File Upload Issues**
-   - Ensure `uploads/` directory exists and is writable
-   - Check file size limits in configuration
-   - Verify disk space availability
+| Issue | Solution |
+|-------|----------|
+| **Database Connection Errors** | Ensure MariaDB is running, check `.env` configuration, verify database exists |
+| **Migration Failures** | Check database permissions, ensure correct migration file naming, review SQL syntax |
+| **Build Errors** | Run `npm install`, clear `dist/` with `npm run clean`, check Node.js version (v16+) |
+| **File Upload Issues** | Ensure `uploads/` directory exists and is writable, check file size limits, verify disk space |
 
 ### Support
 
 For questions, bug reports, or feature requests:
-- Create an issue on GitHub
-- Check existing issues for solutions
+
+- [Create an issue on GitHub](https://github.com/cigoria/simpleShare/issues)
+- [Check existing issues](https://github.com/cigoria/simpleShare/issues)
 - Review documentation before asking questions
 
 ## License
@@ -419,4 +463,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **[zeti1223](https://github.com/zeti1223)** - Frontend development and UI/UX design
 - **[FonixPython](https://github.com/FonixPython)** - Backend development
-
