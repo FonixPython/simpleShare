@@ -135,16 +135,21 @@ simpleShare/
    cp .env.example .env
    ```
 
-   Edit `.env` with your database configuration:
+   Edit `.env` for your setup:
+   ```
+   DATABASE_URL="mysql://username:password@localhost:3306/mydb"
+   DATABASE_USER="username"
+   DATABASE_PASSWORD="password"
+   DATABASE_NAME="mydb"
+   DATABASE_HOST="localhost"
+   DATABASE_PORT=3306
 
-   ``` bash
-    DB_HOST=localhost
-    DB_PORT=3306
-    DB_USER=simpleShare
-    DB_PASSWORD=simpleShare
-    DB_NAME=simpleShare
-    PORT=3000
-    UPLOAD_PATH=./uploads/
+   PORT=3000
+   UPLOAD_PATH=./uploads/
+
+   DEFAULT_ADMIN_USERNAME=admin
+   DEFAULT_ADMIN_PASSWORD=admin
+   DEFAULT_ADMIN_QUOTA=10737418240
    ```
 
 4. **Database Setup:**
@@ -177,46 +182,78 @@ simpleShare/
 ```yaml
 ---
 services:
-  mariadb:
+  db:
     image: mariadb:latest
-    container_name: simpleShare-Database
+    container_name: simpleShare_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: simpleShare
-      MYSQL_DATABASE: simpleShare
-      MYSQL_USER: simpleShare
-      MYSQL_PASSWORD: simpleShare
+      MYSQL_USER: ${DBUSER}
+      MYSQL_PASSWORD: ${DBPASS}
+      MYSQL_DATABASE: ${DB}
+      MYSQL_ROOT_PASSWORD: ${DBRPASS}
     volumes:
-      - ./DB/mysql:/var/lib/mysql
-      - ./DB/Schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-    ports:
-      - 3306:3306
+      - ${DBDATA}:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   simpleShare:
-    image: ghcr.io/cigoria/simpleshare:latest
+    image: registry.gitlab.com/cigoria/simpleshare:latest
+    # image: ghcr.io/cigoria/simpleshare:latest
     container_name: simpleShare
     restart: unless-stopped
-    volumes:
-      - ./Main/.env:/app/.env:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DB}
+      DATABASE_USER: ${DBUSER}
+      DATABASE_PASSWORD: ${DBPASS}
+      DATABASE_NAME: ${DB}
+      DATABASE_HOST: ${DBHOST}
+      DATABASE_PORT: ${DBPORT}
+      PORT: ${PORT}
+      UPLOAD_PATH: ${UPLOAD}
+      DEFAULT_ADMIN_USERNAME: ${DEFUSER}
+      DEFAULT_ADMIN_PASSWORD: ${PASS}
+      DEFAULT_ADMIN_QUOTA: ${QUOTA}
     ports:
       - 3000:3000
+
 ```
 
 2. **Folder structure**
 
 ```bash
-mkdir DB Main
-wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/Schema.sql -o ./DB/Schema.sql
-wget https://raw.githubusercontent.com/cigoria/simpleShare/refs/heads/release/.env.example -o ./Main/.env
+mkdir DB
+touch .env
 ```
 
-3. **Start container**
+3. **Edit `.env` for your setup:**
+```
+DB=simpleshare
+DBDATA=/Docker/simpleShare/DB/
+DBHOST=db
+DBPORT=3306
+DBRPASS=simpleshare
+DBUSER=simpleshare
+DBPASS=simpleshare
+PASS=admin
+PORT=3000
+QUOTA=10737418240
+UPLOAD=./uploads/
+DEFUSER=admin
+```
+
+4. **Start container**
 
 ```bash
 docker compose up -d
 ```
 
-4. **Open browser at:** [http://localhost:3000](http://localhost:3000)
+5. **Open browser at:** [http://localhost:3000](http://localhost:3000)
 
 ## Development
 
