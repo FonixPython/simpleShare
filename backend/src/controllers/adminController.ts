@@ -4,14 +4,17 @@ import * as auth from "../auth";
 import * as adminActions from "../adminActions";
 import * as uploadActions from "../uploadActions";
 
+const { extractToken } = auth;
+
 export const registerUser = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.sendStatus(401)}
+  const token = extractToken(req);
+  if (!token){return res.sendStatus(401)}
   let new_username = req.body.username;
   let new_password = req.body.password;
   let is_admin = req.body.isAdmin || false;
   let quota = req.body.quota || 52428800;
   if(!new_username || !new_password){return res.status(400).json({message:"Invalid request! Username and passowrd are required!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin")
+  let user_permission = await auth.validateUserToken(token,"admin")
   if (user_permission.met === false){return res.sendStatus(401)}
   let register_result = await adminActions.registerUser(new_username,new_password,is_admin,quota)
   if (register_result === 0){return res.sendStatus(200)}
@@ -20,8 +23,9 @@ export const registerUser = async (req: Request, res: Response) => {
 };
 
 export const changeUserPassword = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let target_user_id = req.body.userId;
@@ -38,8 +42,9 @@ export const changeUserPassword = async (req: Request, res: Response) => {
 };
 
 export const changeUsername = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let target_user_id = req.body.userId;
@@ -57,8 +62,9 @@ export const changeUsername = async (req: Request, res: Response) => {
 };
 
 export const changeUserQuota = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let target_user_id = req.body.userId;
@@ -75,8 +81,9 @@ export const changeUserQuota = async (req: Request, res: Response) => {
 };
 
 export const changeUserAdminStatus = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let target_user_id = req.body.userId;
@@ -93,8 +100,9 @@ export const changeUserAdminStatus = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let target_user_id = req.body.userId;
@@ -110,8 +118,9 @@ export const deleteUser = async (req: Request, res: Response) => {
 };
 
 export const getGlobalLimit = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401)}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401)}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   try{
     const total_limit = await uploadActions.getGlobalStorageLimit();
@@ -133,8 +142,9 @@ export const getGlobalLimit = async (req: Request, res: Response) => {
 };
 
 export const getGlobalStorage = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401)}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401)}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   try{
     const total_limit = await uploadActions.getGlobalStorageLimit();
@@ -161,8 +171,9 @@ export const getGlobalStorage = async (req: Request, res: Response) => {
 };
 
 export const getStorageSettings = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401)}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401)}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   try{
     const global_limit = await uploadActions.getGlobalStorageLimit();
@@ -186,8 +197,9 @@ export const getStorageSettings = async (req: Request, res: Response) => {
 };
 
 export const getAllUsersWithFiles = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let users = await adminActions.getAllUsersWithFiles();
@@ -203,8 +215,9 @@ export const getAllUsersWithFiles = async (req: Request, res: Response) => {
 };
 
 export const getAllFiles = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let files = await adminActions.getAllFiles();
@@ -220,8 +233,9 @@ export const getAllFiles = async (req: Request, res: Response) => {
 };
 
 export const getGroupDetails = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const groupCode = Array.isArray(req.params.groupCode) ? req.params.groupCode[0] : req.params.groupCode;
@@ -240,8 +254,9 @@ export const getGroupDetails = async (req: Request, res: Response) => {
 };
 
 export const getUserStatistics = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let stats = await adminActions.getUserStatistics();
@@ -257,8 +272,9 @@ export const getUserStatistics = async (req: Request, res: Response) => {
 };
 
 export const getFileTypeStatistics = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let stats = await adminActions.getFileTypeStatistics();
@@ -274,8 +290,9 @@ export const getFileTypeStatistics = async (req: Request, res: Response) => {
 };
 
 export const getSystemHealthMetrics = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   let metrics = await adminActions.getSystemHealthMetrics();
@@ -291,8 +308,9 @@ export const getSystemHealthMetrics = async (req: Request, res: Response) => {
 };
 
 export const deleteFile = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const fileCode = req.params.fileCode;
@@ -316,8 +334,9 @@ export const deleteFile = async (req: Request, res: Response) => {
 };
 
 export const updateStorageLimit = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.status(401)}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401)}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   
   const newLimit = req.body.limit;
@@ -339,8 +358,9 @@ export const updateStorageLimit = async (req: Request, res: Response) => {
 // File management endpoints
 
 export const updateFileId = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { currentId, newId } = req.body;
@@ -364,8 +384,9 @@ export const updateFileId = async (req: Request, res: Response) => {
 };
 
 export const updateFileName = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { fileId, newName } = req.body;
@@ -391,8 +412,9 @@ export const updateFileName = async (req: Request, res: Response) => {
 // Group management endpoints
 
 export const updateGroupId = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { currentId, newId } = req.body;
@@ -416,8 +438,9 @@ export const updateGroupId = async (req: Request, res: Response) => {
 };
 
 export const updateGroupName = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { groupId, newName } = req.body;
@@ -443,8 +466,9 @@ export const updateGroupName = async (req: Request, res: Response) => {
 // Link management endpoints
 
 export const updateLinkId = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { currentId, newId } = req.body;
@@ -468,8 +492,9 @@ export const updateLinkId = async (req: Request, res: Response) => {
 };
 
 export const updateLinkUrl = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const { linkId, newUrl } = req.body;
@@ -497,8 +522,9 @@ export const updateLinkUrl = async (req: Request, res: Response) => {
 const ALLOWED_TABLES = ['users', 'file_index', 'file_groups', 'settings', 'session_tokens', 'shared_links'];
 
 export const getDatabaseTables = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   return res.status(200).json({
@@ -514,8 +540,9 @@ export const getDatabaseTables = async (req: Request, res: Response) => {
 };
 
 export const getTableData = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const tableName = Array.isArray(req.params.table) ? req.params.table[0] : req.params.table;
@@ -567,8 +594,9 @@ export const getTableData = async (req: Request, res: Response) => {
 };
 
 export const updateTableRow = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const tableName = Array.isArray(req.params.table) ? req.params.table[0] : req.params.table;
@@ -642,8 +670,9 @@ export const updateTableRow = async (req: Request, res: Response) => {
 };
 
 export const deleteTableRow = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const tableName = Array.isArray(req.params.table) ? req.params.table[0] : req.params.table;
@@ -685,8 +714,9 @@ export const deleteTableRow = async (req: Request, res: Response) => {
 };
 
 export const insertTableRow = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(401).json({error:"Unauthorized!"})}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,"admin");
+  const token = extractToken(req);
+  if (!token) {return res.status(401).json({error:"Unauthorized!"})}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! Admin access required!"})}
   
   const tableName = Array.isArray(req.params.table) ? req.params.table[0] : req.params.table;

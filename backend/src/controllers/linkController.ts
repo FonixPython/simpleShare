@@ -3,6 +3,8 @@ import { prisma } from '../db';
 import * as auth from "../auth";
 import crypto from 'crypto';
 
+const { extractToken } = auth;
+
 function generateLinkId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
   let result = '';
@@ -26,11 +28,12 @@ async function generateUniqueLinkId(): Promise<string> {
 }
 
 export const createSharedLink = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {
+  const token = extractToken(req);
+  if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  let user_permission = await auth.validateUserToken(token, null);
   if (user_permission.level === "none") {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -85,11 +88,12 @@ export const getSharedLink = async (req: Request, res: Response) => {
 };
 
 export const deleteSharedLink = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {
+  const token = extractToken(req);
+  if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  let user_permission = await auth.validateUserToken(token, null);
   if (user_permission.level === "none") {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -122,11 +126,12 @@ export const deleteSharedLink = async (req: Request, res: Response) => {
 };
 
 export const getUserSharedLinks = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {
+  const token = extractToken(req);
+  if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  let user_permission = await auth.validateUserToken(token, null);
   if (user_permission.level === "none") {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -145,11 +150,12 @@ export const getUserSharedLinks = async (req: Request, res: Response) => {
 };
 
 export const getAllSharedLinks = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {
+  const token = extractToken(req);
+  if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  let user_permission = await auth.validateUserToken(token, null);
   if (user_permission.level !== "admin") {
     return res.status(403).json({ error: "Forbidden: Admin access required" });
   }
