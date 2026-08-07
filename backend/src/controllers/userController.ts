@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import * as auth from "../auth";
 import * as userActions from "../userActions";
 
+const { extractToken } = auth;
+
 export const login = async (req: Request, res: Response) => {
   let username: string = req.body.username;
   let password: string = req.body.password;
@@ -25,22 +27,25 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.status(400)}
-  let logout_result = await auth.logoutUser(req.headers.authorization);
+  const token = extractToken(req);
+  if (!token) {return res.status(400)}
+  let logout_result = await auth.logoutUser(token);
   if (logout_result){return res.sendStatus(200)}
   else {return res.sendStatus(500)}
 };
 
 export const verifySession = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.status(401)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null);
+  const token = extractToken(req);
+  if (!token){return res.status(401)}
+  let user_permission = await auth.validateUserToken(token,null);
   if (user_permission.level !== "none"){return res.status(200).json({permission:user_permission.level})}
   else {return res.status(401).json({permission:user_permission.level})}
 };
 
 export const getQuota = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) return res.sendStatus(401);
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null)
+  const token = extractToken(req);
+  if (!token) return res.sendStatus(401);
+  let user_permission = await auth.validateUserToken(token,null)
   if (user_permission.level === "none"){return res.sendStatus(401)}
   let total_quota = await userActions.getTotalQuota(user_permission.user_id)
   let used_quota = await userActions.getUsedQuota(user_permission.user_id)
@@ -53,17 +58,19 @@ export const getQuota = async (req: Request, res: Response) => {
 };
 
 export const getAllUserFiles = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.sendStatus(401)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null)
+  const token = extractToken(req);
+  if (!token){return res.sendStatus(401)}
+  let user_permission = await auth.validateUserToken(token,null)
   if (user_permission.level === "none"){return res.sendStatus(401)}
   let files = await userActions.getAllFiles(user_permission.user_id)
   return res.status(200).json(files)
 };
 
 export const changePassword = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.sendStatus(401)}
+  const token = extractToken(req);
+  if (!token){return res.sendStatus(401)}
   if (!req.body.old_password || !req.body.new_password){return res.sendStatus(400)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null);
+  let user_permission = await auth.validateUserToken(token,null);
   if (user_permission.level === "none") {return res.sendStatus(401)}
   let action_result = await userActions.changePassword(user_permission.user_id,req.body.old_password,req.body.new_password)
 

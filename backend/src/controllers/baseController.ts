@@ -12,8 +12,9 @@ export const serveIndex = (req: Request, res: Response) => {
 };
 
 export const serveAdmin = async (req: Request, res: Response) => {
-  if (!req.cookies.session_token) {return res.redirect("/")}
-  let user_permission = await auth.validateUserToken(req.cookies.session_token,"admin");
+  const token = auth.extractToken(req);
+  if (!token) {return res.redirect("/")}
+  let user_permission = await auth.validateUserToken(token,"admin");
   if (!user_permission.met){return res.status(401).json({error:"Unauthorized! You must be an admin to see this page!"})}
   const devPath = path.join(__dirname, '../../client/index.html');
   const prodPath = path.join(__dirname, '../public/index.html');

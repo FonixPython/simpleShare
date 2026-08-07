@@ -5,6 +5,8 @@ import * as auth from "../auth";
 import * as uploadActions from "../uploadActions";
 import { prisma } from "../db";
 
+const { extractToken } = auth;
+
 export const uploadFile = async (req: Request & Record<string, any>, res: Response) => {
   if (!req.file){return res.status(400).json({error:"No file provided"})}
   let result = await uploadActions.registerUploadInIndex(req);
@@ -47,8 +49,9 @@ export const uploadMultipleIndividual = async (req: Request & Record<string, any
 };
 
 export const deleteItem = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.sendStatus(401)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null);
+  const token = extractToken(req);
+  if (!token){return res.sendStatus(401)}
+  let user_permission = await auth.validateUserToken(token,null);
   let code = req.params.code
   let deleteSubItems = req.query.deleteSubItems === 'true'
   if (user_permission.level === "none"){return res.sendStatus(401)}
@@ -57,7 +60,7 @@ export const deleteItem = async (req: Request, res: Response) => {
     delete_result = await uploadActions.deleteItem(code,deleteSubItems)
   }
   if (user_permission.level === "user"){
-    delete_result = await uploadActions.deleteItem(code,deleteSubItems,req.headers.authorization)
+    delete_result = await uploadActions.deleteItem(code,deleteSubItems,token)
   }
   switch(delete_result){
     case(0):return res.sendStatus(200);break;
@@ -68,8 +71,9 @@ export const deleteItem = async (req: Request, res: Response) => {
 };
 
 export const deleteGroups = async (req: Request, res: Response) => {
-  if (!req.headers.authorization){return res.sendStatus(401)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization,null);
+  const token = extractToken(req);
+  if (!token){return res.sendStatus(401)}
+  let user_permission = await auth.validateUserToken(token,null);
   let code = req.params.code
   if (user_permission.level === "none"){return res.sendStatus(401)}
   let delete_result: number = 2;
@@ -77,7 +81,7 @@ export const deleteGroups = async (req: Request, res: Response) => {
     delete_result = await uploadActions.deleteItem(code,true)
   }
   if (user_permission.level === "user"){
-    delete_result = await uploadActions.deleteItem(code,true,req.headers.authorization)
+    delete_result = await uploadActions.deleteItem(code,true,token)
   }
   switch(delete_result){
     case(0):return res.sendStatus(200);break;
@@ -144,8 +148,9 @@ export const checkFile = async (req: Request, res: Response) => {
 };
 
 export const createGroupFromFiles = async (req: Request, res: Response) => {
-  if (!req.headers.authorization) {return res.sendStatus(401)}
-  let user_permission = await auth.validateUserToken(req.headers.authorization, null);
+  const token = extractToken(req);
+  if (!token) {return res.sendStatus(401)}
+  let user_permission = await auth.validateUserToken(token, null);
   if (user_permission.level === "none" || !user_permission.user_id) {return res.sendStatus(401)}
   
   const { fileIds, groupName } = req.body;

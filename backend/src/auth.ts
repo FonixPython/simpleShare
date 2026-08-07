@@ -17,6 +17,10 @@ export interface LoginResponse {
     message: string;
 }
 
+export function extractToken(req: any): string | null {
+    return req.headers.authorization || req.cookies?.session_token || null;
+}
+
 
 export async function validateUserToken(token:string, validateTo:PermissionLevel | null): Promise<PermissionResponse> {
     try {
@@ -102,7 +106,7 @@ interface extension {
 }
 
 export async function authenticateUser(req:Request & Record<string, any> , res:Response, next:NextFunction) {
-  const auth = req.headers.authorization;
+  const auth = extractToken(req);
   if (!auth) return res.sendStatus(401);
   let user_permission = await validateUserToken(auth,null);
   if (user_permission.level === "none") {return res.sendStatus(401);}
