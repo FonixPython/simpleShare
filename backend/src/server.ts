@@ -8,6 +8,10 @@ import "dotenv/config";
 
 const PORT = process.env.PORT || 3000;
 const app = express()
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  next()
+})
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
