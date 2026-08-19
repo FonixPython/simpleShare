@@ -13,69 +13,69 @@ import { FileGroup } from "./userActions";
 
 type ItemType = "file" | "group"
 
-export async function getTotalStorageUsed():Promise<number | null> {
+export async function getTotalStorageUsed(): Promise<number | null> {
   try {
-    const result = await prisma.file_index.aggregate({_sum: {file_size_in_bytes: true}});
+    const result = await prisma.file_index.aggregate({ _sum: { file_size_in_bytes: true } });
     return Number(result._sum.file_size_in_bytes || 0);
-  } catch(err){console.log(err);return null}
+  } catch (err) { console.log(err); return null }
 }
 
-export async function getTotalFiles():Promise<number | null> {
+export async function getTotalFiles(): Promise<number | null> {
   try {
     const result = await prisma.file_index.count({})
     return Number(result || 0);
-  } catch(err){console.log(err);return null}
+  } catch (err) { console.log(err); return null }
 }
 
-export async function getGlobalStorageLimit():Promise<number | null> {
+export async function getGlobalStorageLimit(): Promise<number | null> {
   try {
-    const result = await prisma.settings.findFirstOrThrow({where:{name:"global-storage-limit"}})
+    const result = await prisma.settings.findFirstOrThrow({ where: { name: "global-storage-limit" } })
     return Number(BigInt(result.num_value || 0));
-  } catch(err){console.log(err);return 0 }
+  } catch (err) { console.log(err); return 0 }
 }
 
 export async function calculateRemainingGlobalStorage() {
-  const totalLimit:number = await getGlobalStorageLimit() || 1;
+  const totalLimit: number = await getGlobalStorageLimit() || 1;
   if (totalLimit === 0) return null; // Unlimited
-  const totalUsed:number = await getTotalStorageUsed() || 1;
+  const totalUsed: number = await getTotalStorageUsed() || 1;
   return totalLimit - totalUsed;
 }
 
-export async function calculateRemainFromQuota(user_id:string):Promise<number | null> {
+export async function calculateRemainFromQuota(user_id: string): Promise<number | null> {
   try {
     try {
-      let result = await prisma.users.findFirstOrThrow({where:{id:user_id}})
-      let quota:number = Number(result.quota_in_bytes);
+      let result = await prisma.users.findFirstOrThrow({ where: { id: user_id } })
+      let quota: number = Number(result.quota_in_bytes);
       if (quota == 0) return null;
-      let used_res = await prisma.file_index.aggregate({where:{user_id:user_id},_sum:{file_size_in_bytes:true}})
-      let used_up:number = Number(used_res._sum.file_size_in_bytes || 0)
-      let remaining:number = quota - used_up
+      let used_res = await prisma.file_index.aggregate({ where: { user_id: user_id }, _sum: { file_size_in_bytes: true } })
+      let used_up: number = Number(used_res._sum.file_size_in_bytes || 0)
+      let remaining: number = quota - used_up
       return remaining;
-    } catch {return 0;}
-  } catch(err){console.log(err);return 1}
+    } catch { return 0; }
+  } catch (err) { console.log(err); return 1 }
 }
 
-export async function registerUploadInIndex(req:Request& Record<string, any>) {
+export async function registerUploadInIndex(req: Request & Record<string, any>) {
   try {
     if (!req.file) throw new Error("No file uploaded");
-    
+
     // Rename the file to use the file code
     const ext = path.extname(req.file.originalname);
     const newFilename = `${req.fileCode}${ext}`;
-    
+
     // Rename the file on disk
     const fs = require('fs');
     const oldPath = path.join(process.env.UPLOAD_PATH || './uploads', req.file.filename);
     const newPath = path.join(process.env.UPLOAD_PATH || './uploads', newFilename);
-    
+
     if (fs.existsSync(oldPath)) {
       fs.renameSync(oldPath, newPath);
     }
     let fixed_filename = Buffer.from(req.file.originalname, "latin1").toString("utf8").normalize("NFC");
-    let res = await prisma.file_index.create({data:{id:req.fileCode,mime_type:req.file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:req.file.size,user_id:req.user.id}})
+    let res = await prisma.file_index.create({ data: { id: req.fileCode, mime_type: req.file.mimetype, stored_filename: newFilename, original_name: fixed_filename, file_size_in_bytes: req.file.size, user_id: req.user.id } })
 
     return !!res;
-  } catch(err){
+  } catch (err) {
     if (req.file !== undefined) {
       const ext = path.extname(req.file.originalname);
       const newFilename = `${req.fileCode}${ext}`;
@@ -87,7 +87,7 @@ export async function registerUploadInIndex(req:Request& Record<string, any>) {
 
 const storage = multer.diskStorage({
   destination: process.env.UPLOAD_PATH || "./uploads",
-  filename: function (req:Request& Record<string, any>, file:Express.Multer.File, cb: (error: Error | null, filename: string)=>void){
+  filename: function (req: Request & Record<string, any>, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
     const ext = path.extname(file.originalname);
     // For single file upload, use a temporary name first, will be renamed later
     const filename = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}${ext}`;
@@ -95,9 +95,9 @@ const storage = multer.diskStorage({
   },
 });
 
-export const uploadMiddleware = (req:Request& Record<string, any>, res:Response, next:NextFunction) => {
+export const uploadMiddleware = (req: Request & Record<string, any>, res: Response, next: NextFunction) => {
   const limits = {} as { [key: string]: any };
-  if (req.maxUploadSize) {limits.fileSize = req.maxUploadSize;}
+  if (req.maxUploadSize) { limits.fileSize = req.maxUploadSize; }
 
   const upload = multer({
     storage: storage,
@@ -105,27 +105,36 @@ export const uploadMiddleware = (req:Request& Record<string, any>, res:Response,
   }).single("file");
 
   upload(req, res, (err: any) => {
-    if (err) return next(err);
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({
+            error: "File too large"
+          });
+        }
+      }
+      return next(err);
+    }
     next();
   });
 };
 
-async function generateUniqueCode(code_length:number) {
+async function generateUniqueCode(code_length: number) {
   try {
-    const chars:string = "abcdefghijklmnopqrstuvwxyz";
+    const chars: string = "abcdefghijklmnopqrstuvwxyz";
     while (true) {
-      let result:string = "";
-      for (let i = 0; i < code_length; i++) {result += chars.charAt(Math.floor(Math.random() * chars.length));}
-      let res = await prisma.file_groups.findMany({where:{id:result}})
-      let res2 = await prisma.file_groups.findMany({where:{id:result}})
-      if (res.length == 0 && res2.length==0) {return result}
+      let result: string = "";
+      for (let i = 0; i < code_length; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
+      let res = await prisma.file_groups.findMany({ where: { id: result } })
+      let res2 = await prisma.file_groups.findMany({ where: { id: result } })
+      if (res.length == 0 && res2.length == 0) { return result }
     }
-  } catch(err){console.log(err)}
+  } catch (err) { console.log(err) }
 }
 
-export const uploadGroupMiddleware = (req:Request& Record<string, any>, res:Response, next:NextFunction) => {
+export const uploadGroupMiddleware = (req: Request & Record<string, any>, res: Response, next: NextFunction) => {
   const limits = {} as { [key: string]: any };
-  if (req.maxUploadSize) {limits.fileSize = req.maxUploadSize;}
+  if (req.maxUploadSize) { limits.fileSize = req.maxUploadSize; }
 
   const upload = multer({
     storage: storage,
@@ -138,67 +147,67 @@ export const uploadGroupMiddleware = (req:Request& Record<string, any>, res:Resp
   });
 };
 
-export async function prepareGroupUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
-  const groupCode:string | undefined = await generateUniqueCode(6);
-  if (groupCode === undefined){return res.sendStatus(500)}
+export async function prepareGroupUploadContext(req: Request & Record<string, any>, res: Response, next: NextFunction) {
+  const groupCode: string | undefined = await generateUniqueCode(6);
+  if (groupCode === undefined) { return res.sendStatus(500) }
   req.groupCode = groupCode;
 
   // Check global storage limit first
   const globalRemaining = await calculateRemainingGlobalStorage();
-  if (globalRemaining !== null && globalRemaining <= 0) {return res.status(500).json({ error: "Global storage limit reached" });}
+  if (globalRemaining !== null && globalRemaining <= 0) { return res.status(500).json({ error: "Global storage limit reached" }); }
 
   // Check user quota
   let remaining = await calculateRemainFromQuota(req.user.id)
-  
+
   if (remaining !== null) {
-    if (remaining < BigInt(0)) {return res.sendStatus(413);}
+    if (remaining < BigInt(0)) { return res.sendStatus(413); }
     req.maxUploadSize = remaining;
-  } 
+  }
   else if (globalRemaining !== null && remaining === null) {
-    if (globalRemaining <= 0) {res.sendStatus(500);} 
-    else {req.maxUploadSize = globalRemaining;}
+    if (globalRemaining <= 0) { res.sendStatus(500); }
+    else { req.maxUploadSize = globalRemaining; }
   }
 
   // Apply global storage limit to max upload size if it's more restrictive
   if (globalRemaining !== null && remaining !== null && remaining > globalRemaining) {
-    if (globalRemaining <= 0) {res.sendStatus(500);} 
-    else {req.maxUploadSize = globalRemaining;}
+    if (globalRemaining <= 0) { res.sendStatus(500); }
+    else { req.maxUploadSize = globalRemaining; }
   }
 
   next();
 }
 
-export async function registerGroupUploadInIndex(req:Request& Record<string, any>) {
+export async function registerGroupUploadInIndex(req: Request & Record<string, any>) {
   try {
     if (!req.files || req.files.length === 0) throw new Error("No files uploaded");
-    
+
     const groupName = req.body.groupName || 'Untitled Group';
     const fileIds: string[] = [];
     const uploadedFiles: any[] = [];
 
     // First, register all files in the file_index table
     for (const file of req.files as Express.Multer.File[]) {
-      const fileCode:string | undefined = await generateUniqueCode(6);
-      if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
+      const fileCode: string | undefined = await generateUniqueCode(6);
+      if (fileCode === undefined) { throw new Error("For some reason the file code is undefined????" + fileCode) }
       fileIds.push(fileCode);
-      
+
       let fixed_filename = Buffer.from(file.originalname, "latin1").toString("utf8").normalize("NFC");
-      
+
       // Update the filename to include the file code
       const ext = path.extname(fixed_filename);
       const newFilename = `${fileCode}${ext}`;
-      
+
       // Rename the file on disk
       const fs = require('fs');
       const oldPath = path.join(process.env.UPLOAD_PATH || './uploads', file.filename);
       const newPath = path.join(process.env.UPLOAD_PATH || './uploads', newFilename);
-      
+
       if (fs.existsSync(oldPath)) {
         fs.renameSync(oldPath, newPath);
       }
-      
+
       // Register file in database
-      await prisma.file_index.create({data:{id:fileCode,mime_type:file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:file.size,user_id:req.user.id}})
+      await prisma.file_index.create({ data: { id: fileCode, mime_type: file.mimetype, stored_filename: newFilename, original_name: fixed_filename, file_size_in_bytes: file.size, user_id: req.user.id } })
 
       uploadedFiles.push({
         code: fileCode,
@@ -208,7 +217,7 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
     }
 
     // Then create the group entry
-    await prisma.file_groups.create({data:{id:req.groupCode,name:groupName,file_ids:JSON.stringify(fileIds),user_id:req.user.id}})
+    await prisma.file_groups.create({ data: { id: req.groupCode, name: groupName, file_ids: JSON.stringify(fileIds), user_id: req.user.id } })
 
     return {
       group: {
@@ -217,65 +226,65 @@ export async function registerGroupUploadInIndex(req:Request& Record<string, any
       },
       files: uploadedFiles
     };
-  } catch(err){console.log(err);return null}
+  } catch (err) { console.log(err); return null }
 }
 
-export async function prepareUploadContext(req:Request& Record<string, any>, res:Response, next:NextFunction) {
+export async function prepareUploadContext(req: Request & Record<string, any>, res: Response, next: NextFunction) {
   const code = await generateUniqueCode(6);
   req.fileCode = code;
 
   // Check global storage limit first
   const globalRemaining = await calculateRemainingGlobalStorage();
-  if (globalRemaining !== null && globalRemaining <= 0) {return res.status(500).json({ error: "Global storage limit reached" });}
+  if (globalRemaining !== null && globalRemaining <= 0) { return res.status(500).json({ error: "Global storage limit reached" }); }
 
   // Check user quota
   let remaining = await calculateRemainFromQuota(req.user.id)
-  
+
   if (remaining !== null) {
-    if (remaining < BigInt(0)) {return res.sendStatus(413);}
+    if (remaining < BigInt(0)) { return res.sendStatus(413); }
     req.maxUploadSize = remaining;
-  } 
+  }
   else if (globalRemaining !== null && remaining === null) {
-    if (globalRemaining <= 0) {res.sendStatus(500);} 
-    else {req.maxUploadSize = globalRemaining;}
+    if (globalRemaining <= 0) { res.sendStatus(500); }
+    else { req.maxUploadSize = globalRemaining; }
   }
 
   // Apply global storage limit to max upload size if it's more restrictive
   if (globalRemaining !== null && remaining !== null && remaining > globalRemaining) {
-    if (globalRemaining <= 0) {res.sendStatus(500);} 
-    else {req.maxUploadSize = globalRemaining;}
+    if (globalRemaining <= 0) { res.sendStatus(500); }
+    else { req.maxUploadSize = globalRemaining; }
   }
 
   next();
 }
 
-export async function registerMultipleIndividualUploadsInIndex(req:Request& Record<string, any>) {
+export async function registerMultipleIndividualUploadsInIndex(req: Request & Record<string, any>) {
   try {
     if (!req.files || req.files.length === 0) throw new Error("No files uploaded");
-    
+
     const uploadedFiles: any[] = [];
 
     // Register all files in the file_index table individually (no grouping)
     for (const file of req.files as Express.Multer.File[]) {
-      const fileCode:string | undefined = await generateUniqueCode(6);
-      if (fileCode === undefined){throw new Error("For some reason the file code is undefined????"+fileCode)}
+      const fileCode: string | undefined = await generateUniqueCode(6);
+      if (fileCode === undefined) { throw new Error("For some reason the file code is undefined????" + fileCode) }
       let fixed_filename = Buffer.from(file.originalname, "latin1").toString("utf8").normalize("NFC");
-      
+
       // Update the filename to include the file code
       const ext = path.extname(fixed_filename);
       const newFilename = `${fileCode}${ext}`;
-      
+
       // Rename the file on disk
       const fs = require('fs');
       const oldPath = path.join(process.env.UPLOAD_PATH || './uploads', file.filename);
       const newPath = path.join(process.env.UPLOAD_PATH || './uploads', newFilename);
-      
+
       if (fs.existsSync(oldPath)) {
         fs.renameSync(oldPath, newPath);
       }
-      
+
       // Register file in database
-      await prisma.file_index.create({data:{id:fileCode,mime_type:file.mimetype,stored_filename:newFilename,original_name:fixed_filename,file_size_in_bytes:file.size,user_id:req.user.id}})
+      await prisma.file_index.create({ data: { id: fileCode, mime_type: file.mimetype, stored_filename: newFilename, original_name: fixed_filename, file_size_in_bytes: file.size, user_id: req.user.id } })
 
 
       uploadedFiles.push({
@@ -288,47 +297,47 @@ export async function registerMultipleIndividualUploadsInIndex(req:Request& Reco
     return {
       files: uploadedFiles
     };
-  } catch(err){console.log(err);return null}
+  } catch (err) { console.log(err); return null }
 }
 
-export async function deleteItem(code:string|string[],deleteSubItems:boolean=false,validation:string | null=null):Promise<number>{
-  try{
+export async function deleteItem(code: string | string[], deleteSubItems: boolean = false, validation: string | null = null): Promise<number> {
+  try {
     // Get item and type of it
-    let type:ItemType = "file"
-    let files_result = await prisma.file_index.findMany({where:{id:Array.isArray(code) ? code[0] : code}})
-    if (files_result.length === 0){type="group"}
-    if (type === "group"){
-      let group_results = await prisma.file_groups.findMany({where:{id:Array.isArray(code) ? code[0] : code}})
-      if (group_results.length === 0){return 1;} // An Item with such code does not exist!
-      if(validation!==null && group_results[0].user_id !== validation){return 3} // Unauthorized!
-      if (deleteSubItems){
-        for (let file_code of group_results[0].file_ids){
-          let process_result = await deleteItem(file_code,true,validation)
-          if(process_result===1){continue}
-          if(process_result===2){return 2}
+    let type: ItemType = "file"
+    let files_result = await prisma.file_index.findMany({ where: { id: Array.isArray(code) ? code[0] : code } })
+    if (files_result.length === 0) { type = "group" }
+    if (type === "group") {
+      let group_results = await prisma.file_groups.findMany({ where: { id: Array.isArray(code) ? code[0] : code } })
+      if (group_results.length === 0) { return 1; } // An Item with such code does not exist!
+      if (validation !== null && group_results[0].user_id !== validation) { return 3 } // Unauthorized!
+      if (deleteSubItems) {
+        for (let file_code of group_results[0].file_ids) {
+          let process_result = await deleteItem(file_code, true, validation)
+          if (process_result === 1) { continue }
+          if (process_result === 2) { return 2 }
         }
       }
-      await prisma.file_groups.delete({where:{id:Array.isArray(code) ? code[0] : code}})
+      await prisma.file_groups.delete({ where: { id: Array.isArray(code) ? code[0] : code } })
       return 0 // Success
-    } if (type === "file"){
-      if(validation!==null && files_result[0].user_id !== validation){return 3} // Unauthorized!
-      const groups_containing_file = await prisma.file_groups.findMany({where: {file_ids: {contains: Array.isArray(code) ? code[0] : code}}});
-      for (let group of groups_containing_file){
+    } if (type === "file") {
+      if (validation !== null && files_result[0].user_id !== validation) { return 3 } // Unauthorized!
+      const groups_containing_file = await prisma.file_groups.findMany({ where: { file_ids: { contains: Array.isArray(code) ? code[0] : code } } });
+      for (let group of groups_containing_file) {
         let file_ids: string[] = JSON.parse(group.file_ids);
         const codeValue = Array.isArray(code) ? code[0] : code;
         file_ids = file_ids.filter(id => id !== codeValue);
-        await prisma.file_groups.update({where: {id: group.id},data: {file_ids: JSON.stringify(file_ids)}});
+        await prisma.file_groups.update({ where: { id: group.id }, data: { file_ids: JSON.stringify(file_ids) } });
       }
-      try {await fs.unlink(process.env.UPLOAD_PATH + files_result[0].stored_filename);} 
+      try { await fs.unlink(process.env.UPLOAD_PATH + files_result[0].stored_filename); }
       catch (err) {
         console.log("File deletion error:", err);
         return 2 // Stop process if file deletion faliure
       }
-      await prisma.file_index.delete({where:{id:Array.isArray(code) ? code[0] : code}})
+      await prisma.file_index.delete({ where: { id: Array.isArray(code) ? code[0] : code } })
       return 0 // Success
     }
     return 2;
-  } catch(err){console.log(err);return 2}
+  } catch (err) { console.log(err); return 2 }
 }
 
 type Extended = any & {
@@ -336,39 +345,39 @@ type Extended = any & {
   files: any[];
 };
 
-export async function retrieveObjectInfo(code:string):Promise<Record<string, any>|null> {
+export async function retrieveObjectInfo(code: string): Promise<Record<string, any> | null> {
   try {
-    let type:ItemType = "file"
+    let type: ItemType = "file"
     try {
-      await prisma.file_index.findFirstOrThrow({where:{id:code}})
-    } catch {type="group"}
-    if (type === "group"){
+      await prisma.file_index.findFirstOrThrow({ where: { id: code } })
+    } catch { type = "group" }
+    if (type === "group") {
       try {
-        let group_results:Extended = await prisma.file_groups.findFirstOrThrow({where:{id:code}})
-        group_results.type ="group";
+        let group_results: Extended = await prisma.file_groups.findFirstOrThrow({ where: { id: code } })
+        group_results.type = "group";
         group_results.files = []
-        for (let id of JSON.parse(group_results.file_ids)){
+        for (let id of JSON.parse(group_results.file_ids)) {
           let file_data = await retrieveObjectInfo(id)
           group_results.files.push(file_data)
         }
         return group_results
-      } catch {return null}
+      } catch { return null }
     }
-    if (type === "file"){
-      let files_result:Extended = await prisma.file_index.findFirstOrThrow({where:{id:code}})
+    if (type === "file") {
+      let files_result: Extended = await prisma.file_index.findFirstOrThrow({ where: { id: code } })
       files_result.file_size_in_bytes = Number(files_result.file_size_in_bytes)
       files_result.type = "file"
       return files_result
     }
     return null
-  } catch(err){console.log(err);return null}
+  } catch (err) { console.log(err); return null }
 }
 
-export async function sanitizeFilename(input:string) {
+export async function sanitizeFilename(input: string) {
   let name = input.replace(/[\/\\?%*:|"<>]/g, "_");
   name = name.replace(/[\x00-\x1f\x80-\x9f]/g, "");
   name = name.replace(/[. ]+$/, "");
   const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
-  if (reserved.test(name)) {name = "_" + name;}
+  if (reserved.test(name)) { name = "_" + name; }
   return name.slice(0, 255);
 }
