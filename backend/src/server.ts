@@ -12,7 +12,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type")
-
+  
   if (req.method === "OPTIONS") {
       return res.sendStatus(204)
   }
@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use("/",router)
+app.use("/", router)
 
 async function startServer() {
   try {
