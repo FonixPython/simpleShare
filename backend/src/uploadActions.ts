@@ -47,7 +47,7 @@ export async function calculateRemainFromQuota(user_id:string):Promise<number | 
       let result = await prisma.users.findFirstOrThrow({where:{id:user_id}})
       let quota:number = Number(result.quota_in_bytes);
       if (quota == 0) return null;
-      let used_res = await prisma.file_index.aggregate({_sum:{file_size_in_bytes:true}})
+      let used_res = await prisma.file_index.aggregate({where:{id:user_id},_sum:{file_size_in_bytes:true}})
       let used_up:number = Number(used_res._sum.file_size_in_bytes || 0)
       let remaining:number = quota - used_up
       return remaining;
